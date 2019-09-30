@@ -12,7 +12,8 @@
   </a>
 </p>
 
-> This project is for all parent who want to teach how to use a keyboard to their child from very young age
+> This project I am working it for my daughter, I ut the song she love.
+> if you wanna your kids enjoy computer from very young
 
 ### 🏠 [Homepage](na)
 
@@ -21,6 +22,7 @@
 - ### Bootstrap
 - ### CSS
 - ### Javascript
+- ### jQuery
 
 
 ## Author
@@ -45,7 +47,7 @@ Give a ⭐️ if this project helped you!
 ## 📝 License
 
 Copyright © 2019 [Farid Hammouten](https://github.com/farid212).<br />
-This project is [MIT](na) licensed.
+This project is [MIT](LICENSE.md) licensed.
 
 ***
 _This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
