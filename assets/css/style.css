@@ -1,0 +1,43 @@
+body{
+    background-color: rgb(211, 211, 101);
+}
+
+h1{
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.centerRow {
+    height: 55vh;
+}
+
+.contentBorder{
+    border: 10px solid darkblue;
+    background-color: cadetblue;
+}
+
+#msg{
+    text-transform: uppercase;
+    font-size: 70px;
+    font-weight: 600;
+}
+
+#msg::before{
+    color: black;
+}
+
+#msg::after{
+    color: white;
+}
+
+.zoom {
+    animation:animatezoom 0.1s
+}
+
+@keyframes animatezoom{
+    from{
+        transform:scale(0)
+    } to{
+        transform:scale(1)
+    }
+}
