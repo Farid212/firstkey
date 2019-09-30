@@ -12,7 +12,8 @@
   </a>
 </p>
 
-> This project I am working it for my daughter, I ut the song she love.
+> This project I am working it for my daughter, I put the song she love.
+
 > if you wanna your kids enjoy computer from very young
 
 ### 🏠 [Homepage](na)
