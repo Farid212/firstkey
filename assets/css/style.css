@@ -21,23 +21,3 @@ h1{
     font-size: 70px;
     font-weight: 600;
 }
-
-#msg::before{
-    color: black;
-}
-
-#msg::after{
-    color: white;
-}
-
-.zoom {
-    animation:animatezoom 0.1s
-}
-
-@keyframes animatezoom{
-    from{
-        transform:scale(0)
-    } to{
-        transform:scale(1)
-    }
-}
