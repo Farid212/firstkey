@@ -1,34 +1,31 @@
 (() => {
+  function promiseGoInvisible() {
+    $(".contentBorder")[0].style.background = "#" + randomColor();
+    $("#msg").fadeOut();
+  }
 
-	const promiseGoInvisible = () =>{ 
-		return new Promise((resolve)=>{
-			$(".contentBorder")[0].style.background = "#" + randomColor();  
-			resolve($("#msg").fadeOut())	
-		})
-	}
+  function randomColor() {
+    let hex = Math.round(Math.random() * 0xffffff).toString(16);
+    while (hex.length < 6) hex = "0" + hex;
+    return hex;
+  }
 
-	const randomColor = () => {
-		let hex = Math.round(Math.random() * 0xffffff).toString(16);
-    	while (hex.length < 6) hex = "0" + hex;
-    	return hex;
-	};
+  function swapKey(param) {
+    randomLetter();
+    document.getElementById("msg").innerText = param.key;
 
-	const swapKey = param => { 
-		return new Promise ((resolve)=>{
-			resolve(
-				document.getElementById("msg").innerText = param.key,
-				$("#msg")[0].style.color = "white",
-				$("#msg")[0].style.fontSize = "13rem",
-				$("#msg").fadeIn()
-			)
-		})
-		 
-	}
+    $("#msg")[0].style.color = "white";
+    $("#msg")[0].style.fontSize = "13rem";
+    $("#msg").fadeIn();
+  }
 
+  document.addEventListener("keypress", function (event) {
+    promiseGoInvisible();
+    swapKey(event);
+  });
 
-	document.addEventListener("keypress", async function(event){
-		await promiseGoInvisible()
-		await swapKey(event)
-	});
-
+  function randomLetter() {
+    let randamKeyCode = Math.floor(Math.random() * 90 + 65);
+    console.log(randamKeyCode);
+  }
 })();
