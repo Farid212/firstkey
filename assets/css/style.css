@@ -16,8 +16,20 @@ h1{
     background-color: cadetblue;
 }
 
-#msg{
+#lettes-box, #msg, .basic-letter{
     text-transform: uppercase;
     font-size: 150px;
     font-weight: 600;
+}
+
+.verified{
+    color: white;
+}
+
+.wrong{
+    color: red;
+}
+
+.right{
+    color: lime;
 }
