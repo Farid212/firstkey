@@ -9,24 +9,28 @@ let verified = false;
 const levelDefinition = 25;
 
 document.addEventListener("keydown", (event) => {
-  console.log(event);
+  // console.log(event);
   if (event.code === "Space" && !gameStarted) {
-    let userLevel = prompt("What level do you want to start? (1-10)");
-    if (userLevel > 0 && userLevel < 11) {
-      level = userLevel;
-    } else {
-      level = 1;
-    }
+    // let userLevel = prompt("What level do you want to start? (1-10)");
+    // if (userLevel > 0 && userLevel < 11) {
+    //   level = userLevel;
+    // } else {
+    //   level = 1;
+    // }
     gameStarted = true;
     document.getElementById("msg").style.display = "none";
     updateGame();
   } else {
-    if (gameStarted && level === 1 && correctAnswers < 50) {
+    if (gameStarted && level === 1 && correctAnswers < levelDefinition) {
       const letter =
         document.getElementsByClassName("basic-letter")[0].innerHTML;
       let verified = event.key === letter ? true : false;
       nextLevel(verified);
-    } else if (gameStarted && level > 1 && correctAnswers < 50 * level) {
+    } else if (
+      gameStarted &&
+      level > 1 &&
+      correctAnswers < levelDefinition * level
+    ) {
       console.log("condition 2");
       patternCode = document.getElementsByClassName("basic-letter");
       if (event.key === patternCode[patternIndex].innerHTML) {
@@ -56,7 +60,6 @@ document.addEventListener("keydown", (event) => {
 function updateGame() {
   const gameEl = document.getElementById("letters-box");
   let letters = generateRandomLetter();
-  console.log(letters);
   let things = "";
   for (const letter of letters) {
     things += `<div class="basic-letter">${letter}</div>`;
@@ -102,12 +105,19 @@ function nextLevel(verified) {
     score++;
     correctAnswers++;
     playSound(true);
-    if (correctAnswers === 50 * level) {
+    if (correctAnswers === levelDefinition * level) {
       level++;
-      letterCount++;
+      // letterCount++;
       correctAnswers = 0;
     }
     updateBgColor();
     updateGame();
   } else playSound(false);
+}
+
+function fetchData() {
+  fetch("https://random-word-api.herokuapp.com/word?number=5")
+    .then((response) => response.json())
+    .then((response) => console.log(response))
+    .catch((error) => console.log(error));
 }
