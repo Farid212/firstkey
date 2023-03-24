@@ -11,12 +11,13 @@ const levelDefinition = 25;
 document.addEventListener("keydown", (event) => {
   // console.log(event);
   if (event.code === "Space" && !gameStarted) {
-    // let userLevel = prompt("What level do you want to start? (1-10)");
-    // if (userLevel > 0 && userLevel < 11) {
-    //   level = userLevel;
-    // } else {
-    //   level = 1;
-    // }
+    let userLevel = prompt("What level do you want to start? (1-10)");
+    if (userLevel > 1 && userLevel < 11) {
+      level = userLevel;
+      correctAnswers = (level - 1) * 25;
+    } else {
+      level = 1;
+    }
     gameStarted = true;
     document.getElementById("msg").style.display = "none";
     updateGame();
@@ -57,26 +58,6 @@ document.addEventListener("keydown", (event) => {
   levelEl.innerHTML = `Level: ${level}`;
 });
 
-function updateGame() {
-  const gameEl = document.getElementById("letters-box");
-  let letters = generateRandomLetter();
-  let things = "";
-  for (const letter of letters) {
-    things += `<div class="basic-letter">${letter}</div>`;
-  }
-  gameEl.innerHTML = things;
-}
-
-// generate the game random letter
-function generateRandomLetter() {
-  let currentLetters = "";
-  const options = "abcdefghijklmnopqrstuvwxyz1234567890";
-  for (let i = 0; i < level; i++) {
-    const randomIndex = Math.floor(Math.random() * options.length);
-    currentLetters += options[randomIndex];
-  }
-  return currentLetters;
-}
 // update background color
 function updateBgColor() {
   let hex = Math.round(Math.random() * 0xffffff).toString(16);
@@ -84,7 +65,6 @@ function updateBgColor() {
   document.getElementsByClassName("contentBorder")[0].style.backgroundColor =
     "#" + hex;
 }
-
 // right or wrong song
 function playSound(answer) {
   const correctAnswerSound = document.getElementById("correctAnswer");
@@ -98,7 +78,6 @@ function playSound(answer) {
     wrongAnswerSound.play();
   }
 }
-
 //move to next step
 function nextLevel(verified) {
   if (verified) {
@@ -107,17 +86,60 @@ function nextLevel(verified) {
     playSound(true);
     if (correctAnswers === levelDefinition * level) {
       level++;
-      // letterCount++;
-      correctAnswers = 0;
     }
     updateBgColor();
     updateGame();
   } else playSound(false);
 }
 
-function fetchData() {
-  fetch("https://random-word-api.herokuapp.com/word?number=5")
-    .then((response) => response.json())
-    .then((response) => console.log(response))
-    .catch((error) => console.log(error));
+async function updateGame() {
+  const gameEl = document.getElementById("letters-box");
+  let letters = await generateRandomLetter();
+  if (!letters) return;
+  let things = "";
+  for (const letter of letters) {
+    things += `<div class="basic-letter">${letter}</div>`;
+  }
+  gameEl.innerHTML = things;
+}
+
+// generate the game random letter
+async function generateRandomLetter() {
+  let currentLetters = "";
+  const options = "abcdefghijklmnopqrstuvwxyz1234567890";
+  if (level === 1) {
+    for (let i = 0; i < level; i++) {
+      const randomIndex = Math.floor(Math.random() * options.length);
+      currentLetters += options[randomIndex];
+    }
+  } else {
+    try {
+      const dataPromise = await fetchData();
+      const data = await dataPromise;
+      if (data && data.length > 0) {
+        currentLetters = data[0];
+      } else {
+        for (let i = 0; i < level; i++) {
+          const randomIndex = Math.floor(Math.random() * options.length);
+          currentLetters += options[randomIndex];
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  return currentLetters;
+}
+
+async function fetchData() {
+  try {
+    const response = await fetch(
+      `https://random-word-api.herokuapp.com/word?length=${level}`
+    );
+    const responseAsJson = await response.json();
+    return responseAsJson;
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
 }
