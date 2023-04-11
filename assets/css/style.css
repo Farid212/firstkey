@@ -9,6 +9,14 @@ h1{
 
 .centerRow {
     height: 55vh;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+}
+
+.content{
+    height: 100%;
+    align-items: center;
 }
 
 .contentBorder{
@@ -16,10 +24,25 @@ h1{
     background-color: cadetblue;
 }
 
-#lettes-box, #msg, .basic-letter{
+.msgBox{
+    text-align: center;
+}
+
+.basic-letter, #msg{
     text-transform: uppercase;
-    font-size: 150px;
     font-weight: 600;
+}
+
+#letters-box{
+    display: flex;
+}
+
+.basic-letter{
+    font-size: 30vh;
+}
+
+#msg{
+    font-size: 10rem;
 }
 
 .verified{
