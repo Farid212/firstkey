@@ -81,7 +81,7 @@ function playSound(answer) {
 //move to next step
 function nextLevel(verified) {
   if (verified) {
-    score++;
+    score += level;
     correctAnswers++;
     playSound(true);
     if (correctAnswers === levelDefinition * level) {
