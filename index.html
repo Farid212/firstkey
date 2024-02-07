@@ -1,48 +1,51 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <title>First Key</title>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <!-- Bootstrap CSS -->
-    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"> -->
-    <link rel="stylesheet" href="./assets/css/animate.css">
-    <link rel="stylesheet" href="./assets/css/style.css">
-  </head>
-  <body>
-      <header>
-        <div class="text-center">
-          <h1>First Key</h1>
-        </div>
-      </header>
-      <main>
-        <div class="container">
-          <div class="d-flex justify-content-between">
-            <div id="score"></div>
-            <div id="level"></div>
-          </div>
-          <div class="contentBorder">
-            <div class="row centerRow text-center">
-              <div class="col-12 align-self-center">
-                <div class="content">
-                  <div class="msgBox">
-                    <div id="msg">press Space to start</div>
-                    <div id="letters-box" class="d-flex justify-content-center"></div>
-                  </div>
-                </div>
+<head>
+  <title>First Key</title>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"> -->
+  <link rel="stylesheet" href="./assets/css/animate.css">
+  <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+
+<body>
+  <header>
+    <div class="text-center">
+      <h1>First Key</h1>
+    </div>
+  </header>
+  <main>
+    <div class="container">
+      <div class="d-flex justify-content-between">
+        <div id="score">Score: <span id="scoreEl"></span></div>
+        <div id="level"></div>
+      </div>
+      <div class="contentBorder">
+        <div class="row centerRow text-center">
+          <div class="col-12 align-self-center">
+            <div class="content">
+              <div class="msgBox">
+                <div id="msg">press Space to start</div>
+                <div id="letters-box" class="d-flex justify-content-center"></div>
               </div>
             </div>
           </div>
         </div>
-        <audio id="correctAnswer" src="./assets/audio/CA1.mp3" ></audio>
-        <audio id="wrongAnswer" src="./assets/audio/WA3.mp3" ></audio>
+      </div>
+    </div>
+    <audio id="correctAnswer" src="./assets/audio/CA1.mp3"></audio>
+    <audio id="wrongAnswer" src="./assets/audio/WA3.mp3"></audio>
 
-       
-      </main>
-      <!-- Optional JavaScript -->
-      <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <script src="./assets/js/app.js"></script>
-  </body>
+
+  </main>
+  <!-- Optional JavaScript -->
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+  <script src="./assets/js/app.js"></script>
+</body>
+
 </html>

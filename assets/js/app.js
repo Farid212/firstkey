@@ -23,6 +23,10 @@ document.addEventListener("keydown", (event) => {
     updateGame();
   } else {
     if (gameStarted && level === 1 && correctAnswers < levelDefinition) {
+      //test if the key is an alpheNumeric one
+      const isAlphaNumeric =
+        event.key.length === 1 && event.key.match(/[a-z0-9]/i);
+      if (!isAlphaNumeric) return;
       const letter =
         document.getElementsByClassName("basic-letter")[0].innerHTML;
       let verified = event.key === letter ? true : false;
@@ -52,8 +56,8 @@ document.addEventListener("keydown", (event) => {
     }
   }
 
-  const scoreEl = document.getElementById("score");
-  scoreEl.innerHTML = `Score: ${score}`;
+  const scoreEl = document.getElementById("scoreEl");
+  scoreEl.innerText = score;
   const levelEl = document.getElementById("level");
   levelEl.innerHTML = `Level: ${level}`;
 });
@@ -78,10 +82,11 @@ function playSound(answer) {
     wrongAnswerSound.play();
   }
 }
+
 //move to next step
 function nextLevel(verified) {
   if (verified) {
-    score += level;
+    score += Number(level);
     correctAnswers++;
     playSound(true);
     if (correctAnswers === levelDefinition * level) {
