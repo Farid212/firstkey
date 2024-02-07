@@ -1,58 +1,60 @@
-body{
-    background-color: rgb(211, 211, 101);
+body {
+  background-color: rgb(211, 211, 101);
 }
 
-h1{
-    text-transform: uppercase;
-    font-weight: 600;
+h1 {
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
 .centerRow {
-    height: 55vh;
-    justify-content: center;
-    display: flex;
-    align-items: center;
+  height: 55vh;
+  justify-content: center;
+  display: flex;
+  align-items: center;
 }
 
-.content{
-    height: 100%;
-    align-items: center;
+.content {
+  height: 100%;
+  align-items: center;
 }
 
-.contentBorder{
-    border: 10px solid darkblue;
-    background-color: cadetblue;
+.contentBorder {
+  border: 10px solid darkblue;
+  background-color: cadetblue;
 }
 
-.msgBox{
-    text-align: center;
+.msgBox {
+  text-align: center;
+  padding: 1rem;
 }
 
-.basic-letter, #msg{
-    text-transform: uppercase;
-    font-weight: 600;
+.basic-letter,
+#msg {
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
-#letters-box{
-    display: flex;
+#letters-box {
+  display: flex;
 }
 
-.basic-letter{
-    font-size: 30vh;
+.basic-letter {
+  font-size: 30vh;
 }
 
-#msg{
-    font-size: 10rem;
+#msg {
+  font-size: 10vw;
 }
 
-.verified{
-    color: white;
+.verified {
+  color: white;
 }
 
-.wrong{
-    color: red;
+.wrong {
+  color: red;
 }
 
-.right{
-    color: lime;
+.right {
+  color: lime;
 }
