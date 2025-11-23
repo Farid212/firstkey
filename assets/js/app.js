@@ -138,9 +138,9 @@ async function generateRandomLetter() {
 
 async function fetchData() {
   try {
-    const response = await fetch(
-      `https://random-word-api.herokuapp.com/word?length=${level}`
-    );
+    const pattern = '?'.repeat(level);
+    const response = await fetch(`https://api.datamuse.com/words?sp=${pattern}&max=1&v=words`)
+    console.log(response);
     const responseAsJson = await response.json();
     return responseAsJson;
   } catch (error) {
