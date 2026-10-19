@@ -60,6 +60,7 @@ export function startGame(root, state, target, handlers) {
     e.preventDefault();
     if (r === 'wrong') {
       document.dispatchEvent(new CustomEvent('firstkey:wrong', { detail: { blockId, level } }));
+      s = handlers.getState(); // la série remise à zéro par le directeur ne doit pas être écrasée
       return play('wrongAnswer');
     }
     play('correctAnswer');

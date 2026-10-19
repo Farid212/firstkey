@@ -72,3 +72,23 @@ test('animations désactivées: état mis à jour, rien ne joue', () => {
   assert.deepEqual(t.state.rewards.badges.earned.sort(), ['first_level', 'first_step']);
   t.d.stop();
 });
+
+test('aperçus de collection: file bornée à 5', async () => {
+  const t = setup();
+  for (let i = 0; i < 30; i++) t.d.replay('cow');
+  await t.drain();
+  assert.equal(t.runs, 6); // 1 en cours + 5 en attente, le reste ignoré
+  t.d.stop();
+});
+
+test('récompense ignorée: la mémoire anti-répétition ne change pas', async () => {
+  const t = setup(); // rng = 0: 1re famille = animal (vache)
+  t.correct(); // badge first_step joue
+  for (let i = 0; i < 5; i++) t.correct(); // 6e: récompense tirée mais ignorée (badge en cours)
+  await t.drain();
+  const before = t.runs;
+  for (let i = 0; i < 10; i++) t.correct();
+  await t.drain();
+  assert.ok(t.runs > before); // une vraie récompense a joué ensuite, sans plantage
+  t.d.stop();
+});

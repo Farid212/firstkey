@@ -302,7 +302,7 @@ function buildChef(g) {
   });
 }
 const mmh = { voices: [s('sine', 300, 380, 0, 0.3, 0.16, { vib: { rate: 6, depth: 10 } }), s('sine', 380, 460, 0.32, 0.45, 0.16, { vib: { rate: 6, depth: 10 } }), s('triangle', 1500, 1500, 0.8, 0.3, 0.07)] };
-const sizzle = { voices: [s('noise', 5000, 3500, 0, 0.7, 0.14, { filter: { type: 'highpass', freq: 3000 } }), s('noise', 2500, 1800, 0, 0.7, 0.08, { filter: { type: 'bandpass', freq: 2500 } })] };
+const sizzle = { voices: [s('noise', 4000, 3500, 0, 0.7, 0.14, { filter: { type: 'highpass', freq: 3000 } }), s('noise', 2500, 1800, 0, 0.7, 0.08, { filter: { type: 'bandpass', freq: 2500 } })] };
 const flipSnd = { voices: [s('noise', 500, 1800, 0, 0.3, 0.18, { filter: { type: 'bandpass', freq: 900 } }), s('sine', 250, 700, 0, 0.25, 0.14)] };
 const clang = { voices: [s('triangle', 900, 880, 0, 0.35, 0.15), s('sine', 1350, 1340, 0, 0.3, 0.1), s('sine', 2250, 2240, 0, 0.2, 0.06)] };
 

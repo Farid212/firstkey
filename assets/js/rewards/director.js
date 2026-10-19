@@ -34,11 +34,14 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
 
   // file: toujours mis en file (bornée); random: abandonné si quelque chose joue
   function play(job, mode) {
-    if (!settings().rewardAnimations) return;
-    if (mode === 'random' && (playing || queue.length)) return;
+    if (!settings().rewardAnimations) return false;
+    if (mode === 'random' && (playing || queue.length)) return false;
+    // aperçus (collection): un enfant qui tape 30 fois une carte ne fait pas une file de 2 minutes
+    if (mode === 'preview' && queue.length >= MAX_QUEUE) return false;
     queue.push(job);
     if (mode === 'queue' && queue.length > MAX_QUEUE) queue.splice(0, queue.length - MAX_QUEUE);
     pump();
+    return true;
   }
 
   function award(rewards) {
@@ -52,9 +55,11 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
     if (--gap > 0) return;
     gap = nextGap(rng);
     const pick = pickReward(getState().rewards, memory, rng);
-    memory = { lastFamily: pick.family, lastCreatureId: pick.creatureId ?? memory.lastCreatureId };
     const ctx = { letter: rect ? { display, rect } : null, lang: lang() };
-    play(() => (pick.creatureId ? runAct(getArt(pick.creatureId), fx, ctx) : party(fx)), 'random');
+    // la mémoire ne change que si la récompense joue vraiment (sinon on pourrait répéter la dernière vue)
+    if (play(() => (pick.creatureId ? runAct(getArt(pick.creatureId), fx, ctx) : party(fx)), 'random')) {
+      memory = { lastFamily: pick.family, lastCreatureId: pick.creatureId ?? memory.lastCreatureId };
+    }
   }
 
   function onLevelUp({ level, newLevel }) {
@@ -85,10 +90,14 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
   }]);
   for (const [type, fn] of wrapped) doc.addEventListener(type, fn);
 
+  // la collection appelle replay/playBadge hors événement: appliquer ici le réglage des sons
+  const prepare = () => { audio.unlock(); audio.setEnabled(settings().rewardSounds); };
   function replay(creatureId) {
+    prepare();
     if (CREATURES.some((c) => c.id === creatureId)) play(() => runAct(getArt(creatureId), fx, { letter: null, lang: lang() }), 'preview');
   }
   function playBadge(badgeId) {
+    prepare();
     if (BADGES.some((b) => b.id === badgeId)) play(() => badge(badgeId), 'preview');
   }
   // Vide la file et efface l'animation en cours (retour à l'accueil).
