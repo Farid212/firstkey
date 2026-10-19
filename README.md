@@ -37,6 +37,10 @@
 
 Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](https://github.com/Farid212/firstkey/issues).
 
+## Récompenses et collection
+
+Les récompenses vivent dans `assets/js/rewards/`. Pour ajouter une créature: une entrée dans `creatures.js` (id, famille `animal` ou `character`, noms fr/en/ja, à la fin pour garder l'ordre de déblocage), un module d'art dans `art/` qui exporte `ART = { id: { draw, cry, act } }`, puis l'ajouter au registre `art/index.js`. Passer `CREATURE_COUNT` dans `model.js` à la nouvelle taille. `npm test` échoue tant qu'une créature n'a pas d'art. Pour revoir une animation sans jouer: `document.dispatchEvent(new CustomEvent('firstkey:preview', { detail: { id: 'cow' } }))` (aussi `badge:<id>`, `levelup:stickman`, `levelup:party`).
+
 ## Show your support
 
 Give a ⭐️ if this project helped you!

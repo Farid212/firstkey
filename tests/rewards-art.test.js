@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { ART, getArt } from '../assets/js/rewards/art/index.js';
 import { CREATURES } from '../assets/js/rewards/creatures.js';
 import { validateSound } from '../assets/js/rewards/audio.js';
+import { ease } from '../assets/js/rewards/anim.js';
+import { readdirSync, readFileSync } from 'node:fs';
 
 const ok = (a) => {
   assert.equal(typeof a.draw, 'function');
@@ -39,4 +41,23 @@ test('pickLevelup choisit une des deux variantes', async () => {
   assert.equal(pickLevelup(() => 0), 'stickman');
   assert.equal(pickLevelup(() => 0.9), 'party');
   for (const k of ['stickman', 'party']) assert.equal(typeof LEVELUPS[k], 'function');
+});
+
+test('les 24 créatures ont un art et des noms dans les 3 langues', () => {
+  assert.deepEqual(Object.keys(ART).sort(), CREATURES.map((c) => c.id).sort());
+  for (const c of CREATURES) {
+    for (const l of ['fr', 'en', 'ja']) assert.ok(c.names[l], `${c.id} ${l}`);
+    assert.deepEqual(validateSound(ART[c.id].cry), [], c.id);
+  }
+});
+
+test('les courbes citées dans l\'art et les animations existent', () => {
+  const dirs = ['art', 'levelup'].map((d) => new URL(`../assets/js/rewards/${d}/`, import.meta.url));
+  for (const dir of dirs) {
+    for (const f of readdirSync(dir).filter((n) => n.endsWith('.js'))) {
+      const src = readFileSync(new URL(f, dir), 'utf8');
+      const names = [...src.matchAll(/ease\.(\w+)/g), ...[...src.matchAll(/track\(\[[\s\S]*?\]\)/g)].flatMap((tr) => [...tr[0].matchAll(/,\s*'(\w+)'\s*\]/g)])].map((m) => m[1]);
+      for (const n of names) assert.ok(n in ease, `${f}: courbe inconnue ${n}`);
+    }
+  }
 });
