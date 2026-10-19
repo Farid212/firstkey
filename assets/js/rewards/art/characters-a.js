@@ -6,10 +6,10 @@ import { INK, OUT, ell, path, group, rot, tube, eyes, blinkAt, popper, actor, po
 import { s, wob, mouthO, blush, spot } from './animals-b.js';
 
 const FS = 110;
-const sideOf = (xf) => (xf < 0.5 ? 1 : -1); // côté de la lettre: vers le centre de l'écran
+export const sideOf = (xf) => (xf < 0.5 ? 1 : -1); // côté de la lettre: vers le centre de l'écran
 
 // La lettre: texte SVG qui part de sa place dans la question (ctx.letter.rect), ou apparaît sur place en aperçu.
-function letterKit(fx, S, ctx) {
+export function letterKit(fx, S, ctx) {
   S.scene.parentNode.removeAttribute('clip-path'); // la lettre vient de plus haut que la bande
   const el = svgEl('text', { 'font-size': FS, 'font-weight': 800, fill: '#2b2d54', stroke: '#fff', 'stroke-width': 6, 'paint-order': 'stroke', 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-family': 'system-ui,sans-serif' });
   el.textContent = ctx?.letter?.display ?? 'A';
