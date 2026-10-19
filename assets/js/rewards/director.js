@@ -1,17 +1,14 @@
 import { todayString, applyCorrect, applyWrong, applyLevelUp, newBadges, awardBadges, nextGap, pickReward } from './engine.js';
 import { CREATURES } from './creatures.js';
 import { BADGES } from './badges.js';
-import { SFX } from './audio.js';
 import { getArt } from './art/index.js';
-import { runAct, showCard } from './fx.js';
+import { runAct } from './fx.js';
+import { badgeStyle, celebrateBadge } from './badge-art.js';
 import { LEVELUPS, pickLevelup } from './levelup/index.js';
 import { party } from './levelup/party.js';
 import { reveal } from './levelup/reveal.js';
 
 const MAX_QUEUE = 5;
-
-// Point d'accroche remplacé par la Task 11 (celebrateBadge).
-const celebrateBadge = (fx, { badgeId, lang }) => showCard(fx, null, SFX.sparkle, BADGES.find((b) => b.id === badgeId)?.names[lang]);
 
 export function startDirector({ getState, onChange, audio, fx, rng = Math.random, today = todayString, doc = document }) {
   const queue = [];
@@ -21,6 +18,7 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
 
   const settings = () => getState().settings;
   const lang = () => settings().language;
+  const badge = (badgeId) => celebrateBadge(fx, { badgeId, style: badgeStyle(settings().age), lang: lang() });
   const save = (rewards) => onChange({ ...getState(), rewards });
   const levelup = (ctx, variant = pickLevelup(rng)) => LEVELUPS[variant](fx, ctx);
 
@@ -46,7 +44,7 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
   function award(rewards) {
     const ids = newBadges({ ...getState(), rewards });
     save(ids.length ? awardBadges(rewards, ids) : rewards);
-    for (const badgeId of ids) play(() => celebrateBadge(fx, { badgeId, lang: lang() }), 'queue');
+    for (const badgeId of ids) play(() => badge(badgeId), 'queue');
   }
 
   function onCorrect({ blockId, kind, display, rect }) {
@@ -91,7 +89,7 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
     if (CREATURES.some((c) => c.id === creatureId)) play(() => runAct(getArt(creatureId), fx, { letter: null, lang: lang() }), 'preview');
   }
   function playBadge(badgeId) {
-    if (BADGES.some((b) => b.id === badgeId)) play(() => celebrateBadge(fx, { badgeId, lang: lang() }), 'preview');
+    if (BADGES.some((b) => b.id === badgeId)) play(() => badge(badgeId), 'preview');
   }
   // Vide la file et efface l'animation en cours (retour à l'accueil).
   function clear() {
