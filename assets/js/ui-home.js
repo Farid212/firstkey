@@ -27,6 +27,7 @@ export function renderHome(root, state, handlers) {
       const grid = el('div', 'levels');
       for (let n = 1; n <= level; n++) {
         const btn = el('button', 'lvl', String(n));
+        btn.setAttribute('aria-label', `Niveau ${n}`);
         btn.onclick = () => handlers.onPickLevel(b.id, n);
         grid.append(btn);
       }

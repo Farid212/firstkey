@@ -17,10 +17,11 @@ const int = (v, min, max, def) => {
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
 };
 
-export function loadState(storage = localStorage) {
+export function loadState(storage) {
   const d = defaultState();
   let raw;
   try {
+    storage ??= localStorage;
     raw = JSON.parse(storage.getItem(KEY));
   } catch {
     return d;
@@ -43,8 +44,9 @@ export function loadState(storage = localStorage) {
   };
 }
 
-export function saveState(state, storage = localStorage) {
+export function saveState(state, storage) {
   try {
+    storage ??= localStorage;
     storage.setItem(KEY, JSON.stringify(state));
   } catch {
     // quota ou stockage bloqué: on continue sans sauvegarde

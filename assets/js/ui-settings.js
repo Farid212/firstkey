@@ -56,6 +56,7 @@ export function openSettings(root, state, handlers) {
       fn(s);
       cur = s;
       handlers.onChange(s);
+      disarm();
     };
 
     const age = el('input', 'num');
@@ -112,11 +113,17 @@ export function openSettings(root, state, handlers) {
       cur = jumpTo(cur, jb.value, n);
       handlers.onChange(cur);
       jg.textContent = 'C’est fait';
+      disarm();
     };
+    jb.onchange = jn.oninput = () => { jg.textContent = 'Aller à ce niveau'; };
     box.append(row('set-jb', 'Saut : bloc', jb), row('set-jn', 'Saut : niveau', jn), jg);
 
     const reset = el('button', 'big danger', 'Recommencer à zéro');
     let armed = false;
+    function disarm() {
+      armed = false;
+      reset.textContent = 'Recommencer à zéro';
+    }
     reset.onclick = () => {
       if (!armed) {
         armed = true;

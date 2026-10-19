@@ -13,7 +13,8 @@ export function startGame(root, state, target, handlers) {
   const div = (cls) => Object.assign(document.createElement('div'), { className: cls });
   root.replaceChildren();
   const bar = div('bar');
-  const back = Object.assign(document.createElement('button'), { className: 'back', textContent: '←', ariaLabel: 'Retour' });
+  const back = Object.assign(document.createElement('button'), { className: 'back', textContent: '←', tabIndex: -1 });
+  back.setAttribute('aria-label', 'Retour');
   const info = div('info');
   bar.append(back, info);
   const hint = div('hint');
@@ -34,6 +35,9 @@ export function startGame(root, state, target, handlers) {
     question = makeQuestion(blockId, level, s.settings);
     typer = createTyper(question.accepts);
     hint.textContent = question.hint ?? '';
+    // texte long: la taille de base (clamp du CSS) rétrécit pour tenir en quelques lignes
+    const len = question.display.length;
+    shown.style.fontSize = len > 6 ? `max(2rem, ${(18 * 6 / len).toFixed(1)}vw)` : '';
     paint();
   }
 
@@ -47,8 +51,11 @@ export function startGame(root, state, target, handlers) {
   }
 
   function onKey(e) {
+    if (e.repeat) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
-    const r = typer.press(e.key);
+    let r = typer.press(e.key);
+    // AZERTY: les chiffres demandent Maj, on retente avec le chiffre de la touche
+    if (r === 'wrong' && /^(Digit|Numpad)\d$/.test(e.code)) r = typer.press(e.code.at(-1));
     if (r === 'ignored') return;
     e.preventDefault();
     if (r === 'wrong') return play('wrongAnswer');
@@ -58,7 +65,7 @@ export function startGame(root, state, target, handlers) {
     s = res.state;
     const detail = { blockId, level };
     document.dispatchEvent(new CustomEvent('firstkey:correct', { detail }));
-    if (res.leveledUp) document.dispatchEvent(new CustomEvent('firstkey:levelup', { detail }));
+    if (res.leveledUp) document.dispatchEvent(new CustomEvent('firstkey:levelup', { detail: { ...detail, newLevel: res.state.progress[blockId].level } }));
     handlers.onChange(s);
     next();
   }

@@ -45,3 +45,13 @@ test('niveaux hors bornes bornés', () => {
     assert.equal(st.progress.letters.level, want);
   }
 });
+
+test('localStorage global qui lève (stockage bloqué)', () => {
+  Object.defineProperty(globalThis, 'localStorage', { get() { throw new Error('SecurityError'); }, configurable: true });
+  try {
+    assert.deepEqual(loadState(), defaultState());
+    assert.doesNotThrow(() => saveState(defaultState()));
+  } finally {
+    delete globalThis.localStorage;
+  }
+});

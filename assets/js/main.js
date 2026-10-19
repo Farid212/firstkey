@@ -17,7 +17,6 @@ function home() {
   renderHome(root, state, {
     onPlay: (blockId) => game({ blockId }),
     onPickLevel: (blockId, level) => game({ blockId, level }),
-    onOpenSettings: () => {},
   });
 }
 
