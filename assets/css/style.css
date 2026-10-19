@@ -1,60 +1,24 @@
+* { box-sizing: border-box; }
 body {
-  background-color: rgb(211, 211, 101);
+  margin: 0; min-height: 100vh; font-family: system-ui, sans-serif;
+  background: linear-gradient(160deg, #ffe08a, #ff9ec4 60%, #9ad7ff);
+  color: #2b2b4a;
 }
-
-h1 {
-  text-transform: uppercase;
-  font-weight: 600;
+#app { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+#gear { position: fixed; top: 8px; right: 8px; font-size: 1.6rem; background: none; border: 0; opacity: .4; cursor: pointer; }
+button { font: inherit; cursor: pointer; }
+button:disabled { cursor: default; }
+.big {
+  display: block; width: 100%; padding: 20px; font-size: 2rem; font-weight: 700;
+  border: 0; border-radius: 24px; background: #fff; box-shadow: 0 6px 0 #0002;
 }
-
-.centerRow {
-  height: 55vh;
-  justify-content: center;
-  display: flex;
-  align-items: center;
-}
-
-.content {
-  height: 100%;
-  align-items: center;
-}
-
-.contentBorder {
-  border: 10px solid darkblue;
-  background-color: cadetblue;
-}
-
-.msgBox {
-  text-align: center;
-  padding: 1rem;
-}
-
-.basic-letter,
-#msg {
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-#letters-box {
-  display: flex;
-}
-
-.basic-letter {
-  font-size: 30vh;
-}
-
-#msg {
-  font-size: 10vw;
-}
-
-.verified {
-  color: white;
-}
-
-.wrong {
-  color: red;
-}
-
-.right {
-  color: lime;
-}
+.mix { background: #6c5ce7; color: #fff; margin-bottom: 24px; }
+.mix:disabled, .soon .big { opacity: .45; }
+.block { margin-bottom: 20px; }
+.levels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.lvl { width: 56px; height: 56px; font-size: 1.3rem; border: 0; border-radius: 16px; background: #ffffffb0; }
+.bar { display: flex; align-items: center; gap: 16px; font-size: 1.5rem; font-weight: 700; }
+.back { font-size: 2rem; padding: 8px 20px; border: 0; border-radius: 16px; background: #fff; }
+.hint { text-align: center; font-size: 1.5rem; min-height: 2rem; margin-top: 40px; }
+.display { text-align: center; font-size: clamp(4rem, 18vw, 10rem); font-weight: 800; margin-top: 10px; word-break: break-word; }
+.typed { color: #00b894; }
