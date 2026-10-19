@@ -60,5 +60,6 @@ test('badges: levels and explorer', () => {
   }
   assert.equal(b('level_10').earned(mk()), false);
   assert.equal(b('explorer').earned(mk({ blocksTried: ['letters'] })), false);
-  assert.equal(b('explorer').earned(mk({ blocksTried: ['letters', 'words'] })), true);
+  assert.equal(b('explorer').earned(mk({ blocksTried: ['letters', 'words'] })), false);
+  assert.equal(b('explorer').earned(mk({ blocksTried: ['letters', 'words', 'math'] })), true);
 });

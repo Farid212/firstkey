@@ -49,3 +49,20 @@ button:disabled { cursor: default; }
 .new { position: absolute; top: -6px; right: -4px; background: #ff4d6d; color: #fff; font-size: .75rem; padding: 2px 8px; border-radius: 999px; }
 .collection-btn { background: #00b894; color: #fff; margin-top: 24px; position: relative; font-size: 1.6rem; }
 .dot { position: absolute; top: 10px; right: 14px; width: 18px; height: 18px; border-radius: 50%; background: #ff4d6d; border: 3px solid #fff; }
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-top: 24px; }
+.choice {
+  position: relative; min-height: 130px; border: 0; border-radius: 28px; color: #2b2b4a;
+  background: var(--c); box-shadow: 0 8px 0 var(--d); transition: transform .08s, box-shadow .08s;
+}
+.choice:nth-child(1) { --c: #ffc8dd; --d: #e89ab8; }
+.choice:nth-child(2) { --c: #b9f3d0; --d: #7fd3a4; }
+.choice:nth-child(3) { --c: #bfe0ff; --d: #86b8ea; }
+.choice:nth-child(4) { --c: #ffeaa0; --d: #e6c75e; }
+.choice:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 2px 0 var(--d); }
+.choice:focus-visible { outline: 4px solid #6c5ce7; outline-offset: 4px; }
+.choice .num { font-size: 3.5rem; font-weight: 800; }
+.choice .pos {
+  position: absolute; top: 10px; left: 10px; width: 34px; height: 34px; line-height: 34px;
+  border-radius: 50%; background: #ffffffc0; font-size: 1.2rem; font-weight: 800;
+}
+.choice:disabled { background: #e3e3ea; box-shadow: none; color: #a0a0b0; transform: translateY(6px); }

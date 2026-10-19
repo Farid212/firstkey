@@ -74,8 +74,8 @@ test('jumpTo niveau non numérique', () => {
 
 test('pickBlock', () => {
   const s = defaultState();
-  s.settings.blocks = ['math'];
+  s.settings.blocks = ['js'];
   assert.equal(pickBlock(s), null);
-  s.settings.blocks = ['letters', 'math'];
+  s.settings.blocks = ['letters', 'js'];
   for (let i = 0; i < 20; i++) assert.equal(pickBlock(s), 'letters');
 });

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { makeQuestion, toQuestion, answerKind } from '../assets/js/questions.js';
 import { LETTERS } from '../assets/js/data/letters.js';
 import { WORDS } from '../assets/js/data/words.js';
-import { MAX_LEVEL } from '../assets/js/blocks.js';
+import { MAX_LEVEL, BLOCKS } from '../assets/js/blocks.js';
 
 const S = (language, uppercase = true) => ({ language, uppercase });
 const fixed = (x) => () => x;
@@ -80,7 +80,25 @@ test('toutes les questions fr/en ont des accepts valides', () => {
 });
 
 test('bloc non jouable lève une erreur', () => {
-  assert.throws(() => makeQuestion('math', 1, S('fr')));
+  assert.throws(() => makeQuestion('js', 1, S('fr')));
+});
+
+test('math jouable: QCM au niveau 1, réponse tapée au niveau 58', () => {
+  assert.ok(BLOCKS.find((b) => b.id === 'math').playable);
+  const c = makeQuestion('math', 1, S('fr'), fixed(0.3));
+  assert.equal(c.kind, 'choice');
+  assert.equal(c.hint, '');
+  assert.match(c.display, /^\d+ \+ \d+$/);
+  assert.equal(c.choices.length, 3);
+  assert.ok(c.choices.every((x) => typeof x === 'string'));
+  const [a, b] = c.display.split(' + ').map(Number);
+  assert.equal(c.choices[c.answerIndex], String(a + b));
+  const t = makeQuestion('math', 58, S('fr'), fixed(0.3));
+  assert.equal(t.kind, 'typed');
+  assert.equal(t.math, true);
+  assert.match(t.accepts[0], /^\d+$/);
+  assert.equal(t.accepts.length, 1);
+  assert.notEqual(makeQuestion('letters', 1, S('fr'), fixed(0)).kind, 'choice');
 });
 
 test('fr/en: aucun mot ne contient de saut de ligne ni de double espace', () => {

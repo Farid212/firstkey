@@ -1,6 +1,7 @@
 import { MAX_LEVEL, BLOCKS } from './blocks.js';
 import { LETTERS } from './data/letters.js';
 import { WORDS } from './data/words.js';
+import { makeMathQuestion } from './math.js';
 
 const WINDOW = 10; // taille de la réserve de mots
 
@@ -20,6 +21,12 @@ function pick(arr, rng) {
 export function makeQuestion(blockId, level, settings, rng = Math.random) {
   const block = BLOCKS.find((b) => b.id === blockId);
   if (!block || !block.playable) throw new Error(`Bloc non jouable : ${blockId}`);
+  if (blockId === 'math') {
+    const m = makeMathQuestion(level, rng);
+    return m.mode === 'choice'
+      ? { kind: 'choice', display: m.prompt, hint: '', choices: m.choices.map(String), answerIndex: m.answerIndex }
+      : { kind: 'typed', display: m.prompt, accepts: m.accepts, math: true };
+  }
   const lang = settings.language;
   const list = (blockId === 'letters' ? LETTERS : WORDS)[lang];
   let pool;
