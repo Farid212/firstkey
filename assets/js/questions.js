@@ -24,13 +24,18 @@ export function makeQuestion(blockId, level, settings, rng = Math.random) {
   const list = (blockId === 'letters' ? LETTERS : WORDS)[lang];
   let pool;
   if (blockId === 'letters') {
-    pool = list.slice(0, Math.min(list.length, level + 1));
+    const n = Math.min(list.length, 2 + Math.floor(((list.length - 2) * (level - 1)) / (MAX_LEVEL - 1)));
+    pool = list.slice(0, n); // niveau 1: 2 items, niveau max: toute la liste
   } else {
     // fenêtre qui avance de la fin du début de liste (niveau 1) à la fin de liste (niveau max)
     const start = Math.round(((level - 1) / (MAX_LEVEL - 1)) * Math.max(0, list.length - WINDOW));
     pool = list.slice(start, start + WINDOW);
   }
-  const item = pick(pool, rng);
+  return toQuestion(pick(pool, rng), lang, settings);
+}
+
+// Transforme une entrée de liste en question.
+export function toQuestion(item, lang, settings) {
   if (lang === 'ja') return { ...item };
   const display = settings.uppercase ? item.toUpperCase() : item;
   return { display, accepts: textAccepts(item, lang) };

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeQuestion } from '../assets/js/questions.js';
+import { makeQuestion, toQuestion } from '../assets/js/questions.js';
 import { LETTERS } from '../assets/js/data/letters.js';
 import { WORDS } from '../assets/js/data/words.js';
 import { MAX_LEVEL } from '../assets/js/blocks.js';
@@ -85,4 +85,26 @@ test('bloc non jouable lève une erreur', () => {
 
 test('fr/en: aucun mot ne contient de saut de ligne ni de double espace', () => {
   for (const lang of ['fr', 'en']) for (const w of WORDS[lang]) assert.match(w, /^[^\s]+( [^\s]+)*$/, w);
+});
+
+test('niveau max: la réserve de lettres couvre toute la liste (fr, en, ja)', () => {
+  for (const lang of ['fr', 'en', 'ja']) {
+    const n = LETTERS[lang].length;
+    const seen = new Set();
+    for (let k = 0; k < n; k++)
+      seen.add(makeQuestion('letters', MAX_LEVEL, S(lang, false), fixed((k + 0.5) / n)).display);
+    assert.equal(seen.size, n, lang);
+  }
+});
+
+test('exhaustif: chaque entrée est tapable au clavier', () => {
+  const ok = /^[a-z0-9 ']+$/;
+  for (const blockList of [LETTERS, WORDS])
+    for (const lang of ['fr', 'en', 'ja'])
+      for (const item of blockList[lang]) {
+        const q = toQuestion(item, lang, S(lang, true));
+        assert.ok(q.accepts.length > 0, String(item.display ?? item));
+        if (lang === 'ja') for (const a of q.accepts) assert.match(a, ok, q.display);
+        else assert.ok(q.accepts.some((a) => ok.test(a)), q.display);
+      }
 });
