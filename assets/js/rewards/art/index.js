@@ -5,9 +5,10 @@ import { ART as STICKMAN } from './stickman.js';
 import { ART as ANIMALS_A } from './animals-a.js';
 import { ART as ANIMALS_B } from './animals-b.js';
 import { ART as ANIMALS_C } from './animals-c.js';
+import { ART as CHARS_A } from './characters-a.js';
 
 // Rempli par les tâches d'art (8 à 14).
-export const ART = { ...STICKMAN, ...ANIMALS_A, ...ANIMALS_B, ...ANIMALS_C };
+export const ART = { ...STICKMAN, ...ANIMALS_A, ...ANIMALS_B, ...ANIMALS_C, ...CHARS_A };
 
 function fallback(id) {
   const name = CREATURES.find((c) => c.id === id)?.names.fr ?? id;
