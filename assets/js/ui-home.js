@@ -1,5 +1,6 @@
 import { BLOCKS } from './blocks.js';
 import { pickBlock } from './progress.js';
+import { hasNew } from './ui-collection.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -35,5 +36,9 @@ export function renderHome(root, state, handlers) {
     } else card.append(main);
     home.append(card);
   }
+  const col = el('button', 'big collection-btn', `🎒 Ma collection · ${state.rewards.unlocked} / 24`);
+  if (hasNew(state.rewards)) col.append(el('span', 'dot'));
+  col.onclick = handlers.onOpenCollection;
+  home.append(col);
   root.append(home);
 }

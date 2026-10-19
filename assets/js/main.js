@@ -1,6 +1,7 @@
 import { loadState, saveState } from './store.js';
 import { renderHome } from './ui-home.js';
 import { startGame } from './ui-game.js';
+import { renderCollection } from './ui-collection.js';
 import { openSettings } from './ui-settings.js';
 import { createAudio } from './rewards/audio.js';
 import { createFx } from './rewards/fx.js';
@@ -27,7 +28,14 @@ function home() {
   renderHome(root, state, {
     onPlay: (blockId) => game({ blockId }),
     onPickLevel: (blockId, level) => game({ blockId, level }),
+    onOpenCollection: collection,
   });
+}
+
+function collection() {
+  director.clear();
+  gear.hidden = true;
+  renderCollection(root, state, { onBack: home, onChange, onReplay: (id) => director.replay(id) });
 }
 
 function game(target) {
