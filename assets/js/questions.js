@@ -40,3 +40,5 @@ export function toQuestion(item, lang, settings) {
   const display = settings.uppercase ? item.toUpperCase() : item;
   return { display, accepts: textAccepts(item, lang) };
 }
+
+export const answerKind = (blockId, display) => (blockId !== 'words' ? 'letter' : display.includes(' ') ? 'sentence' : 'word');

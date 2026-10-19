@@ -1,5 +1,5 @@
 import { pickBlock, recordCorrect } from './progress.js';
-import { makeQuestion } from './questions.js';
+import { makeQuestion, answerKind } from './questions.js';
 import { createTyper } from './typer.js';
 
 const play = (id) => {
@@ -25,7 +25,7 @@ export function startGame(root, state, target, handlers) {
   shown.append(done, rest);
   root.append(bar, hint, shown);
 
-  let s = state;
+  let s = handlers.getState();
   let blockId, level, question, typer;
 
   function next() {
@@ -58,15 +58,21 @@ export function startGame(root, state, target, handlers) {
     if (r === 'wrong' && /^(Digit|Numpad)\d$/.test(e.code)) r = typer.press(e.code.at(-1));
     if (r === 'ignored') return;
     e.preventDefault();
-    if (r === 'wrong') return play('wrongAnswer');
+    if (r === 'wrong') {
+      document.dispatchEvent(new CustomEvent('firstkey:wrong', { detail: { blockId, level } }));
+      return play('wrongAnswer');
+    }
     play('correctAnswer');
     if (r === 'right') return paint();
     const res = recordCorrect(s, blockId, level);
-    s = res.state;
+    handlers.onChange(res.state);
+    const { x, y, width, height } = shown.getBoundingClientRect();
     const detail = { blockId, level };
-    document.dispatchEvent(new CustomEvent('firstkey:correct', { detail }));
+    const kind = answerKind(blockId, question.display);
+    document.dispatchEvent(new CustomEvent('firstkey:correct', { detail: { ...detail, kind, display: question.display, rect: { x, y, width, height } } }));
     if (res.leveledUp) document.dispatchEvent(new CustomEvent('firstkey:levelup', { detail: { ...detail, newLevel: res.state.progress[blockId].level } }));
-    handlers.onChange(s);
+    // relire l'état: un écouteur a pu y ajouter des récompenses
+    s = handlers.getState();
     next();
   }
 

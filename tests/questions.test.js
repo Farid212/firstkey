@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeQuestion, toQuestion } from '../assets/js/questions.js';
+import { makeQuestion, toQuestion, answerKind } from '../assets/js/questions.js';
 import { LETTERS } from '../assets/js/data/letters.js';
 import { WORDS } from '../assets/js/data/words.js';
 import { MAX_LEVEL } from '../assets/js/blocks.js';
@@ -107,4 +107,11 @@ test('exhaustif: chaque entrée est tapable au clavier', () => {
         if (lang === 'ja') for (const a of q.accepts) assert.match(a, ok, q.display);
         else assert.ok(q.accepts.some((a) => ok.test(a)), q.display);
       }
+});
+
+test('answerKind: lettre, mot, phrase', () => {
+  assert.equal(answerKind('letters', 'a'), 'letter');
+  assert.equal(answerKind('words', 'chat'), 'word');
+  assert.equal(answerKind('words', 'le chat dort'), 'sentence');
+  assert.equal(answerKind('math', '1'), 'letter');
 });

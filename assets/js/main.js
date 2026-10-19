@@ -22,7 +22,7 @@ function home() {
 
 function game(target) {
   gear.hidden = true; // pas de réglages pendant une partie (écouteurs clavier actifs)
-  startGame(root, state, target, { onChange, onExit: home });
+  startGame(root, state, target, { onChange, getState: () => state, onExit: home });
 }
 
 gear.onclick = () => openSettings(root, state, { onChange, onClose: home });
