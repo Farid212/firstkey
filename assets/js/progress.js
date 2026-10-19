@@ -20,7 +20,7 @@ export function recordCorrect(state, blockId, playedLevel) {
 
 export function jumpTo(state, blockId, level) {
   const s = structuredClone(state);
-  s.progress[blockId] = { level: Math.min(MAX_LEVEL, Math.max(1, Math.floor(level))), correct: 0 };
+  s.progress[blockId] = { level: Math.min(MAX_LEVEL, Math.max(1, Math.floor(level) || 1)), correct: 0 };
   return s;
 }
 

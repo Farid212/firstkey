@@ -66,6 +66,12 @@ test('jumpTo borne', () => {
   assert.equal(jumpTo(s, 'words', 7).progress.words.correct, 0);
 });
 
+test('jumpTo niveau non numérique', () => {
+  const s = defaultState();
+  assert.equal(jumpTo(s, 'words', NaN).progress.words.level, 1);
+  assert.equal(jumpTo(s, 'words', Infinity).progress.words.level, MAX_LEVEL);
+});
+
 test('pickBlock', () => {
   const s = defaultState();
   s.settings.blocks = ['math'];
