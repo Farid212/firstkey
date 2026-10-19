@@ -1,9 +1,10 @@
 import { CREATURES } from '../creatures.js';
 import { SFX } from '../audio.js';
 import { svgEl, showCard } from '../fx.js';
+import { ART as STICKMAN } from './stickman.js';
 
 // Rempli par les tâches d'art (8 à 14).
-export const ART = {};
+export const ART = { ...STICKMAN };
 
 function fallback(id) {
   const name = CREATURES.find((c) => c.id === id)?.names.fr ?? id;

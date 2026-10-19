@@ -3,33 +3,15 @@ import { CREATURES } from './creatures.js';
 import { BADGES } from './badges.js';
 import { SFX } from './audio.js';
 import { getArt } from './art/index.js';
-import { runAct, showCard, svgEl } from './fx.js';
+import { runAct, showCard } from './fx.js';
+import { LEVELUPS, pickLevelup } from './levelup/index.js';
+import { party } from './levelup/party.js';
+import { reveal } from './levelup/reveal.js';
 
 const MAX_QUEUE = 5;
 
-// Points d'accroche remplacés par la Task 8 (pickLevelup, reveal) et la Task 11 (celebrateBadge).
-const levelup = (fx) => fx.run(async () => { fx.audio.play(SFX.fanfare); await fx.wait(1200); });
-const reveal = (fx, { creatureId, lang }) =>
-  showCard(fx, getArt(creatureId).draw, getArt(creatureId).cry, CREATURES.find((c) => c.id === creatureId)?.names[lang]);
+// Point d'accroche remplacé par la Task 11 (celebrateBadge).
 const celebrateBadge = (fx, { badgeId, lang }) => showCard(fx, null, SFX.sparkle, BADGES.find((b) => b.id === badgeId)?.names[lang]);
-
-// Fête courte: confettis dans le tiers bas.
-const party = (fx) => fx.run(async (g) => {
-  const { w, h } = fx.size();
-  const bits = Array.from({ length: 24 }, (_, i) => {
-    const r = svgEl('rect', { width: 10, height: 6, fill: `hsl(${i * 47} 80% 60%)` });
-    g.append(r);
-    return { r, x: Math.random() * w, y0: h * 0.66, dy: h * 0.3 * (0.5 + Math.random()), spin: Math.random() * 720 };
-  });
-  fx.audio.play(SFX.pop);
-  await fx.tween(1600, (u) => {
-    for (const b of bits) {
-      const y = b.y0 + (fx.reduced ? 0 : b.dy * u);
-      b.r.setAttribute('transform', `translate(${b.x} ${y}) rotate(${fx.reduced ? 0 : b.spin * u})`);
-      b.r.setAttribute('opacity', 1 - u * u);
-    }
-  });
-});
 
 export function startDirector({ getState, onChange, audio, fx, rng = Math.random, today = todayString, doc = document }) {
   const queue = [];
@@ -40,6 +22,7 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
   const settings = () => getState().settings;
   const lang = () => settings().language;
   const save = (rewards) => onChange({ ...getState(), rewards });
+  const levelup = (ctx, variant = pickLevelup(rng)) => LEVELUPS[variant](fx, ctx);
 
   async function pump() {
     if (playing) return;
@@ -78,14 +61,14 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
 
   function onLevelUp({ level, newLevel }) {
     const { rewards, unlockedId } = applyLevelUp(getState().rewards);
-    play(() => levelup(fx, { oldLevel: level, newLevel }), 'queue');
+    play(() => levelup({ oldLevel: level, newLevel }), 'queue');
     if (unlockedId) play(() => reveal(fx, { creatureId: unlockedId, lang: lang() }), 'queue');
     award(rewards);
   }
 
   function onPreview({ id }) {
     if (id.startsWith('badge:')) return playBadge(id.slice(6));
-    if (id === 'levelup:stickman' || id === 'levelup:party') return play(() => levelup(fx, { oldLevel: 1, newLevel: 2 }, id.slice(8)), 'preview');
+    if (id === 'levelup:stickman' || id === 'levelup:party') return play(() => levelup({ oldLevel: 1, newLevel: 2 }, id.slice(8)), 'preview');
     replay(id);
   }
 
