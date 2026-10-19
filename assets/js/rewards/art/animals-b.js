@@ -3,9 +3,9 @@ import { track, clamp, lerp, ease } from '../anim.js';
 import { svgEl } from '../fx.js';
 import { INK, ell, path, group, rot, tube, eyes, blinkAt, popper, actor, portrait, play, dust } from './kit.js';
 
-const s = (wave, f0, f1, t, d, g, extra) => ({ wave, f0, f1, t, d, g, ...extra });
-const wob = (t, f, a) => Math.sin(t * f) * a;
-const mouthO = (parent, x, y, rx, ry) => {
+export const s = (wave, f0, f1, t, d, g, extra) => ({ wave, f0, f1, t, d, g, ...extra });
+export const wob = (t, f, a) => Math.sin(t * f) * a;
+export const mouthO = (parent, x, y, rx, ry) => {
   const g = group(parent, { transform: `translate(${x} ${y})` });
   const m = group(g);
   m.append(ell(0, 0, rx, ry, '#6b1f3a', { 'stroke-width': 4 }), ell(0, ry * 0.45, rx * 0.6, ry * 0.4, '#ff7a9c', { stroke: 'none' }));
@@ -13,9 +13,9 @@ const mouthO = (parent, x, y, rx, ry) => {
   set(0);
   return set;
 };
-const blush = (parent, pts, c = '#ff8fa3') => pts.forEach(([x, y]) => parent.append(ell(x, y, 10, 6, c, { stroke: 'none', opacity: 0.55 })));
-const spot = () => 0.3 + Math.random() * 0.4;
-const setT = (el, x, y, sx = 1, sy = sx) => el.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sx.toFixed(3)} ${sy.toFixed(3)})`);
+export const blush = (parent, pts, c = '#ff8fa3') => pts.forEach(([x, y]) => parent.append(ell(x, y, 10, 6, c, { stroke: 'none', opacity: 0.55 })));
+export const spot = () => 0.3 + Math.random() * 0.4;
+export const setT = (el, x, y, sx = 1, sy = sx) => el.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sx.toFixed(3)} ${sy.toFixed(3)})`);
 
 // ---------- Cochon ----------
 function buildPig(g) {
@@ -197,7 +197,7 @@ function sheepAct(fx) {
       setT(fence, cx, 0);
       const x0 = cx - side * 190, x1 = cx - side * 105, x2 = cx + side * 150;
       const u1 = clamp((t - 1.3) / 0.5, 0, 1), u2 = clamp((t - 2.0) / 0.9, 0, 1);
-      const x = u2 > 0 ? lerp(x1, x2, ease.inOut2(u2)) : lerp(x0, x1, u1);
+      const x = u2 > 0 ? lerp(x1, x2, ease.io3(u2)) : lerp(x0, x1, u1);
       const jump = 4 * 30 * u1 * (1 - u1) * (u2 > 0 ? 0 : 1) + 4 * 135 * u2 * (1 - u2);
       const crouch = Math.max(0, 1 - Math.abs(t - 1.95) / 0.2) * 0.15;
       const sp = turn(t);
