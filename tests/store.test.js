@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { defaultState, loadState, saveState } from '../assets/js/store.js';
 import { MAX_LEVEL } from '../assets/js/blocks.js';
+import { defaultRewards, normalizeRewards } from '../assets/js/rewards/model.js';
 
 const fake = (init) => {
   const m = new Map(init ? [['firstkey.state.v1', init]] : []);
@@ -44,6 +45,23 @@ test('niveaux hors bornes bornés', () => {
     const st = loadState(fake(JSON.stringify({ progress: { letters: { level: lvl, correct: 0 } } })));
     assert.equal(st.progress.letters.level, want);
   }
+});
+
+test('sauvegarde sans rewards -> rewards par défaut, score gardé', () => {
+  const st = loadState(fake(JSON.stringify({ score: 12 })));
+  assert.equal(st.score, 12);
+  assert.deepEqual(st.rewards, defaultRewards());
+});
+
+test('réglages de récompense: défaut true, non booléen -> true', () => {
+  const st = loadState(fake(JSON.stringify({ settings: { rewardAnimations: 'oui', rewardSounds: false } })));
+  assert.equal(st.settings.rewardAnimations, true);
+  assert.equal(st.settings.rewardSounds, false);
+});
+
+test('defaultState().rewards est valide', () => {
+  const d = defaultState();
+  assert.deepEqual(normalizeRewards(d.rewards), d.rewards);
 });
 
 test('localStorage global qui lève (stockage bloqué)', () => {
