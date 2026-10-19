@@ -59,7 +59,7 @@ function pigAct(fx) {
     const A = actor(S.scene, buildPig);
     const wig = track([[0.8, 0], [0.95, 1], [1.8, 1], [1.95, 0]]);
     const pv = track([[1.9, 0], [2.1, 1, 'outBack'], [4.0, 1], [4.2, 0]]);
-    const spin = track([[2.9, 0], [3.5, 1, 'inOut2']]);
+    const spin = track([[2.9, 0], [3.5, 1, 'io3']]);
     const dirty = track([[3.3, 0], [3.6, 1]]);
     const hop = (u) => 4 * 70 * u * (1 - u);
     return (t, once) => {
@@ -190,7 +190,7 @@ function sheepAct(fx) {
     fence.append(path('M -54 -52 L 54 -52 M -54 -26 L 54 -26', 'none', { stroke: INK, 'stroke-width': 11 }), path('M -54 -52 L 54 -52 M -54 -26 L 54 -26', 'none', { stroke: '#e8c27a', 'stroke-width': 6 }));
     const A = actor(S.scene, buildSheep);
     const open = track([[2.0, 0], [2.1, 1], [2.9, 1], [3.0, 0]]);
-    const turn = track([[3.3, 0], [4.0, 1, 'inOut2']]);
+    const turn = track([[3.3, 0], [4.0, 1, 'io3']]);
     const pulse = track([[0.8, 0], [1.0, 1], [1.2, 0]]);
     return (t, once) => {
       const p = pop(t), cx = S.W * 0.5;
