@@ -7,5 +7,5 @@ export function makeGate(rng = Math.random) {
 }
 
 export function checkGate(gate, input) {
-  return String(input).trim() === String(gate.answer);
+  return typeof input === 'string' && input.trim() === String(gate.answer);
 }
