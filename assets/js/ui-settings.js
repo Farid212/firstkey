@@ -75,6 +75,14 @@ export function openSettings(root, state, handlers) {
     up.onchange = () => change((s) => { s.settings.uppercase = up.checked; });
     box.append(row('set-up', 'Majuscules', up));
 
+    for (const [id, key, label] of [['set-fx', 'rewardAnimations', 'Animations de récompense'], ['set-snd', 'rewardSounds', 'Sons de récompense']]) {
+      const c = el('input');
+      c.type = 'checkbox';
+      c.checked = cur.settings[key];
+      c.onchange = () => change((s) => { s.settings[key] = c.checked; });
+      box.append(row(id, label, c));
+    }
+
     const lang = el('select', 'num');
     for (const [v, t] of [['fr', 'Français'], ['en', 'English'], ['ja', '日本語']]) {
       const o = el('option', '', t);
