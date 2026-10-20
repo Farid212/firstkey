@@ -43,11 +43,12 @@ export function startGame(root, state, target, handlers) {
 
   let s = handlers.getState();
   let blockId, level, question, typer;
+  let fixed = target.level; // niveau choisi par une pastille; suit le niveau si on le termine
 
   function next() {
     blockId = target.blockId === 'random' ? pickBlock(s) : target.blockId;
     if (!blockId) return exit(); // aucun bloc jouable: jamais de question vide
-    level = target.level ?? s.progress[blockId].level;
+    level = fixed ?? s.progress[blockId].level;
     question = makeQuestion(blockId, level, s.settings);
     const q = question;
     typer = q.kind === 'choice' ? null : createTyper(q.accepts);
@@ -115,6 +116,7 @@ export function startGame(root, state, target, handlers) {
     const detail = { blockId, level };
     const kind = answerKind(blockId, question.display);
     document.dispatchEvent(new CustomEvent('firstkey:correct', { detail: { ...detail, kind, display: question.display, rect: { x, y, width, height } } }));
+    if (res.leveledUp && fixed === level) fixed = res.state.progress[blockId].level;
     if (res.leveledUp) document.dispatchEvent(new CustomEvent('firstkey:levelup', { detail: { ...detail, newLevel: res.state.progress[blockId].level } }));
     // relire l'état: un écouteur a pu y ajouter des récompenses
     s = handlers.getState();
