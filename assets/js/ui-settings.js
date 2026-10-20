@@ -95,6 +95,16 @@ export function openSettings(root, state, handlers) {
     lang.onchange = () => change((s) => { s.settings.language = lang.value; });
     box.append(row('set-lang', 'Langue', lang));
 
+    const code = el('select', 'num');
+    for (const [v, t] of [['py', 'Python'], ['js', 'JavaScript']]) {
+      const o = el('option', '', t);
+      o.value = v;
+      code.append(o);
+    }
+    code.value = cur.settings.codeLanguage;
+    code.onchange = () => change((s) => { s.settings.codeLanguage = code.value; });
+    box.append(row('set-code', 'Langage de programmation', code));
+
     const fs = el('fieldset');
     fs.append(el('legend', '', 'Blocs actifs'));
     for (const b of BLOCKS) {
