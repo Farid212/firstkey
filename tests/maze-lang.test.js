@@ -117,3 +117,15 @@ test('fuzz: 2000 chaînes, aucune exception', () => {
   }
   assert.ok(valid >= 0);
 });
+
+test('espaces Unicode acceptés, autre caractère non ASCII montré entier', () => {
+  for (const sp of ['\u00a0', '\u2003', '\u202f', '\u3000']) {
+    assert.deepEqual(parse(`for i in range(2):${sp}forward()`, 'py'), parse('for i in range(2): forward()', 'py'));
+  }
+  assert.ok(parse('forward()\u00a0', 'js').ok);
+  for (const [src, ch] of [['forward() 🐢', '🐢'], ['forwärd()', 'ä'], ['forward(\u200b)', 'U+200B']]) {
+    const r = parse(src, 'py');
+    assert.equal(r.ok, false);
+    assert.equal(r.error.message, `Je ne comprends pas ce caractère : « ${ch} »`);
+  }
+});

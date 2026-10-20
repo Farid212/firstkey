@@ -119,7 +119,7 @@ export function startMaze(root, state, target, handlers) {
   const names = commandNames(lang);
   prompt.textContent = lang === 'py' ? '>>>' : '>';
   title.textContent = lang === 'py' ? 'Python' : 'JavaScript';
-  const creature = CREATURES[s.rewards.unlocked - 1] ?? CREATURES[0];
+  let creature;
 
   let fixed = target.level; // niveau choisi par une pastille; suit le niveau si on le termine
   let level, maze, world, hero, arrow, star;
@@ -215,6 +215,8 @@ export function startMaze(root, state, target, handlers) {
   // ---------- niveau ----------
   function load() {
     level = fixed ?? s.progress.maze.level;
+    creature = CREATURES[s.rewards.unlocked - 1] ?? CREATURES[0]; // relu: un niveau a pu débloquer une créature
+    resetBtn.disabled = false;
     maze = makeMaze(level);
     world = createWorld(maze);
     const tier = tierOf(level);
@@ -292,7 +294,7 @@ export function startMaze(root, state, target, handlers) {
     const res = execute(r.prog, world);
     if (res.error) {
       row.classList.add('bad');
-      note('Cette ligne est trop longue, essaie plus court.', 'err');
+      note('Cette boucle est trop longue, essaie plus court.', 'err');
       return; // le monde reste comme avant la ligne
     }
     if (!res.events.some((ev) => ev.k === 'bump')) row.append(el('span', 'term-ok', ' ✓'));
@@ -324,6 +326,7 @@ export function startMaze(root, state, target, handlers) {
         place(pos.x, pos.y);
       } else if (ev.k === 'goal') {
         queue.length = 0; // les lignes tapées pour ce labyrinthe-ci n'ont plus de sens
+        resetBtn.disabled = true; // la victoire ne doit pas être perdue ni laisser l'ancien labyrinthe
         play('correctAnswer');
         note('Bravo, tu as trouvé l’étoile !', 'win');
         await tween(520, t, (k) => place(pos.x, pos.y, -Math.abs(Math.sin(k * Math.PI * 2)) * 2.2,
@@ -333,6 +336,7 @@ export function startMaze(root, state, target, handlers) {
         correct();
         await wait(reduced() ? 0 : 450, t);
         if (t !== token) return;
+        queue.length = 0; // lignes tapées pendant la danse
         load();
       }
     }

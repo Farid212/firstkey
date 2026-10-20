@@ -35,11 +35,19 @@ const fail = (code, message, hint) => { throw new Fail(code, message, hint); };
 const isDigit = (c) => c >= '0' && c <= '9';
 const isIdStart = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_';
 
+// Espaces, y compris l'espace insécable (Option+Espace sur Mac) et les autres espaces Unicode.
+const SPACE = /[ \t\n\r\u00a0\u2000-\u200a\u202f\u3000]/;
+
 function tokenize(src) { // un seul passage linéaire
   const out = [];
   for (let i = 0; i < src.length;) {
     const c = src[i];
-    if (c === ' ' || c === '\t' || c === '\n' || c === '\r') { i++; continue; }
+    if (SPACE.test(c)) { i++; continue; }
+    if (c > '\x7f') { // par point de code: un emoji reste entier
+      const ch = String.fromCodePoint(src.codePointAt(i));
+      const seen = /[\p{L}\p{N}\p{P}\p{S}]/u.test(ch) ? ch : `U+${ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}`;
+      fail('syntax', `Je ne comprends pas ce caractère : « ${seen} »`);
+    }
     let j = i + 1;
     let k = 'sym';
     if (isDigit(c)) { k = 'num'; while (j < src.length && isDigit(src[j])) j++; }

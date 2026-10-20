@@ -89,3 +89,17 @@ test('migration: anciennes sauvegardes reçoivent maze, progress.maze existe', (
   assert.deepEqual(load([]).progress.maze, { level: 1, correct: 0 });
   assert.ok(defaultState().settings.blocks.includes('maze'));
 });
+
+test('migration de maze une seule fois: un parent qui décoche Programmation le garde décoché', () => {
+  const OLD = ['letters', 'words', 'math', 'js', 'python'];
+  const s = fake(JSON.stringify({ settings: { blocks: OLD }, progress: { letters: { level: 3, correct: 1 } } }));
+  const st = loadState(s);
+  assert.ok(st.settings.blocks.includes('maze'));
+  st.settings.blocks = st.settings.blocks.filter((b) => b !== 'maze');
+  saveState(st, s);
+  assert.ok(JSON.parse(s.getItem('firstkey.state.v1')).progress.maze);
+  assert.ok(!loadState(s).settings.blocks.includes('maze'));
+  assert.ok(!loadState(s).settings.blocks.includes('maze'));
+  const partial = fake(JSON.stringify({ settings: { blocks: ['letters', 'math'] } }));
+  assert.deepEqual(loadState(partial).settings.blocks, ['letters', 'math']);
+});

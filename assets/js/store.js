@@ -22,7 +22,8 @@ const int = (v, min, max, def) => {
 };
 
 // Anciens joueurs: le nouveau bloc Programmation ne doit pas leur rester caché.
-const migrateBlocks = (b) => (OLD_BLOCKS.every((id) => b.includes(id)) && !b.includes('maze') ? [...b, 'maze'] : b);
+// Une seule fois: une sauvegarde d'avant le labyrinthe n'a pas de progress.maze, toutes les suivantes en ont un.
+const migrateBlocks = (b, done) => (!done && OLD_BLOCKS.every((id) => b.includes(id)) && !b.includes('maze') ? [...b, 'maze'] : b);
 
 export function loadState(storage) {
   const d = defaultState();
@@ -42,7 +43,7 @@ export function loadState(storage) {
       age: int(s.age, 1, 99, d.settings.age),
       uppercase: typeof s.uppercase === 'boolean' ? s.uppercase : d.settings.uppercase,
       language: LANGS.includes(s.language) ? s.language : d.settings.language,
-      blocks: Array.isArray(s.blocks) ? migrateBlocks(s.blocks.filter((b) => ids.includes(b))) : d.settings.blocks,
+      blocks: Array.isArray(s.blocks) ? migrateBlocks(s.blocks.filter((b) => ids.includes(b)), p.maze != null) : d.settings.blocks,
       codeLanguage: CODE_LANGS.includes(s.codeLanguage) ? s.codeLanguage : d.settings.codeLanguage,
       rewardAnimations: typeof s.rewardAnimations === 'boolean' ? s.rewardAnimations : true,
       rewardSounds: typeof s.rewardSounds === 'boolean' ? s.rewardSounds : true,

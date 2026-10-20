@@ -56,30 +56,37 @@ function zigzag(n, rng, turns, lo, hi) {
   return moves;
 }
 
-// Escalier: n répétitions de (s pas, virage, s pas, virage inverse).
-function stairs(n, rng) {
-  const s = int(1, 2, rng), reps = int(2, Math.max(2, Math.floor((n - 1) / s)), rng);
-  const a = pick([1, 3], rng), b = pick([0, 2], rng), first = int(0, 1, rng);
-  const moves = [];
-  for (let i = 0; i < reps; i++) moves.push(...repeat(first ? a : b, s), ...repeat(first ? b : a, s));
-  return moves;
+// Palier 4: chaque niveau a sa propre forme répétitive (j = 0..7 dans chaque famille), orientée au hasard.
+const rot = (moves, r, flip) => moves.map((m) => ((flip && m % 2 ? m + 2 : m) + r) % 4);
+
+// Escalier: `reps` marches de h pas puis v pas (h, v = 1 ou 2).
+function stairs(n, j) {
+  const h = 1 + (j & 1), v = 1 + ((j >> 1) & 1), reps = Math.floor((n - 1) / Math.max(h, v)) - (j >> 2);
+  return Array.from({ length: reps }, () => [...repeat(1, h), ...repeat(2, v)]).flat();
 }
 
-// Spirale vers l'intérieur depuis un coin: avance tant que possible, tourne sinon.
-function spiral(open, n, rng) {
-  const sx = pick([0, n - 1], rng), sy = pick([0, n - 1], rng);
-  let dir = int(0, 1, rng) ? (sx ? 3 : 1) : (sy ? 0 : 2);
-  const turn = pick([1, 3], rng);
-  let x = sx, y = sy;
-  open[y][x] = true;
-  const cells = [{ x, y }];
-  for (let stuck = 0; stuck < 2;) {
-    const nx = x + DIRS[dir].x, ny = y + DIRS[dir].y;
-    if (can(open, n, nx, ny, x, y)) {
-      open[ny][nx] = true; cells.push({ x: nx, y: ny }); x = nx; y = ny; stuck = 0;
-    } else { dir = (dir + turn) % 4; stuck++; }
+// Spirale vers l'intérieur: côtés k-1, k-1, k-1, k-3, k-3, ... (au moins 3 côtés, donc 2 virages).
+function spiral(n, j) {
+  const k = n - (j & 1), lens = [k - 1];
+  for (let l = k - 1; lens.length < 3 + (j >> 1) && l > 0; l -= 2) lens.push(l, l);
+  return lens.slice(0, 3 + (j >> 1)).flatMap((l, i) => repeat((1 + i) % 4, l));
+}
+
+// Serpentin: `passes` allers-retours de a pas, reliés par 2 pas.
+function serpent(n, j) {
+  const a = n - 1 - (j & 3), passes = 3 + (j >> 2);
+  return Array.from({ length: passes }, (_, i) => [...(i ? repeat(2, 2) : []), ...repeat(i % 2 ? 3 : 1, a)]).flat();
+}
+
+// Creuse `moves` à une position tirée au hasard où le chemin tient dans la grille.
+function placed(open, n, rng, moves) {
+  let x = 0, y = 0, x0 = 0, x1 = 0, y0 = 0, y1 = 0;
+  for (const m of moves) {
+    x += DIRS[m].x; y += DIRS[m].y;
+    x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
   }
-  return cells;
+  if (x1 - x0 > n - 1 || y1 - y0 > n - 1) return null;
+  return trace(open, n, int(-x0, n - 1 - x1, rng), int(-y0, n - 1 - y1, rng), moves);
 }
 
 // Marche auto-évitante de `len` cases.
@@ -126,12 +133,8 @@ function candidate(level, tier, n, rng, attempt) {
   } else if (tier === 3) {
     cells = trace(open, n, x, y, zigzag(n, rng, int(2, 4, rng), 2, 4));
   } else if (tier === 4) {
-    cells = n >= 7 && int(0, 1, rng) ? spiral(open, n, rng) : null;
-    if (!cells) {
-      const moves = stairs(n, rng);
-      const ex = moves.filter((m) => m % 2).length, ey = moves.length - ex;
-      cells = trace(open, n, int(0, n - 1 - ex, rng), int(0, n - 1 - ey, rng), moves);
-    }
+    const i = level - 49;
+    cells = placed(open, n, rng, rot([stairs, spiral, serpent][i % 3](n, Math.floor(i / 3)), int(0, 3, rng), int(0, 1, rng)));
   } else {
     const len = Math.max(4, int(tier === 5 ? n : Math.round(n * 1.5), tier === 5 ? n + 4 : n * 2, rng) - Math.floor(attempt / 5));
     cells = walk(open, n, rng, len);

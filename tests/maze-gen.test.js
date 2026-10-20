@@ -86,3 +86,23 @@ test('solve: valeur connue et cas sans solution', () => {
   assert.equal(solve({ ...m, walls: [[F, T, F], [T, T, F], [T, T, F]] }), -1);
   assert.equal(solutionPath({ ...m, walls: [[F, T, F], [T, T, F], [T, T, F]] }), null);
 });
+
+const sig = (m) => JSON.stringify([m.walls, m.start, m.goal]);
+
+test('palier 4: 24 labyrinthes distincts, jamais un simple couloir, au moins 2 virages', () => {
+  const seen = new Set();
+  for (let l = 49; l <= 72; l++) {
+    const m = makeMaze(l), turns = solutionPath(m).filter((c) => c !== 'f').length;
+    seen.add(sig(m));
+    assert.ok(turns >= 2, `niveau ${l}: ${turns} virages`);
+    assert.ok(m.par > 7, `niveau ${l}: par ${m.par}`);
+  }
+  assert.equal(seen.size, 24);
+});
+
+test('chaque palier: tous ses labyrinthes sont différents', () => {
+  for (const [a, b] of [[1, 12], [13, 30], [31, 48], [49, 72], [73, 94], [95, 114]]) {
+    const seen = new Set(LEVELS.slice(a - 1, b).map((l) => sig(makeMaze(l))));
+    assert.equal(seen.size, b - a + 1, `paliers ${a}-${b}`);
+  }
+});
