@@ -38,7 +38,15 @@ export function startGame(root, state, target, handlers) {
     const q = question;
     typer = q.kind === 'choice' ? null : createTyper(q.accepts);
     hint.textContent = q.hint ?? '';
-    if (blockId === 'math') {
+    const isCode = blockId === 'js' || blockId === 'python';
+    shown.classList.toggle('code', isCode);
+    choices.classList.toggle('code', isCode);
+    if (isCode) {
+      // monospace ~0,62em par caractère; le texte passe à la ligne plutôt que de déborder (pre-wrap)
+      const rows = q.display.split('\n');
+      const w = 0.62 * Math.min(28, Math.max(...rows.map((r) => r.length))); // au-delà de 28 caractères la ligne passe à la ligne
+      shown.style.fontSize = `max(14px, min(48px, ${(88 / w).toFixed(2)}vw, ${Math.round(640 / w)}px, ${Math.round(280 / rows.length)}px))`;
+    } else if (blockId === 'math') {
       // une seule ligne tant que possible: ~0,6em par caractère dans la largeur de #app (688px au plus)
       const len = q.display.length + (q.math ? 3 + q.accepts[0].length : 0);
       shown.style.fontSize = `min(10rem, ${(150 / len).toFixed(1)}vw, ${Math.round(1100 / len)}px)`;
@@ -92,6 +100,11 @@ export function startGame(root, state, target, handlers) {
 
   function paint() {
     info.textContent = `Score ${s.score} · Niveau ${level}`;
+    if (question.kind === 'choice') {
+      lead.textContent = question.display;
+      done.textContent = rest.textContent = '';
+      return;
+    }
     if (blockId === 'math') {
       const a = question.math ? question.accepts[0] : '';
       lead.textContent = question.math ? `${question.display} = ` : question.display;
@@ -119,7 +132,8 @@ export function startGame(root, state, target, handlers) {
     }
     let r = typer.press(e.key);
     // AZERTY: les chiffres demandent Maj, on retente avec le chiffre de la touche
-    if (r === 'wrong' && /^(Digit|Numpad)\d$/.test(e.code)) r = typer.press(e.code.at(-1));
+    // en code, pas de repli avec Maj: sur QWERTY Maj+9 est « ( », pas « 9 »
+    if (r === 'wrong' && /^(Digit|Numpad)\d$/.test(e.code) && !(question.code && e.shiftKey)) r = typer.press(e.code.at(-1));
     if (r === 'ignored') return;
     e.preventDefault();
     if (r === 'wrong') return wrong();

@@ -74,8 +74,19 @@ test('jumpTo niveau non numérique', () => {
 
 test('pickBlock', () => {
   const s = defaultState();
-  s.settings.blocks = ['js'];
+  s.settings.blocks = ['inconnu'];
   assert.equal(pickBlock(s), null);
-  s.settings.blocks = ['letters', 'js'];
+  s.settings.blocks = ['letters', 'inconnu'];
   for (let i = 0; i < 20; i++) assert.equal(pickBlock(s), 'letters');
+  // âge minimal
+  s.settings.blocks = ['letters', 'words', 'math', 'js', 'python'];
+  s.settings.age = 4;
+  const seen4 = new Set(Array.from({ length: 50 }, (_, i) => pickBlock(s, () => i / 50)));
+  assert.deepEqual([...seen4].sort(), ['letters', 'words']);
+  s.settings.age = 8;
+  const seen8 = new Set(Array.from({ length: 50 }, (_, i) => pickBlock(s, () => i / 50)));
+  assert.equal(seen8.size, 5);
+  s.settings.blocks = ['js'];
+  s.settings.age = 4;
+  assert.equal(pickBlock(s), null);
 });

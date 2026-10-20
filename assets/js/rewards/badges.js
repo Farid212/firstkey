@@ -17,7 +17,10 @@ export const BADGES = [
   b('total_100', '100 bonnes réponses', '100 correct answers', '100もんせいかい', stat('totalCorrect', 100)),
   b('total_500', '500 bonnes réponses', '500 correct answers', '500もんせいかい', stat('totalCorrect', 500)),
   b('total_1000', '1000 bonnes réponses', '1000 correct answers', '1000もんせいかい', stat('totalCorrect', 1000)),
-  b('explorer', 'Explorateur', 'Explorer', 'たんけんか', (s) => playable.every((id) => s.rewards.stats.blocksTried.includes(id))),
+  b('explorer', 'Explorateur', 'Explorer', 'たんけんか', (s) => {
+    const on = (s.settings?.blocks ?? []).filter((id) => playable.includes(id));
+    return on.length > 0 && on.every((id) => s.rewards.stats.blocksTried.includes(id));
+  }),
   b('first_word', 'Premier mot', 'First word', 'はじめてのことば', (s) => s.rewards.stats.wordTyped),
   b('first_sentence', 'Première phrase', 'First sentence', 'はじめてのぶん', (s) => s.rewards.stats.sentenceTyped),
   b('collector_12', 'Collectionneur', 'Collector', 'コレクター', (s) => s.rewards.unlocked >= 12),

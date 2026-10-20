@@ -66,3 +66,8 @@ button:disabled { cursor: default; }
   border-radius: 50%; background: #ffffffc0; font-size: 1.2rem; font-weight: 800;
 }
 .choice:disabled { background: #e3e3ea; box-shadow: none; color: #a0a0b0; transform: translateY(6px); }
+.display.code, .choices.code .num { font-family: ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; text-align: left; }
+.display.code { width: fit-content; max-width: 100%; margin-inline: auto; padding: 12px 16px; background: #fff; border-radius: 16px; box-shadow: 0 4px 0 #0002; font-weight: 700; }
+.choices.code { grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); }
+.choices.code .choice { min-width: 0; padding: 40px 10px 12px; }
+.choices.code .num { display: block; font-size: clamp(1.1rem, 4.5vw, 1.8rem); font-weight: 700; }

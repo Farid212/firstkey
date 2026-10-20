@@ -25,6 +25,9 @@ export function jumpTo(state, blockId, level) {
 }
 
 export function pickBlock(state, rng = Math.random) {
-  const ok = state.settings.blocks.filter((id) => BLOCKS.find((b) => b.id === id)?.playable);
+  const ok = state.settings.blocks.filter((id) => {
+    const b = BLOCKS.find((x) => x.id === id);
+    return b?.playable && b.minAge <= state.settings.age;
+  });
   return ok.length ? ok[Math.floor(rng() * ok.length)] : null;
 }

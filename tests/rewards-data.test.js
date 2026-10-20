@@ -59,7 +59,9 @@ test('badges: levels and explorer', () => {
     assert.equal(b(`level_${n}`).earned(mk({}, 2, { letters: { level: 1 }, words: { level: n } })), true);
   }
   assert.equal(b('level_10').earned(mk()), false);
-  assert.equal(b('explorer').earned(mk({ blocksTried: ['letters'] })), false);
-  assert.equal(b('explorer').earned(mk({ blocksTried: ['letters', 'words'] })), false);
-  assert.equal(b('explorer').earned(mk({ blocksTried: ['letters', 'words', 'math'] })), true);
+  const ex = (blocks, tried) => { const s = mk({ blocksTried: tried }); s.settings = { blocks }; return b('explorer').earned(s); };
+  assert.equal(ex(['letters', 'words'], ['letters']), false);
+  assert.equal(ex(['letters', 'words'], ['letters', 'words']), true);
+  assert.equal(ex([], []), false);
+  assert.equal(ex(['letters', 'inconnu'], ['letters']), true);
 });

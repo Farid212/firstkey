@@ -79,8 +79,15 @@ test('toutes les questions fr/en ont des accepts valides', () => {
       }
 });
 
-test('bloc non jouable lève une erreur', () => {
-  assert.throws(() => makeQuestion('js', 1, S('fr')));
+test('bloc inconnu lève une erreur', () => {
+  assert.throws(() => makeQuestion('inconnu', 1, S('fr')));
+});
+
+test('js et python: QCM puis ligne à retaper', () => {
+  assert.equal(makeQuestion('js', 1, S('fr'), fixed(0.3)).kind, 'choice');
+  const t = makeQuestion('python', 58, S('fr'), fixed(0.3));
+  assert.equal(t.kind, 'typed');
+  assert.equal(t.display, t.accepts[0]);
 });
 
 test('math jouable: QCM au niveau 1, réponse tapée au niveau 58', () => {
