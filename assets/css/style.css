@@ -81,7 +81,8 @@ button:disabled { cursor: default; }
   min-width: 0; height: 52px; padding: 0 4px; font-size: 1.2rem; font-weight: 800;
   border-radius: 14px; background: #fff; box-shadow: 0 4px 0 var(--c, var(--shadow)); border: 2px solid var(--t, #eee);
 }
-.lvl:last-child { background: var(--t, #fff); border-color: var(--c, #eee); } /* niveau actuel */
+.lvl.now { background: var(--t, #fff); border-color: var(--c, #eee); } /* niveau actuel */
+.lvl.locked { background: #ffffff59; border-color: #ffffff80; color: #2b2b4a80; box-shadow: none; cursor: not-allowed; }
 .lvl:not(:disabled):active { box-shadow: 0 1px 0 var(--c, var(--shadow)); transform: translateY(3px); }
 .collection-btn { background: #00876c; color: #fff; box-shadow: 0 6px 0 #005c49; position: relative; font-size: 1.6rem; }
 .collection-btn:not(:disabled):active { box-shadow: 0 2px 0 #005c49; }

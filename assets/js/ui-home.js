@@ -1,4 +1,4 @@
-import { BLOCKS } from './blocks.js';
+import { BLOCKS, MAX_LEVEL } from './blocks.js';
 import { pickBlock } from './progress.js';
 import { hasNew } from './ui-collection.js';
 
@@ -40,14 +40,20 @@ export function renderHome(root, state, handlers) {
     if (b.playable) {
       main.onclick = () => handlers.onPlay(b.id);
       const grid = el('div', 'levels');
-      for (let n = 1; n <= level; n++) {
-        const btn = el('button', 'lvl', String(n));
-        btn.setAttribute('aria-label', `${b.label}, niveau ${n}`);
-        btn.onclick = () => handlers.onPickLevel(b.id, n);
+      let now;
+      // tous les niveaux sont visibles: ceux pas encore atteints sont grisés et inaccessibles
+      for (let n = 1; n <= MAX_LEVEL; n++) {
+        const locked = n > level;
+        const btn = el('button', 'lvl' + (locked ? ' locked' : '') + (n === level ? ' now' : ''), String(n));
+        btn.setAttribute('aria-label', `${b.label}, niveau ${n}${locked ? ', pas encore atteint' : ''}`);
+        btn.disabled = locked;
+        if (!locked) btn.onclick = () => handlers.onPickLevel(b.id, n);
+        if (n === level) now = btn;
         grid.append(btn);
       }
       card.append(grid);
-      requestAnimationFrame(() => { grid.scrollTop = grid.scrollHeight; }); // le niveau actuel (le dernier) reste visible
+      // le niveau actuel reste visible dans la grille défilante
+      requestAnimationFrame(() => { grid.scrollTop += now.getBoundingClientRect().top - grid.getBoundingClientRect().top - 60; });
     }
     blocks.append(card);
   }
