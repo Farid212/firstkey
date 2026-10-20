@@ -14,7 +14,8 @@ test('answersPerLevel', () => {
   assert.equal(answersPerLevel(2), 5);
   assert.equal(answersPerLevel(5), 10);
   assert.equal(answersPerLevel(8), 25);
-  assert.equal(answersPerLevel(8, 'maze'), 1);
+  assert.equal(answersPerLevel(8, 'maze'), 3); // un tour = 3 exercices
+  assert.equal(answersPerLevel(2, 'maze'), 3);
   assert.equal(answersPerLevel(8, 'letters'), 25);
 });
 
@@ -93,10 +94,17 @@ test('pickBlock', () => {
   assert.equal(pickBlock(s), null);
 });
 
-test('maze: un niveau par réussite, jamais tiré au hasard', () => {
+test('maze: un niveau par tour de 3 exercices réussis, jamais tiré au hasard', () => {
   const s = st8();
-  const r = recordCorrect(s, 'maze', 1);
+  let r = { state: s };
+  for (let i = 0; i < 2; i++) {
+    r = recordCorrect(r.state, 'maze', 1);
+    assert.equal(r.leveledUp, false);
+    assert.equal(r.state.progress.maze.correct, i + 1);
+  }
+  r = recordCorrect(r.state, 'maze', 1);
   assert.equal(r.state.progress.maze.level, 2);
+  assert.equal(r.state.progress.maze.correct, 0);
   assert.equal(r.leveledUp, true);
   s.settings.blocks = ['maze'];
   assert.equal(pickBlock(s), null);

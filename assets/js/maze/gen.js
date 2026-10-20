@@ -1,13 +1,16 @@
-// Générateur et solveur de labyrinthes (module pur, sans DOM, sans Math.random).
-export const DIRS = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }]; // nord, est, sud, ouest
-const TIER_ENDS = [12, 30, 48, 72, 94, 114];
-const MAX_ATTEMPTS = 60;
+// Segments étiquetés, assemblage dans la grille et solveur (module pur, sans DOM, sans Math.random).
+import { levelSpec } from './levels.js';
 
+export const DIRS = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }]; // nord, est, sud, ouest
+export const MAX_SIZE = 11;
+
+// shortcut: anciens paliers de la spec 5, gardés pour ui-maze.js (encadré « Nouveau », aide); la tâche 3 passe au CURRICULUM.
+const TIER_ENDS = [12, 30, 48, 72, 94, 114];
 export const tierOf = (level) => TIER_ENDS.findIndex((end) => level <= end) + 1 || 6;
 
-const sizeOf = (level) => Math.max(5, Math.min(11, Math.round(5 + (6 * (level - 1)) / 113)));
+export const sizeOf = (level) => Math.max(5, Math.min(MAX_SIZE, Math.round(5 + (6 * (level - 1)) / 113)));
 
-function mulberry32(seed) {
+export function mulberry32(seed) {
   return () => {
     seed = (seed + 0x6d2b79f5) | 0;
     let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -15,9 +18,68 @@ function mulberry32(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-const int = (lo, hi, rng) => lo + Math.min(hi - lo, Math.floor(rng() * (hi - lo + 1)));
-const pick = (arr, rng) => arr[int(0, arr.length - 1, rng)];
+export const int = (lo, hi, rng) => lo + Math.min(hi - lo, Math.floor(rng() * (hi - lo + 1)));
+export const pick = (arr, rng) => arr[int(0, arr.length - 1, rng)];
+export const shuffle = (arr, rng) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) { const j = int(0, i, rng); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+};
 
+// ---- Segments ----
+// Une ligne de segment est une liste de commandes (nombre = avancer de n cases, 'r'/'l' = virage)
+// ou une boucle { loop: k, body: [...] }. final: le segment ne peut être que le dernier (le but est dedans);
+// cut: nombre de pas de la trace à retirer à la fin (le but est atteint avant la fin de la boucle).
+const opp = (t) => (t === 'r' ? 'l' : 'r');
+const turn = (rng) => pick(['r', 'l'], rng);
+
+export const SEGMENTS = {
+  straight: (r) => ({ lines: [[int(1, 3, r)]] }),
+  turnR: (r) => ({ lines: [['r', int(1, 3, r)]] }),
+  turnL: (r) => ({ lines: [['l', int(1, 3, r)]] }),
+  L: (r) => ({ lines: [[int(2, 3, r), turn(r), int(2, 3, r)]] }),
+  Z: (r) => { const t = turn(r); return { lines: [[int(1, 3, r), t, int(1, 3, r), opp(t), int(1, 3, r)]] }; },
+  long: (r) => ({ lines: [[int(4, 6, r)]] }),
+  U: (r) => { const t = turn(r); return { lines: [[int(1, 3, r), t, int(2, 3, r), t, int(1, 3, r)]] }; },
+  detour: (r) => { // contourne un mur: monte, passe, redescend
+    const t = turn(r), h = int(1, 2, r);
+    return { lines: [[t, h, opp(t), int(2, 3, r), opp(t), h, t]] };
+  },
+  square: (r, last) => { // 4 côtés avec le but juste après le dernier coin, ou 3 côtés ouverts (virage d'abord)
+    const a = int(3, 4, r), t = turn(r);
+    return last && r() < 0.7
+      ? { lines: [{ loop: 4, body: [a, t] }], cut: a - 1, final: true }
+      : { lines: [{ loop: 3, body: [t, a] }] };
+  },
+  rect: (r) => {
+    const t = turn(r), a = int(4, 6, r), b = int(3, a - 1, r);
+    return r() < 0.5 ? { lines: [{ loop: 2, body: [a, t, b, t] }], cut: b - 1, final: true }
+      : { lines: [{ loop: 2, body: [b, t, a, t] }], cut: a - 1, final: true };
+  },
+  stairs: (r) => { const t = turn(r); return { lines: [{ loop: int(3, 5, r), body: [int(1, 2, r), t, int(1, 2, r), opp(t)] }] }; },
+  spiral: (r, last) => { // dernier: vers l'intérieur (a, a, a, a-2, a-2…); sinon vers l'extérieur (s, s, s+2, s+2)
+    const t = turn(r);
+    if (!last) {
+      const s = int(2, 3, r);
+      return { lines: [{ loop: 2, body: [s, t] }, { loop: 2, body: [s + 2, t] }] };
+    }
+    const a = int(4, 7, r), sides = [a, a, a];
+    for (let l = a - 2; l > 0; l -= 2) sides.push(l, l);
+    const groups = [];
+    for (const s of sides.slice(0, int(4, Math.min(7, sides.length), r))) {
+      if (groups.at(-1)?.[0] === s) groups.at(-1)[1]++; else groups.push([s, 1]);
+    }
+    return { lines: groups.map(([s, k]) => (k > 1 ? { loop: k, body: [s, t] } : [s, t])), final: true };
+  },
+  zigzag: (r) => { // serpent (allers-retours) ou créneaux (monte, avance, descend, avance)
+    const t = turn(r), a = int(2, 3, r), h = int(1, 2, r);
+    return r() < 0.5 ? { lines: [{ loop: 2, body: [a + 1, t, 2, t, a + 1, opp(t), 2, opp(t)] }] }
+      : { lines: [{ loop: 2, body: [t, h, opp(t), 2, opp(t), h, t, a] }] };
+  },
+};
+export const FINAL_ONLY = ['rect'];
+
+// ---- Assemblage ----
 // Case (x, y) creusable depuis (fx, fy): dans la grille, fermée, sans autre voisine ouverte (les murs restent épais).
 function can(open, n, x, y, fx, fy) {
   if (x < 0 || y < 0 || x >= n || y >= n || open[y][x]) return false;
@@ -27,146 +89,45 @@ function can(open, n, x, y, fx, fy) {
   });
 }
 
-// Creuse le chemin décrit par une liste de directions depuis (x, y); null si impossible.
-function trace(open, n, x, y, moves) {
-  if (!can(open, n, x, y, -1, -1)) return null;
-  open[y][x] = true;
+// Cases d'une suite de pas unitaires ('f', 'r', 'l') depuis (0, 0) dans la direction dir.
+export function walkCells(moves, dir) {
+  let x = 0, y = 0;
   const cells = [{ x, y }];
   for (const m of moves) {
-    const nx = x + DIRS[m].x, ny = y + DIRS[m].y;
-    if (!can(open, n, nx, ny, x, y)) return null;
-    open[ny][nx] = true;
-    cells.push({ x: nx, y: ny });
-    x = nx; y = ny;
+    if (m === 'r') dir = (dir + 1) % 4;
+    else if (m === 'l') dir = (dir + 3) % 4;
+    else { x += DIRS[dir].x; y += DIRS[dir].y; cells.push({ x, y }); }
   }
   return cells;
 }
 
-const repeat = (dir, k) => Array(k).fill(dir);
-const dirBetween = (a, b) => DIRS.findIndex((d) => d.x === b.x - a.x && d.y === b.y - a.y);
-
-// Segments alternant horizontal/vertical: `turns` virages, segments de lo..hi pas.
-function zigzag(n, rng, turns, lo, hi) {
-  let axis = int(0, 1, rng), moves = [];
-  const sign = [pick([-1, 1], rng), pick([-1, 1], rng)];
-  for (let i = 0; i <= turns; i++, axis ^= 1) {
-    const dir = axis ? (sign[1] > 0 ? 2 : 0) : (sign[0] > 0 ? 1 : 3);
-    moves = moves.concat(repeat(i % 2 && int(0, 1, rng) ? (dir + 2) % 4 : dir, int(lo, hi, rng)));
-  }
-  return moves;
-}
-
-// Palier 4: chaque niveau a sa propre forme répétitive (j = 0..7 dans chaque famille), orientée au hasard.
-const rot = (moves, r, flip) => moves.map((m) => ((flip && m % 2 ? m + 2 : m) + r) % 4);
-
-// Escalier: `reps` marches de h pas puis v pas (h, v = 1 ou 2).
-function stairs(n, j) {
-  const h = 1 + (j & 1), v = 1 + ((j >> 1) & 1), reps = Math.floor((n - 1) / Math.max(h, v)) - (j >> 2);
-  return Array.from({ length: reps }, () => [...repeat(1, h), ...repeat(2, v)]).flat();
-}
-
-// Spirale vers l'intérieur: côtés k-1, k-1, k-1, k-3, k-3, ... (au moins 3 côtés, donc 2 virages).
-function spiral(n, j) {
-  const k = n - (j & 1), lens = [k - 1];
-  for (let l = k - 1; lens.length < 3 + (j >> 1) && l > 0; l -= 2) lens.push(l, l);
-  return lens.slice(0, 3 + (j >> 1)).flatMap((l, i) => repeat((1 + i) % 4, l));
-}
-
-// Serpentin: `passes` allers-retours de a pas, reliés par 2 pas.
-function serpent(n, j) {
-  const a = n - 1 - (j & 3), passes = 3 + (j >> 2);
-  return Array.from({ length: passes }, (_, i) => [...(i ? repeat(2, 2) : []), ...repeat(i % 2 ? 3 : 1, a)]).flat();
-}
-
-// Creuse `moves` à une position tirée au hasard où le chemin tient dans la grille.
-function placed(open, n, rng, moves) {
-  let x = 0, y = 0, x0 = 0, x1 = 0, y0 = 0, y1 = 0;
-  for (const m of moves) {
-    x += DIRS[m].x; y += DIRS[m].y;
-    x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
-  }
-  if (x1 - x0 > n - 1 || y1 - y0 > n - 1) return null;
-  return trace(open, n, int(-x0, n - 1 - x1, rng), int(-y0, n - 1 - y1, rng), moves);
-}
-
-// Marche auto-évitante de `len` cases.
-function walk(open, n, rng, len) {
-  let x = int(0, n - 1, rng), y = int(0, n - 1, rng);
-  if (!can(open, n, x, y, -1, -1)) return null;
-  open[y][x] = true;
-  const cells = [{ x, y }];
-  while (cells.length < len) {
-    const opts = DIRS.filter((d) => can(open, n, x + d.x, y + d.y, x, y));
-    if (!opts.length) return null;
-    const d = pick(opts, rng);
-    x += d.x; y += d.y;
+// Creuse le chemin `cells` (coordonnées relatives) à une place tirée au hasard dans une grille n×n,
+// n = max(minN, encombrement); null si le chemin ne tient pas ou se touche lui-même.
+export function carve(cells, dir, minN, rng, tags) {
+  if (cells.length < 2) return null;
+  const xs = cells.map((c) => c.x), ys = cells.map((c) => c.y);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys), bw = Math.max(...xs) - x0 + 1, bh = Math.max(...ys) - y0 + 1;
+  const n = Math.max(minN, bw, bh);
+  if (n > MAX_SIZE) return null;
+  const ox = int(0, n - bw, rng) - x0, oy = int(0, n - bh, rng) - y0;
+  const open = Array.from({ length: n }, () => Array(n).fill(false));
+  let prev = { x: -1, y: -1 };
+  for (const c of cells) {
+    const x = c.x + ox, y = c.y + oy;
+    if (!can(open, n, x, y, prev.x, prev.y)) return null;
     open[y][x] = true;
-    cells.push({ x, y });
+    prev = { x, y };
   }
-  return cells;
+  const maze = {
+    w: n, h: n, walls: open.map((row) => row.map((o) => !o)),
+    start: { x: cells[0].x + ox, y: cells[0].y + oy, dir }, goal: { ...prev }, par: 0, tags: [...tags],
+  };
+  maze.par = solve(maze);
+  return maze.par >= 1 ? maze : null;
 }
 
-function deadEnds(open, n, rng, cells, count) {
-  for (let k = 0; k < count; k++) {
-    for (let t = 0; t < 30; t++) {
-      let { x, y } = pick(cells.slice(0, -1), rng);
-      const d = pick(DIRS, rng);
-      let len = 0;
-      for (const max = int(1, 3, rng); len < max && can(open, n, x + d.x, y + d.y, x, y); len++) {
-        x += d.x; y += d.y;
-        open[y][x] = true;
-      }
-      if (len) break;
-    }
-  }
-}
-
-function candidate(level, tier, n, rng, attempt) {
-  const open = Array.from({ length: n }, () => Array(n).fill(false));
-  const t = (level - (TIER_ENDS[tier - 2] ?? 0) - 1) / ((TIER_ENDS[tier - 1] - (TIER_ENDS[tier - 2] ?? 0)) - 1);
-  const x = int(0, n - 1, rng), y = int(0, n - 1, rng);
-  let cells, free = false;
-  if (tier === 1) {
-    cells = trace(open, n, x, y, repeat(int(0, 3, rng), int(1, Math.min(5, n - 1, 1 + Math.ceil(level / 3)), rng)));
-  } else if (tier === 2) {
-    cells = trace(open, n, x, y, zigzag(n, rng, int(2, 2 + Math.floor(t * 2.99), rng), 1, 3));
-  } else if (tier === 3) {
-    cells = trace(open, n, x, y, zigzag(n, rng, int(2, 4, rng), 2, 4));
-  } else if (tier === 4) {
-    const i = level - 49;
-    cells = placed(open, n, rng, rot([stairs, spiral, serpent][i % 3](n, Math.floor(i / 3)), int(0, 3, rng), int(0, 1, rng)));
-  } else {
-    const len = Math.max(4, int(tier === 5 ? n : Math.round(n * 1.5), tier === 5 ? n + 4 : n * 2, rng) - Math.floor(attempt / 5));
-    cells = walk(open, n, rng, len);
-    free = true;
-    if (cells) deadEnds(open, n, rng, cells, tier === 5 ? 1 + Math.floor(t * 3.99) : 3 + Math.floor(t * 5.99));
-  }
-  if (!cells || cells.length < 2) return null;
-  const dir = free ? int(0, 3, rng) : dirBetween(cells[0], cells[1]);
-  return { open, cells, dir };
-}
-
-function fallback(n) {
-  const open = Array.from({ length: n }, () => Array(n).fill(false));
-  const len = Math.min(n, 4);
-  for (let x = 0; x < len; x++) open[0][x] = true;
-  return { open, cells: [{ x: 0, y: 0 }, { x: len - 1, y: 0 }], dir: 1 };
-}
-
-export function makeMaze(level) {
-  const tier = tierOf(level), n = sizeOf(level);
-  for (let attempt = 0; attempt <= MAX_ATTEMPTS; attempt++) {
-    const c = attempt < MAX_ATTEMPTS ? candidate(level, tier, n, mulberry32(level * 7919 + attempt * 104729 + 12345), attempt) : fallback(n);
-    if (!c) continue;
-    const maze = {
-      w: n, h: n, walls: c.open.map((row) => row.map((o) => !o)),
-      start: { ...c.cells[0], dir: c.dir }, goal: { ...c.cells[c.cells.length - 1] }, par: 0, tier,
-    };
-    maze.par = solve(maze);
-    if (maze.par >= 1) return maze;
-  }
-  throw new Error('labyrinthe introuvable'); // inatteignable: le repli est toujours valide
-}
+// Un exercice = levelSpec(level, exercise).worlds[0] (levels.js).
+export const makeMaze = (level, exercise = 0) => levelSpec(level, exercise).worlds[0];
 
 // Commandes minimales ('f' avancer, 'l' gauche, 'r' droite) par BFS sur (x, y, dir); null si impossible.
 export function solutionPath(maze) {
@@ -195,3 +156,6 @@ export function solutionPath(maze) {
 }
 
 export const solve = (maze) => solutionPath(maze)?.length ?? -1;
+
+// Nombre de commandes d'un chemin sans boucle mais avec forward(n): suites de 'f' regroupées + virages.
+export const compressedLength = (path) => path.filter((c, i) => c !== 'f' || path[i - 1] !== 'f').length;

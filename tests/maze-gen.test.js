@@ -1,10 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeMaze, tierOf, solve, solutionPath, DIRS } from '../assets/js/maze/gen.js';
+import { makeMaze, tierOf, solve, solutionPath, DIRS, SEGMENTS, carve, walkCells, mulberry32, compressedLength } from '../assets/js/maze/gen.js';
 
 const LEVELS = Array.from({ length: 114 }, (_, i) => i + 1);
 const free = (m, x, y) => x >= 0 && y >= 0 && x < m.w && y < m.h && !m.walls[y][x];
-const cells = (m) => m.walls.flatMap((row, y) => row.map((w, x) => (w ? null : { x, y }))).filter(Boolean);
 
 function replay(m, path) {
   let { x, y, dir } = m.start;
@@ -16,66 +15,59 @@ function replay(m, path) {
   return x === m.goal.x && y === m.goal.y;
 }
 
-test('tierOf suit les paliers de la spec et les six paliers existent', () => {
+test('tierOf (compatibilité ui-maze.js) suit les anciens paliers de la spec 5', () => {
   assert.deepEqual([1, 12, 13, 30, 31, 48, 49, 72, 73, 94, 95, 114].map(tierOf), [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
 });
 
-test('tous les niveaux: solvable, déterministe, départ/arrivée libres et distincts', () => {
-  for (const l of LEVELS) {
-    const m = makeMaze(l);
+test('tous les niveaux et exercices: solvable, déterministe, départ/arrivée libres et distincts', () => {
+  for (const l of LEVELS) for (const e of [0, 1, 2]) {
+    const m = makeMaze(l, e);
     assert.equal(solve(m), m.par);
     assert.ok(m.par >= 1, `niveau ${l}`);
-    assert.deepEqual(makeMaze(l), m);
+    assert.deepEqual(makeMaze(l, e), m);
     assert.ok(free(m, m.start.x, m.start.y) && free(m, m.goal.x, m.goal.y));
     assert.ok(m.start.x !== m.goal.x || m.start.y !== m.goal.y);
-    assert.equal(m.tier, tierOf(l));
+    assert.ok(Array.isArray(m.tags) && m.tags.length > 0);
     assert.ok(replay(m, solutionPath(m)));
     assert.equal(solutionPath(m).length, m.par);
   }
 });
 
-test('taille 5..11, 5 au niveau 1, 11 au niveau 114, non décroissante', () => {
-  let last = 0;
+test('taille 5..11, 5 au niveau 1, 11 au plus', () => {
   for (const l of LEVELS) {
     const m = makeMaze(l);
     assert.ok(m.w >= 5 && m.w <= 11 && m.w === m.h && m.walls.length === m.h && m.walls.every((r) => r.length === m.w));
-    assert.ok(m.w >= last);
-    last = m.w;
   }
   assert.equal(makeMaze(1).w, 5);
-  assert.equal(makeMaze(114).w, 11);
 });
 
-test('niveaux 1-12: un seul couloir droit de 2 à 6 cases, face à l\'étoile', () => {
-  for (let l = 1; l <= 12; l++) {
-    const m = makeMaze(l), c = cells(m);
-    assert.ok(c.length >= 2 && c.length <= 6, `niveau ${l}`);
-    assert.ok(c.every((p) => p.x === c[0].x) || c.every((p) => p.y === c[0].y));
-    const d = DIRS[m.start.dir];
-    assert.equal(m.par, c.length - 1);
-    assert.equal(Math.sign(m.goal.x - m.start.x), d.x);
-    assert.equal(Math.sign(m.goal.y - m.start.y), d.y);
+test('segments: chaque étiquette donne un chemin qui se creuse, murs épais', () => {
+  const rng = mulberry32(42);
+  for (const [tag, seg] of Object.entries(SEGMENTS)) {
+    let ok = 0;
+    for (let k = 0; k < 20; k++) {
+      const s = seg(rng, k % 2 === 0);
+      const moves = s.lines.flatMap((l) => (Array.isArray(l) ? [l] : Array(l.loop).fill(l.body)))
+        .flat().flatMap((c) => (typeof c === 'number' ? Array(c).fill('f') : [c]));
+      const cells = walkCells(moves, 1);
+      if (carve(cells.slice(0, cells.length - (s.cut ?? 0)), 1, 5, rng, [tag])) ok++;
+    }
+    assert.ok(ok >= 10, `${tag}: ${ok}/20`);
   }
 });
 
-test('palier 2: 2 à 4 virages sur le chemin', () => {
-  for (let l = 13; l <= 30; l++) {
-    const turns = solutionPath(makeMaze(l)).filter((c) => c !== 'f').length;
-    assert.ok(turns >= 2 && turns <= 4, `niveau ${l}: ${turns}`);
-  }
+test('carve: refuse un chemin qui se touche ou dépasse 11 cases', () => {
+  const rng = mulberry32(1);
+  assert.equal(carve(walkCells(['f', 'r', 'f', 'r', 'f'], 1), 1, 5, rng, []), null); // carré 1×1: se touche
+  assert.equal(carve(walkCells(Array(11).fill('f'), 1), 1, 5, rng, []), null);
+  const m = carve(walkCells(['f', 'f', 'r', 'f', 'f'], 1), 1, 5, rng, ['L']);
+  assert.equal(m.par, 5);
+  assert.deepEqual(m.tags, ['L']);
 });
 
-test('paliers 5-6: des impasses, de plus en plus', () => {
-  const dead = (m) => cells(m).filter((p) => DIRS.filter((d) => free(m, p.x + d.x, p.y + d.y)).length === 1).length - 2;
-  for (const l of [73, 94, 95, 114]) assert.ok(dead(makeMaze(l)) >= 1, `niveau ${l}`);
-  const avg = (a, b) => LEVELS.slice(a - 1, b).reduce((s, l) => s + dead(makeMaze(l)), 0) / (b - a + 1);
-  assert.ok(avg(95, 114) > avg(73, 94));
-});
-
-test('niveaux voisins du palier 2: au moins 90 % de paires différentes', () => {
-  let diff = 0;
-  for (let l = 13; l < 30; l++) if (JSON.stringify(makeMaze(l)) !== JSON.stringify(makeMaze(l + 1))) diff++;
-  assert.ok(diff / 17 >= 0.9);
+test('compressedLength: forward(n) compte pour une commande', () => {
+  assert.equal(compressedLength(['f', 'f', 'f', 'r', 'f', 'l', 'f', 'f']), 5);
+  assert.equal(compressedLength([]), 0);
 });
 
 test('solve: valeur connue et cas sans solution', () => {
@@ -85,24 +77,4 @@ test('solve: valeur connue et cas sans solution', () => {
   assert.deepEqual(solutionPath(m), ['f', 'f', 'r', 'f', 'f']);
   assert.equal(solve({ ...m, walls: [[F, T, F], [T, T, F], [T, T, F]] }), -1);
   assert.equal(solutionPath({ ...m, walls: [[F, T, F], [T, T, F], [T, T, F]] }), null);
-});
-
-const sig = (m) => JSON.stringify([m.walls, m.start, m.goal]);
-
-test('palier 4: 24 labyrinthes distincts, jamais un simple couloir, au moins 2 virages', () => {
-  const seen = new Set();
-  for (let l = 49; l <= 72; l++) {
-    const m = makeMaze(l), turns = solutionPath(m).filter((c) => c !== 'f').length;
-    seen.add(sig(m));
-    assert.ok(turns >= 2, `niveau ${l}: ${turns} virages`);
-    assert.ok(m.par > 7, `niveau ${l}: par ${m.par}`);
-  }
-  assert.equal(seen.size, 24);
-});
-
-test('chaque palier: tous ses labyrinthes sont différents', () => {
-  for (const [a, b] of [[1, 12], [13, 30], [31, 48], [49, 72], [73, 94], [95, 114]]) {
-    const seen = new Set(LEVELS.slice(a - 1, b).map((l) => sig(makeMaze(l))));
-    assert.equal(seen.size, b - a + 1, `paliers ${a}-${b}`);
-  }
 });

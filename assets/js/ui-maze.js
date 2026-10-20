@@ -217,7 +217,8 @@ export function startMaze(root, state, target, handlers) {
     level = fixed ?? s.progress.maze.level;
     creature = CREATURES[s.rewards.unlocked - 1] ?? CREATURES[0]; // relu: un niveau a pu débloquer une créature
     resetBtn.disabled = false;
-    maze = makeMaze(level);
+    const p = s.progress.maze; // exercice du tour: réussites déjà faites au niveau courant (rejoué: exercice 1)
+    maze = makeMaze(level, level === p.level ? Math.min(2, p.correct) : 0);
     world = createWorld(maze);
     const tier = tierOf(level);
     draw();
@@ -245,8 +246,8 @@ export function startMaze(root, state, target, handlers) {
   function paint() {
     score.textContent = `⭐ ${s.score}`;
     const p = s.progress.maze;
-    // 1 réussite par niveau: niveau rejoué (plus bas) ou dernier niveau = barre pleine, sinon vide
-    const pct = level < p.level || p.level >= MAX_LEVEL ? 100 : 0;
+    // un tour = 3 exercices: niveau rejoué (plus bas) ou dernier niveau = barre pleine, sinon 0/3, 1/3, 2/3
+    const pct = level < p.level || p.level >= MAX_LEVEL ? 100 : Math.round((100 * p.correct) / 3);
     fill.style.width = `${pct}%`;
     meter.setAttribute('aria-valuenow', String(pct));
     meter.setAttribute('aria-label', `Niveau ${level}`);

@@ -77,9 +77,9 @@ test('pureté', () => {
   assert.deepEqual(p, pc);
 });
 
-test('niveaux 1-114: le chemin BFS atteint le but, par = longueur', () => {
-  for (let lv = 1; lv <= 114; lv++) {
-    const m = makeMaze(lv);
+test('niveaux 1-114, 3 exercices: le chemin BFS atteint le but, par = longueur', () => {
+  for (let i = 0; i < 342; i++) {
+    const lv = Math.floor(i / 3) + 1, m = makeMaze(lv, i % 3);
     const path = solutionPath(m);
     assert.equal(path.length, m.par, `niveau ${lv}`);
     const ast = path.map((c) => ({ t: 'call', name: { f: 'forward', l: 'left', r: 'right' }[c], n: 1 }));
