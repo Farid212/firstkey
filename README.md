@@ -45,6 +45,10 @@ Les récompenses vivent dans `assets/js/rewards/`. Pour ajouter une créature: u
 
 `assets/js/math.js` génère les questions (module pur). Niveaux 1 à 57: choix multiple (3 puis 4 boutons, touches 1 à 4); niveaux 58 à 114: réponse tapée. Opérations par bandes de niveaux: addition 1-24, soustraction 25-44, multiplication 45-74, division 75-94, mélange 95-114.
 
+## Blocs JavaScript et Python
+
+Niveaux 1 à 57: « Que s'affiche-t-il ? » en choix multiple; niveaux 58 à 114: retaper une ligne de code. Les exemples sont dans `assets/js/data/code-js.js` et `code-python.js` (`quiz` et `lines`); `npm test` exécute chaque programme (JavaScript dans Node, Python avec `python3` s'il est installé) pour vérifier sa réponse. « Tout mélangé » ne tire un bloc que si l'âge réglé atteint son âge minimal (`minAge` dans `blocks.js`).
+
 ## Show your support
 
 Give a ⭐️ if this project helped you!
