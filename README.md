@@ -41,6 +41,10 @@ Contributions, issues and feature requests are welcome!<br />Feel free to check 
 
 Les récompenses vivent dans `assets/js/rewards/`. Pour ajouter une créature: une entrée dans `creatures.js` (id, famille `animal` ou `character`, noms fr/en/ja, à la fin pour garder l'ordre de déblocage), un module d'art dans `art/` qui exporte `ART = { id: { draw, cry, act } }`, puis l'ajouter au registre `art/index.js`. Passer `CREATURE_COUNT` dans `model.js` à la nouvelle taille. `npm test` échoue tant qu'une créature n'a pas d'art. Pour revoir une animation sans jouer: `document.dispatchEvent(new CustomEvent('firstkey:preview', { detail: { id: 'cow' } }))` (aussi `badge:<id>`, `levelup:stickman`, `levelup:party`).
 
+## Bloc Calcul
+
+`assets/js/math.js` génère les questions (module pur). Niveaux 1 à 57: choix multiple (3 puis 4 boutons, touches 1 à 4); niveaux 58 à 114: réponse tapée. Opérations par bandes de niveaux: addition 1-24, soustraction 25-44, multiplication 45-74, division 75-94, mélange 95-114.
+
 ## Show your support
 
 Give a ⭐️ if this project helped you!
