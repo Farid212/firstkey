@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeMaze, solve, solutionPath, DIRS, SEGMENTS, carve, walkCells, mulberry32, compressedLength } from '../assets/js/maze/gen.js';
+import { solve, solutionPath, DIRS, SEGMENTS, carve, walkCells, mulberry32, compressedLength } from '../assets/js/maze/gen.js';
+import { makeMaze } from '../assets/js/maze/levels.js';
 
 const LEVELS = Array.from({ length: 114 }, (_, i) => i + 1);
 const free = (m, x, y) => x >= 0 && y >= 0 && x < m.w && y < m.h && !m.walls[y][x];

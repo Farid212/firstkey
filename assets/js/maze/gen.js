@@ -1,5 +1,4 @@
 // Segments étiquetés, assemblage dans la grille et solveur (module pur, sans DOM, sans Math.random).
-import { levelSpec } from './levels.js';
 
 export const DIRS = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }]; // nord, est, sud, ouest
 export const MAX_SIZE = 11;
@@ -52,6 +51,19 @@ export const SEGMENTS = {
     return r() < 0.5 ? { lines: [{ loop: 2, body: [a, t, b, t] }], cut: b - 1, final: true }
       : { lines: [{ loop: 2, body: [b, t, a, t] }], cut: a - 1, final: true };
   },
+  // Carrés décorés (tours de boucle 41-52): un carré dont chaque côté a un détour (castle) ou un décrochement en Z (pinwheel),
+  // tourné vers l'extérieur; dernier: 4 côtés, but sur le dernier côté; sinon 3 côtés ouverts.
+  castle: (r, last) => {
+    const t = turn(r), o = opp(t), x = int(1, 2, r), h = 1, w = 2, y = int(1, 2, r);
+    const side = [o, h, t, w, t, h, o, y];
+    return last && r() < 0.7 ? { lines: [{ loop: 4, body: [x, ...side, t] }], cut: y + 1, final: true }
+      : { lines: [{ loop: 3, body: [t, x, ...side] }] };
+  },
+  pinwheel: (r, last) => {
+    const t = turn(r), o = opp(t), a = int(1, 3, r), b = int(1, 2, r), c = int(2, 3, r);
+    return last && r() < 0.7 ? { lines: [{ loop: 4, body: [a, o, b, t, c, t] }], cut: c, final: true }
+      : { lines: [{ loop: 3, body: [t, a, o, b, t, c] }] };
+  },
   stairs: (r) => { const t = turn(r); return { lines: [{ loop: int(3, 5, r), body: [int(1, 2, r), t, int(1, 2, r), opp(t)] }] }; },
   spiral: (r, last) => { // dernier: vers l'intérieur (a, a, a, a-2, a-2…); sinon vers l'extérieur (s, s, s+2, s+2)
     const t = turn(r);
@@ -65,12 +77,14 @@ export const SEGMENTS = {
     for (const s of sides.slice(0, int(4, Math.min(7, sides.length), r))) {
       if (groups.at(-1)?.[0] === s) groups.at(-1)[1]++; else groups.push([s, 1]);
     }
-    return { lines: groups.map(([s, k]) => (k > 1 ? { loop: k, body: [s, t] } : [s, t])), final: true };
+    return { lines: groups.map(([s, k], i) => (k > 1 ? { loop: k, body: [s, t] } : i === groups.length - 1 ? [s] : [s, t])), final: true };
   },
-  zigzag: (r) => { // serpent (allers-retours) ou créneaux (monte, avance, descend, avance)
-    const t = turn(r), a = int(2, 3, r), h = int(1, 2, r);
-    return r() < 0.5 ? { lines: [{ loop: 2, body: [a + 1, t, 2, t, a + 1, opp(t), 2, opp(t)] }] }
-      : { lines: [{ loop: 2, body: [t, h, opp(t), 2, opp(t), h, t, a] }] };
+  zigzag: (r, last) => { // serpent (allers-retours) ou créneaux (monte, avance, descend, avance)
+    const t = turn(r), a = int(2, last ? 5 : 3, r), h = int(1, last ? 3 : 2, r);
+    // dernier: 3 motifs (11 cases de long), le but avant le dernier pas de 2
+    const k = last && r() < 0.6 ? 3 : 2, cut = k === 3 ? 2 : 0;
+    return r() < 0.5 ? { lines: [{ loop: k, body: [a + 1, t, 2, t, a + 1, opp(t), 2, opp(t)] }], cut, final: k === 3 }
+      : { lines: [{ loop: k, body: [t, h, opp(t), 2, opp(t), h, t, k === 3 ? 2 : a] }], cut, final: k === 3 };
   },
 };
 export const FINAL_ONLY = ['rect'];
@@ -121,9 +135,6 @@ export function carve(cells, dir, minN, rng, tags) {
   maze.par = solve(maze);
   return maze.par >= 1 ? maze : null;
 }
-
-// Un exercice = levelSpec(level, exercise).worlds[0] (levels.js).
-export const makeMaze = (level, exercise = 0) => levelSpec(level, exercise).worlds[0];
 
 // Commandes minimales ('f' avancer, 'l' gauche, 'r' droite) par BFS sur (x, y, dir); null si impossible.
 export function solutionPath(maze) {

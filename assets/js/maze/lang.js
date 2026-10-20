@@ -376,25 +376,27 @@ export function parseProgram(src, lang) {
 
     const missing = (line) => failAt(line, 'block_missing', 'Il manque le bloc à répéter ou à faire.',
       js ? 'Écris-le entre accolades { }' : 'Décale les lignes du bloc de 4 espaces sous cette ligne.');
-    function block(sc, depth, line) {
+    // Mode programme: une instruction par ligne, le corps d'un bloc toujours sur les lignes du dessous (budget de lignes équitable).
+    const inline = (line, what) => failAt(line, 'inline_block', `Mets le corps ${what} sur les lignes en dessous, ${js ? 'entre { et }' : 'décalé'}.`,
+      js ? 'Termine la ligne par {, écris une instruction par ligne, puis } seule sur la dernière.' : 'Va à la ligne après le :, puis décale de 4 espaces.');
+    function block(sc, depth, line, what) {
       let b;
       if (js) {
         while (eat('<nl>'));
-        if (eat('{')) {
-          b = list(sc, depth, '}');
-          if (b.length) need('}', 'syntax', `Il manque une accolade } pour fermer le bloc de la ligne ${line}.`);
-        } else if (!peek() || is('}') || is(';')) missing(line);
-        else b = [stmt(sc, depth)];
+        if (!eat('{')) {
+          if (!peek() || is('}') || is(';')) missing(line);
+          inline(line, what);
+        }
+        if (!is('<nl>') && !is('}')) inline(line, what);
+        b = list(sc, depth, '}');
+        if (b.length) need('}', 'syntax', `Il manque une accolade } pour fermer le bloc de la ligne ${line}.`);
       } else {
         need(':', 'syntax', 'Il manque le signe : à la fin de la ligne.');
-        if (eat('<nl>')) {
-          if (!eat('<in>')) missing(line);
-          b = list(sc, depth, '<de>');
-          eat('<de>');
-        } else {
-          b = [stmt(sc, depth)];
-          while (eat(';') && !is('<nl>')) b.push(stmt(sc, depth));
-        }
+        if (!is('<nl>')) inline(line, what);
+        p++;
+        if (!eat('<in>')) missing(line);
+        b = list(sc, depth, '<de>');
+        eat('<de>');
       }
       if (!b.length) missing(line);
       return b;
@@ -429,7 +431,7 @@ export function parseProgram(src, lang) {
         need(')', 'missing_paren', 'Il manque la parenthèse fermante ) de range');
       }
       sc.vars.add(v);
-      return { t: 'loop', n, v, body: block(sc, depth + 1, line), line };
+      return { t: 'loop', n, v, body: block(sc, depth + 1, line, 'de la boucle'), line };
     }
 
     function stmt(sc, depth) {
@@ -441,7 +443,8 @@ export function parseProgram(src, lang) {
       if (nx && nx.k === 'sym' && (nx.v === '=' || nx.v === '+=' || nx.v === '-=')) {
         checkName(t.v);
         if ((nx.v !== '=' || js) && !sc.vars.has(t.v)) {
-          fail('undefined_name', `Je ne connais pas encore ${short(t.v)}.`, nx.v === '=' ? `Écris let ${short(t.v)} = …` : `Donne-lui d'abord une valeur, par exemple ${js ? 'let ' : ''}${short(t.v)} = 1`);
+          fail('undefined_name', `Je ne connais pas encore ${short(t.v)}.`, sc.fn && main.vars.has(t.v) ? 'Dans une fonction, passe la valeur avec un paramètre.'
+            : nx.v === '=' ? `Écris let ${short(t.v)} = …` : `Donne-lui d'abord une valeur, par exemple ${js ? 'let ' : ''}${short(t.v)} = 1`);
         }
         p += 2;
         const e = expr(sc);
@@ -455,12 +458,13 @@ export function parseProgram(src, lang) {
         if (js) need('(', 'missing_paren', `Il manque une parenthèse ( après ${t.v}`);
         const c = cond(sc);
         if (js) need(')', 'missing_paren', `Il manque une parenthèse ) après la condition de ${t.v}`);
-        const body = block(sc, depth + 1, line);
+        const body = block(sc, depth + 1, line, t.v === 'while' ? 'de la boucle' : 'du if');
         if (t.v === 'while') return { t: 'while', cond: c, body, line };
         const s = { t: 'if', cond: c, body, line };
         const save = p;
         while (eat('<nl>') || (js && eat(';')));
-        if (eat('else')) s.else = block(sc, depth + 1, line); else p = save;
+        const el = peek();
+        if (eat('else')) s.else = block(sc, depth + 1, el.line, 'du else'); else p = save;
         return s;
       }
       const key = keyOf(t.v);
@@ -527,10 +531,11 @@ export function parseProgram(src, lang) {
       if (js) {
         while (eat('<nl>'));
         need('{', 'syntax', `Écris function ${short(name)}() { … }`);
+        if (!is('<nl>') && !is('}')) inline(line, 'de la fonction');
         body = list(sc, 0, '}');
         if (!body.length) missing(line);
         need('}', 'syntax', `Il manque une accolade } pour fermer la fonction ${short(name)}.`);
-      } else body = block(sc, 0, line);
+      } else body = block(sc, 0, line, 'de la fonction');
       funcs[name] = { param, body };
     }
 
@@ -542,8 +547,10 @@ export function parseProgram(src, lang) {
         if (depth === 0 && !sc.fn && is(FN) && toks[p + 1].v !== '=') { funcDef(); continue; }
         out.push(stmt(sc, depth));
         const prev = toks[p - 1].v;
-        if (!peek() || is(stop) || is(';') || is('<nl>') || prev === '}' || prev === '<de>') continue;
-        syntax(`Une seule commande par ligne${js ? ', ou sépare-les avec ;' : ''} (j'ai trouvé ${show()}).`);
+        eat(';'); // un ; en fin de ligne est permis
+        if (!peek() || is('<nl>') || prev === '<de>') continue;
+        if (is('}')) fail('one_per_line', 'Mets l\'accolade } seule sur sa ligne, sous le bloc.');
+        fail('one_per_line', `Écris une seule instruction par ligne (va à la ligne avant ${show()}).`);
       }
     }
 

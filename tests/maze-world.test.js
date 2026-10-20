@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createWorld, execute, executeProgram } from '../assets/js/maze/world.js';
-import { makeMaze, solutionPath } from '../assets/js/maze/gen.js';
+import { solutionPath } from '../assets/js/maze/gen.js';
+import { makeMaze } from '../assets/js/maze/levels.js';
 import { parse, parseProgram } from '../assets/js/maze/lang.js';
 import { TWINS } from './maze-twins.js';
 
@@ -206,8 +207,9 @@ test('programmes jumeaux py/js: mêmes événements', () => {
   assert.ok(some > 0);
 });
 
-test('programmes: une ligne de terminal passe aussi en mode programme', () => {
+test('programmes: le mode programme refuse ; et les corps sur la même ligne, le terminal les garde', () => {
   for (const src of ['forward(3);turn_left()', 'for i in range(4): forward(); turn_left()', 'while not goal(): forward()']) {
-    assert.deepEqual(runP(src, corridor()).events, execute(parse(src, 'py').prog, createWorld(corridor())).events, src);
+    assert.equal(parseProgram(src, 'py').ok, false, src);
+    assert.ok(parse(src, 'py').ok, src);
   }
 });

@@ -170,15 +170,15 @@ test('programmes: forme de l\'AST', () => {
     { k: 'bin', op: '-', a: { k: 'bin', op: '+', a: num(1), b: { k: 'bin', op: '*', a: num(2), b: num(3) } }, b: num(4) });
   assert.deepEqual(noLine(pok('for i in range(3):\n    forward(i + 1)', 'py').program.body[0]),
     { t: 'loop', n: num(3), v: 'i', body: [{ t: 'call', name: 'forward', n: { k: 'bin', op: '+', a: { k: 'var', name: 'i' }, b: num(1) } }] });
-  assert.deepEqual(noLine(pok('while not wall(): forward()', 'py').program.body[0]),
+  assert.deepEqual(noLine(pok('while not wall():\n    forward()', 'py').program.body[0]),
     { t: 'while', cond: { k: 'sense', name: 'wall', neg: true }, body: [{ t: 'call', name: 'forward', n: num(1) }] });
   const f = pok('def marche(n):\n    forward(n)\nmarche(2)', 'py').program;
   assert.deepEqual(noLine(f), { funcs: { marche: { param: 'n', body: [{ t: 'call', name: 'forward', n: { k: 'var', name: 'n' } }] } },
     body: [{ t: 'callfn', name: 'marche', arg: num(2) }] });
   assert.equal(Object.getPrototypeOf(f.funcs), null);
-  assert.deepEqual(noLine(pok('let n = 1\nif (n < 3) turnLeft(); else forward()', 'js').program),
+  assert.deepEqual(noLine(pok('let n = 1\nif (n < 3) {\n  turnLeft()\n} else {\n  forward()\n}', 'js').program),
     noLine(pok('n = 1\nif n < 3:\n  turn_left()\nelse:\n  forward()', 'py').program));
-  assert.equal(pok('if wall(): turn_left()\nelse: forward()', 'py').program.body[0].else.length, 1);
+  assert.equal(pok('if wall():\n    turn_left()\nelse:\n    forward()', 'py').program.body[0].else.length, 1);
   assert.equal(pok('def f():\n    forward()\n\n# commentaire\nf()', 'py').lines, 3);
   assert.equal(pok('forward()', 'js').lines, 1);
 });
@@ -207,7 +207,7 @@ test('programmes: erreurs avec numéro de ligne', () => {
   pbad('else { forward() }', 'js', 'else_alone', { line: 1 });
   pbad('for i in range(2):\n    forward()\nturn_left()\nelse:\n    forward()', 'py', 'else_alone', { line: 4 });
   pbad('if (wall()) {\n  forward()\n', 'js', 'syntax', { line: 2 });
-  pbad('forward() turn_left()', 'py', 'syntax', { line: 1 });
+  pbad('forward() turn_left()', 'py', 'one_per_line', { line: 1 });
   pbad('forward(0 + 1', 'js', 'missing_paren', { line: 1 });
   pbad('forward(100)', 'py', 'too_big', { line: 1 });
   pbad('n = 1\nn = 1000', 'py', 'too_big', { line: 2 });
@@ -217,7 +217,7 @@ test('programmes: erreurs avec numéro de ligne', () => {
   pbad('carre()\ndef carre():\n    forward()', 'py', 'undefined_name', { line: 1 });
   pbad('n = 2\ndef f():\n    forward(n)\nf()', 'py', 'undefined_name', { line: 3 });
   pbad('def f():\n    forward()\ndef f():\n    turn_left()', 'py', 'duplicate_fn', { line: 3 });
-  pbad('function f() { forward() }\nfunction f() { forward() }', 'js', 'duplicate_fn', { line: 2 });
+  pbad('function f() {\n  forward()\n}\nfunction f() {\n  forward()\n}', 'js', 'duplicate_fn', { line: 4 });
   pbad('let n = 3\nif (n === 3) forward()', 'js', 'bad_expr', { line: 2, hint: '==' });
   pbad('n = 3\nif n = 3:\n    forward()', 'py', 'bad_expr', { line: 2, hint: '==' });
   pbad('n = 4\nforward(n / 2)', 'py', 'bad_expr', { line: 2 });
@@ -232,11 +232,41 @@ test('programmes: erreurs avec numéro de ligne', () => {
   pbad('let i = 0\ni++', 'js', 'syntax', { line: 2, hint: '+= 1' });
 });
 
+test('programmes: une instruction par ligne, corps des blocs sur les lignes du dessous', () => {
+  for (const [src, lang] of [['forward(); turn_left()', 'py'], ['forward(); turnLeft();', 'js'], ['forward()\nturn_left(); forward(2)', 'py'],
+    ['n = 1; forward(n)', 'py'], ['if (wall()) {\n  turnLeft(); forward();\n}', 'js']]) {
+    const r = pbad(src, lang, 'one_per_line');
+    assert.ok(r.error.message.includes('Écris une seule instruction par ligne'), r.error.message);
+  }
+  pbad('if (wall()) {\n  turnLeft() }', 'js', 'one_per_line', { line: 2 });
+  pbad('while (!wall()) {\n  forward()\n} forward()', 'js', 'one_per_line', { line: 3 });
+  for (const [src, lang, line] of [['for i in range(4): forward()', 'py', 1], ['forward()\nwhile not wall(): forward()', 'py', 2],
+    ['if wall(): turn_left()', 'py', 1], ['if wall():\n    turn_left()\nelse: forward()', 'py', 3], ['def f(): forward()\nf()', 'py', 1],
+    ['for i in range(2): for j in range(2): forward()', 'py', 1], ['while not goal(): if wall(): turn_left(); forward()', 'py', 1],
+    ['for (let i = 0; i < 4; i++) { forward(); turnLeft(); }', 'js', 1], ['if (wall()) turnLeft();', 'js', 1], ['while (!wall())\n  forward();', 'js', 1],
+    ['if (wall()) {\n  turnLeft()\n} else forward()', 'js', 3], ['function f() { forward() }\nf()', 'js', 1]]) {
+    const r = pbad(src, lang, 'inline_block', { line });
+    assert.ok(r.error.message.includes('Mets le corps'), r.error.message);
+  }
+  assert.ok(parseProgram('for i in range(4): forward()', 'py').error.message.includes('sur les lignes en dessous, décalé'));
+  assert.equal(pok('forward();\nturn_left()', 'py').lines, 2); // un ; final est permis
+  assert.equal(pok('for (let i = 0; i < 2; i++)\n{\n  forward();\n}', 'js').lines, 4);
+  // le terminal (une ligne) garde ; et les boucles sur une ligne
+  assert.ok(parse('forward(); turn_left()', 'py').ok && parse('for i in range(4): forward(); turn_left()', 'py').ok);
+});
+
+test('programmes: variable du programme dans une fonction, indice du paramètre', () => {
+  for (const [src, lang] of [['n = 1\ndef f():\n    n += 1\nf()', 'py'], ['let n = 1\nfunction f() {\n  n += 1\n}\nf()', 'js'], ['let n = 1\nfunction f() {\n  n = 2\n}\nf()', 'js']]) {
+    pbad(src, lang, 'undefined_name', { line: 3, hint: 'passe la valeur avec un paramètre' });
+  }
+  pbad('n += 1', 'py', 'undefined_name', { hint: 'Donne-lui d' });
+});
+
 test('programmes: imbrication, lignes, récursion, noms réservés', () => {
   const py4 = 'for a in range(2):\n  for b in range(2):\n    for c in range(2):\n      for d in range(2):\n        forward()';
   pbad(py4, 'py', 'too_deep', { line: 4 });
   pok('for a in range(2):\n  for b in range(2):\n    for c in range(2):\n      forward()', 'py');
-  pbad('for (let a = 0; a < 2; a++) { for (let b = 0; b < 2; b++) { while (!wall()) { if (wall()) { forward() } } } }', 'js', 'too_deep', { line: 1 });
+  pbad('for (let a = 0; a < 2; a++) {\nfor (let b = 0; b < 2; b++) {\nwhile (!wall()) {\nif (wall()) {\nforward()\n}\n}\n}\n}', 'js', 'too_deep', { line: 4 });
   pbad('if wall():\n  if wall():\n    if wall():\n      if wall():\n        forward()', 'py', 'too_deep');
   pok('def f():\n  for a in range(2):\n    for b in range(2):\n      while not wall():\n        forward()\nf()', 'py');
 
@@ -249,7 +279,7 @@ test('programmes: imbrication, lignes, récursion, noms réservés', () => {
   pbad('def f():\n    f()', 'py', 'recursion', { line: 2 });
   pbad('function f() {\n  forward()\n  f()\n}', 'js', 'recursion', { line: 3 });
   pbad('def f():\n    g()\ndef g():\n    f()\nf()', 'py', 'recursion', { line: 2 });
-  pbad('function f() { g() }\nfunction g() { f() }\nf()', 'js', 'recursion', { line: 1 });
+  pbad('function f() {\n  g()\n}\nfunction g() {\n  f()\n}\nf()', 'js', 'recursion', { line: 2 });
 
   const before = Object.getOwnPropertyNames(Object.prototype).join();
   for (const name of ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf', 'range', 'wall', 'goal', 'def', 'if', 'not', 'turnLeft', 'turn_left', 'forward']) {

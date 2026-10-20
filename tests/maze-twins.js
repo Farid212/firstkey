@@ -12,9 +12,9 @@ export const TWINS = [
   ['for i in range(3):\n    forward(i + 1)\n    turn_left()', 'for (let i = 0; i < 3; i++) {\n  forward(i + 1);\n  turnLeft();\n}'],
   ['k = 0\nwhile k < 3:\n    forward()\n    k += 1', 'let k = 0;\nwhile (k < 3) {\n  forward();\n  k += 1;\n}'],
   ['def pas(n):\n    forward(n)\ndef deux():\n    pas(1)\n    turn_right()\n    pas(2 * 1 - 1)\nfor i in range(2):\n    if i == 1:\n        turn_left()\n    deux()',
-    'function pas(n) {\n  forward(n);\n}\nfunction deux() {\n  pas(1);\n  turnRight();\n  pas(2 * 1 - 1);\n}\nfor (let i = 0; i < 2; i++) {\n  if (i == 1) turnLeft();\n  deux();\n}'],
+    'function pas(n) {\n  forward(n);\n}\nfunction deux() {\n  pas(1);\n  turnRight();\n  pas(2 * 1 - 1);\n}\nfor (let i = 0; i < 2; i++) {\n  if (i == 1) {\n    turnLeft();\n  }\n  deux();\n}'],
   ['while not goal():\n    if wall():\n        turn_left()\n    else:\n        forward()',
     'while (!goal()) {\n  if (wall()) {\n    turnLeft();\n  }\n  else {\n    forward();\n  }\n}'],
   ['n = 1 + 2 * 3 - 4\nforward(n) # trois\n\n# fin', '// calcul\nlet n = 1 + 2 * 3 - 4\nforward(n) // trois'],
-  ['m = 5\nm -= 2\nif m > 2:\n    forward(m)', 'let m = 5\nm -= 2\nif (m > 2) { forward(m) }'],
+  ['m = 5\nm -= 2\nif m > 2:\n    forward(m)', 'let m = 5\nm -= 2\nif (m > 2) {\n  forward(m)\n}'],
 ];

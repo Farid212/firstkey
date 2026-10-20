@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { levelSpec } from '../assets/js/maze/levels.js';
+import { levelSpec, makeMaze } from '../assets/js/maze/levels.js';
+import { generateSpec, loopSlack } from '../assets/js/maze/levels-gen.js';
 import { CURRICULUM } from '../assets/js/maze/curriculum.js';
-import { makeMaze, solve, solutionPath, DIRS } from '../assets/js/maze/gen.js';
+import { solve, solutionPath, compressedLength, DIRS } from '../assets/js/maze/gen.js';
 import { parse, parseProgram } from '../assets/js/maze/lang.js';
 import { createWorld, execute, executeProgram } from '../assets/js/maze/world.js';
 
@@ -26,6 +27,10 @@ function runLines(src, lang, maze) { // comme le terminal: une ligne après l'au
   }
   return { world, events };
 }
+
+test('levels-data.js est à jour: chaque exercice décodé = exercice généré', () => {
+  for (const [l, e] of ALL) assert.deepEqual(spec(l, e), generateSpec(l, e), `niveau ${l}.${e}: données périmées, relance node scripts/build-levels.mjs`);
+});
 
 test('levelSpec: forme, déterminisme, makeMaze = monde 0', () => {
   for (const [l, e] of ALL) {
@@ -117,22 +122,32 @@ test('terminal (1-72): chaque ligne de référence passe dans les deux langages 
   }
 });
 
+// Taille naïve N d'un monde: commandes du plus court chemin sans boucle mais avec forward(n) (suites de 'f' regroupées).
+const naive = (m) => compressedLength(solutionPath(m));
+
 // Règle « la boucle est demandée » (tours 41-72), S = instructions de la référence (commande = 1, boucle = 1 + corps):
-// sans boucle et avec forward() seul il faut au moins 2 × S commandes (par), et même avec forward(n) plus de S.
-test('tours de boucle (41-72): la boucle est demandée', () => {
+// sans boucle il faut au moins 2 × S commandes et plus de 8 (exception mesurée et documentée: tour 68, exercices 2 et 3).
+test('tours de boucle (41-72): sans boucle, au moins 2 × S commandes et plus de 8', () => {
   const size = (src) => src.split('\n').reduce((n, line) => {
     const count = (list) => list.reduce((k, st) => k + 1 + (st.body ? count(st.body) : 0), 0);
     return n + count(parse(line, 'py').prog);
   }, 0);
   for (const [l, e] of ALL.filter(([l]) => l >= 41 && l <= 72)) {
-    const s = spec(l, e), m = s.worlds[0], path = solutionPath(m), S = size(s.reference.py);
-    const C = path.filter((c, i) => c !== 'f' || path[i - 1] !== 'f').length;
+    const s = spec(l, e), N = naive(s.worlds[0]), S = size(s.reference.py);
     assert.ok(/for /.test(s.reference.py), `niveau ${l}.${e}`);
-    assert.ok(m.par >= 2 * S, `niveau ${l}.${e}: par ${m.par}, S ${S}`);
-    assert.ok(C > S, `niveau ${l}.${e}: C ${C}, S ${S}`);
+    assert.ok(N >= 2 * S - loopSlack(l, e), `niveau ${l}.${e}: N ${N}, S ${S}`);
+    assert.ok(N > 8, `niveau ${l}.${e}: N ${N}`);
   }
-  // exemple de la spec: au tour 41, sans boucle il faut plus de 8 commandes
-  for (const e of [0, 1, 2]) assert.ok(spec(41, e).worlds[0].par > 8);
+  assert.deepEqual(ALL.filter(([l, e]) => loopSlack(l, e)).map(([l, e]) => `${l}.${e}`), ['68.1', '68.2']);
+});
+
+// Budget équitable (73-114): le programme naïf (une commande par ligne, forward(n) compris) du monde 0 dépasse le budget
+// dans les deux langages; aux tours 101-114 il échoue en plus dans les deux autres mondes (test du palier 7).
+test('programmes (73-114): le budget ne suffit pas au programme sans la notion', () => {
+  for (const [l, e] of ALL.filter(([l]) => l >= 73)) {
+    const s = spec(l, e), N = naive(s.worlds[0]);
+    assert.ok(N > s.budget.py && N > s.budget.js, `niveau ${l}.${e}: N ${N}, budget ${s.budget.py}/${s.budget.js}`);
+  }
 });
 
 const hasStmt = (list, ok) => list.some((s) => ok(s) || [s.body, s.else].some((b) => b && hasStmt(b, ok)));

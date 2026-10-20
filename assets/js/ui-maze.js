@@ -62,16 +62,23 @@ function helpFor(level, lang) {
   if (has('turnR')) out.push([`${n.right}()`, 'tourne à droite']);
   if (has('turnL')) out.push([`${n.left}()`, 'tourne à gauche']);
   if (has('long')) out.push([`${n.forward}(3)`, 'avance de 3 cases']);
-  if (has('square')) out.push([py ? 'for i in range(4): …' : 'for (let i = 0; i < 4; i++) …', 'répète 4 fois']);
-  if (has('vars')) out.push([py ? 'n = 1 … n += 1' : 'let n = 1; … n += 1;', 'une variable qui grandit']);
-  if (has('fn')) out.push([py ? 'def motif(): …' : 'function motif() { … }', 'une fonction']);
-  if (has('param')) out.push([py ? 'def cote(n): …' : 'function cote(n) { … }', 'une fonction à paramètre']);
-  if (has('while')) {
-    out.push([py ? 'while not wall(): …' : 'while (!wall()) …', 'tant que la voie est libre'],
-      [py ? 'while not goal(): …' : 'while (!goal()) …', 'jusqu’à l’étoile']);
+  if (level <= 72) { // terminal: tout sur une ligne
+    if (has('square')) out.push([py ? 'for i in range(4): …' : 'for (let i = 0; i < 4; i++) …', 'répète 4 fois']);
+    out.push(['a; b', 'plusieurs commandes sur une ligne']);
+    return out;
   }
-  if (has('ifelse')) out.push([py ? 'if wall(): … else: …' : 'if (wall()) … else …', 'si un mur est devant… sinon…']);
-  out.push(level <= 72 ? ['a; b', 'plusieurs commandes sur une ligne'] : ['Ctrl + Entrée', 'lance le programme']);
+  // programme: une instruction par ligne, le corps d'un bloc sur les lignes du dessous
+  const under = py ? 'les lignes décalées en dessous' : 'les lignes entre { et }';
+  out.push([py ? 'for i in range(4):' : 'for (let i = 0; i < 4; i++) {', `répète 4 fois ${under}`]);
+  if (has('vars')) out.push([py ? 'n = 1' : 'let n = 1;', 'une variable'], [py ? 'n += 1' : 'n += 1;', 'la variable grandit de 1']);
+  if (has('fn')) out.push([py ? 'def motif():' : 'function motif() {', `une fonction : ${under}`]);
+  if (has('param')) out.push([py ? 'def cote(n):' : 'function cote(n) {', 'une fonction à paramètre']);
+  if (has('while')) {
+    out.push([py ? 'while not wall():' : 'while (!wall()) {', 'tant que la voie est libre'],
+      [py ? 'while not goal():' : 'while (!goal()) {', 'jusqu’à l’étoile']);
+  }
+  if (has('ifelse')) out.push([py ? 'if wall():' : 'if (wall()) {', 'si un mur est devant…'], [py ? 'else:' : '} else {', '… sinon']);
+  out.push(['1 ligne', 'une seule instruction par ligne'], ['Ctrl + Entrée', 'lance le programme']);
   return out;
 }
 
@@ -115,24 +122,6 @@ function mini(maze) { // vignette d'un monde (palier 7)
 }
 
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-// levelSpec génère tous les exercices précédents au premier appel (≈ 1,7 s pour le tour 114):
-// on les génère par tranches de ~12 ms pour ne jamais geler l'écran.
-let warmed = 0; // tours déjà générés (en cache dans levels.js)
-let warmGoal = 0;
-let warmTimer = null;
-const warmWaiters = new Set();
-function warmStep() {
-  warmTimer = null;
-  const end = performance.now() + 12;
-  while (warmed < warmGoal && performance.now() < end) levelSpec(++warmed, 2);
-  if (warmed < warmGoal) warmTimer = setTimeout(warmStep, 0);
-  for (const cb of [...warmWaiters]) cb();
-}
-export function warmMaze(upTo) {
-  warmGoal = Math.max(warmGoal, Math.min(CURRICULUM.length, upTo));
-  if (warmed < warmGoal && !warmTimer) warmTimer = setTimeout(warmStep, 0);
-}
 
 export function startMaze(root, state, target, handlers) {
   root.replaceChildren();
@@ -417,11 +406,9 @@ export function startMaze(root, state, target, handlers) {
     paint();
   }
 
-  function paint() {
+  function paint(done = counted() ? s.progress.maze.correct : local) { // un tour = 3 exercices: 0/3, 1/3, 2/3
     score.textContent = `⭐ ${s.score}`;
-    const p = s.progress.maze;
     const total = answersPerLevel(s.settings.age, 'maze');
-    const done = counted() ? p.correct : local; // un tour = 3 exercices: 0/3, 1/3, 2/3
     const pct = Math.round((100 * Math.min(done, total)) / total);
     fill.style.width = `${pct}%`;
     meter.setAttribute('aria-valuenow', String(pct));
@@ -456,18 +443,19 @@ export function startMaze(root, state, target, handlers) {
     play('wrongAnswer');
   }
 
-  // voie commune de la victoire (terminal et éditeur)
+  // voie commune de la victoire (terminal et éditeur): la réussite est comptée dès l'étoile atteinte,
+  // avant la danse, pour qu'un « retour » pendant la danse ne perde pas l'exercice (événements envoyés une seule fois)
   async function win(t) {
     queue.length = 0; // les lignes tapées pour ce labyrinthe-ci n'ont plus de sens
     resetBtn.disabled = true; // la victoire ne doit pas être perdue ni laisser l'ancien labyrinthe
     runBtn.disabled = true;
+    drafts.delete(draftKey());
+    correct();
     play('correctAnswer');
     note('Bravo, tu as trouvé l’étoile !', 'win');
     await dance(t);
     if (t !== token) return;
     place(pos.x, pos.y);
-    drafts.delete(draftKey());
-    correct();
     await wait(reduced() ? 0 : 450, t);
     if (t !== token) return;
     queue.length = 0; // lignes tapées pendant la danse
@@ -477,6 +465,7 @@ export function startMaze(root, state, target, handlers) {
 
   function correct() {
     const wasCounted = counted();
+    const before = wasCounted ? s.progress.maze.correct : local;
     const res = recordCorrect(s, 'maze', level);
     handlers.onChange(res.state);
     const { x, y, width, height } = board.getBoundingClientRect();
@@ -486,7 +475,7 @@ export function startMaze(root, state, target, handlers) {
     if (res.leveledUp) document.dispatchEvent(new CustomEvent('firstkey:levelup', { detail: { ...detail, newLevel: res.state.progress.maze.level } }));
     s = handlers.getState(); // relire l'état: un écouteur a pu y ajouter des récompenses
     if (!wasCounted) local += 1; // tour rejoué: exercice suivant (0, 1, 2, 0…)
-    paint();
+    paint(before + 1); // 1/3, 2/3 puis 3/3 pendant la fête; le tour suivant repart de 0/3 à son chargement
   }
 
   // ---------- terminal ----------
@@ -690,27 +679,12 @@ export function startMaze(root, state, target, handlers) {
     note(prog ? 'Le héros revient au départ. Ton programme est gardé.' : 'On recommence ce niveau.', 'info');
     focusField();
   };
-  let onWarm = null;
   back.onclick = () => {
     cancel();
-    warmWaiters.delete(onWarm);
     root.replaceChildren();
     handlers.onExit();
   };
 
-  const need = fixed ?? s.progress.maze.level;
-  warmMaze(need + 1); // le tour suivant aussi: la montée de niveau reste instantanée
-  if (need <= warmed) {
-    load();
-    focusField();
-  } else {
-    term.replaceChildren(el('div', 'term-msg info', 'Je prépare le labyrinthe…'));
-    onWarm = () => {
-      if (need > warmed) return;
-      warmWaiters.delete(onWarm);
-      load();
-      focusField();
-    };
-    warmWaiters.add(onWarm);
-  }
+  load(); // exercices précalculés (levels-data.js): rien à générer, chargement immédiat
+  focusField();
 }
