@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parse, commandNames, suggest } from '../assets/js/maze/lang.js';
+import { parse, parseProgram, commandNames, suggest } from '../assets/js/maze/lang.js';
+import { TWINS } from './maze-twins.js';
 
 const c = (name, n = 1) => ({ t: 'call', name, n });
 const ok = (src, lang, prog) => assert.deepEqual(parse(src, lang), { ok: true, prog }, src);
@@ -128,4 +129,182 @@ test('espaces Unicode acceptés, autre caractère non ASCII montré entier', () 
     assert.equal(r.ok, false);
     assert.equal(r.error.message, `Je ne comprends pas ce caractère : « ${ch} »`);
   }
+});
+
+// ---- Programmes multi-lignes (spec 6) ----
+
+const noLine = (x) => JSON.parse(JSON.stringify(x, (k, v) => (k === 'line' ? undefined : v)));
+const pok = (src, lang) => {
+  const r = parseProgram(src, lang);
+  assert.equal(r.ok, true, `${src} -> ${JSON.stringify(r.error)}`);
+  return r;
+};
+const pbad = (src, lang, code, { line, hint } = {}) => {
+  const r = parseProgram(src, lang);
+  assert.equal(r.ok, false, src);
+  assert.equal(r.error.code, code, `${src} -> ${JSON.stringify(r.error)}`);
+  assert.ok(r.error.message.length > 0);
+  if (line !== undefined) {
+    assert.equal(r.error.line, line, `${src} -> ${JSON.stringify(r.error)}`);
+    assert.ok(r.error.message.startsWith(`Ligne ${line} : `), r.error.message);
+  }
+  if (hint) assert.ok(r.error.hint && r.error.hint.includes(hint), `${src} hint ${r.error.hint}`);
+  return r;
+};
+
+
+test('programmes jumeaux py/js: même AST', () => {
+  assert.ok(TWINS.length >= 10);
+  for (const [py, js] of TWINS) assert.deepEqual(noLine(pok(py, 'py').program), noLine(pok(js, 'js').program), py);
+});
+
+test('programmes: forme de l\'AST', () => {
+  const num = (v) => ({ k: 'num', v });
+  const r = pok('n = 2\nn += 1\nforward(n)', 'py');
+  assert.equal(r.lines, 3);
+  assert.deepEqual(noLine(r.program), { funcs: {}, body: [
+    { t: 'set', name: 'n', op: '=', e: num(2) }, { t: 'set', name: 'n', op: '+=', e: num(1) },
+    { t: 'call', name: 'forward', n: { k: 'var', name: 'n' } }] });
+  assert.equal(r.program.body[2].line, 3);
+  assert.deepEqual(noLine(pok('n = 1 + 2 * 3 - 4', 'py').program.body[0].e),
+    { k: 'bin', op: '-', a: { k: 'bin', op: '+', a: num(1), b: { k: 'bin', op: '*', a: num(2), b: num(3) } }, b: num(4) });
+  assert.deepEqual(noLine(pok('for i in range(3):\n    forward(i + 1)', 'py').program.body[0]),
+    { t: 'loop', n: num(3), v: 'i', body: [{ t: 'call', name: 'forward', n: { k: 'bin', op: '+', a: { k: 'var', name: 'i' }, b: num(1) } }] });
+  assert.deepEqual(noLine(pok('while not wall(): forward()', 'py').program.body[0]),
+    { t: 'while', cond: { k: 'sense', name: 'wall', neg: true }, body: [{ t: 'call', name: 'forward', n: num(1) }] });
+  const f = pok('def marche(n):\n    forward(n)\nmarche(2)', 'py').program;
+  assert.deepEqual(noLine(f), { funcs: { marche: { param: 'n', body: [{ t: 'call', name: 'forward', n: { k: 'var', name: 'n' } }] } },
+    body: [{ t: 'callfn', name: 'marche', arg: num(2) }] });
+  assert.equal(Object.getPrototypeOf(f.funcs), null);
+  assert.deepEqual(noLine(pok('let n = 1\nif (n < 3) turnLeft(); else forward()', 'js').program),
+    noLine(pok('n = 1\nif n < 3:\n  turn_left()\nelse:\n  forward()', 'py').program));
+  assert.equal(pok('if wall(): turn_left()\nelse: forward()', 'py').program.body[0].else.length, 1);
+  assert.equal(pok('def f():\n    forward()\n\n# commentaire\nf()', 'py').lines, 3);
+  assert.equal(pok('forward()', 'js').lines, 1);
+});
+
+test('programmes: erreurs avec numéro de ligne', () => {
+  for (const l of ['py', 'js']) { pbad('', l, 'empty'); pbad('\n  \n', l, 'empty'); }
+  pbad('# rien\n', 'py', 'empty');
+  pbad('forward()\nforwad()', 'py', 'unknown_command', { line: 2, hint: 'forward' });
+  pbad('forward()\nturnLeft()', 'py', 'unknown_command', { line: 2, hint: 'turn_left' });
+  pbad('turn_left()', 'js', 'unknown_command', { line: 1, hint: 'turnLeft' });
+  pbad('function f() {\n  forward()\n}', 'py', 'syntax', { line: 1, hint: 'def' });
+  pbad('def f():\n  forward()', 'js', 'syntax', { line: 1, hint: 'function' });
+  pbad('if !wall():\n    forward()', 'py', 'syntax', { line: 1, hint: 'not' });
+  pbad('while (not wall()) forward()', 'js', 'syntax', { line: 1, hint: '!' });
+  pbad('for i in range(2):\n\tforward()', 'py', 'tab', { line: 2 });
+  pbad('for i in range(2):\n  \tforward()', 'py', 'tab', { line: 2 });
+  pbad('for i in range(2):\n   forward()', 'py', 'indent', { line: 2 });
+  pbad('for i in range(2):\n    forward()\n  turn_left()', 'py', 'indent', { line: 3 });
+  pbad('forward()\n    forward()', 'py', 'indent', { line: 2 });
+  pbad('for i in range(2):\n        forward()', 'py', 'indent', { line: 2 });
+  pbad('for i in range(2):\nforward()', 'py', 'block_missing', { line: 1 });
+  pbad('forward()\nif wall():', 'py', 'block_missing', { line: 2 });
+  pbad('if (wall())', 'js', 'block_missing', { line: 1 });
+  pbad('while (!wall()) {\n}', 'js', 'block_missing', { line: 1 });
+  pbad('forward()\nelse:\n    forward()', 'py', 'else_alone', { line: 2 });
+  pbad('else { forward() }', 'js', 'else_alone', { line: 1 });
+  pbad('for i in range(2):\n    forward()\nturn_left()\nelse:\n    forward()', 'py', 'else_alone', { line: 4 });
+  pbad('if (wall()) {\n  forward()\n', 'js', 'syntax', { line: 2 });
+  pbad('forward() turn_left()', 'py', 'syntax', { line: 1 });
+  pbad('forward(0 + 1', 'js', 'missing_paren', { line: 1 });
+  pbad('forward(100)', 'py', 'too_big', { line: 1 });
+  pbad('n = 1\nn = 1000', 'py', 'too_big', { line: 2 });
+  pbad('forward(n)', 'py', 'undefined_name', { line: 1 });
+  pbad('n += 1', 'py', 'undefined_name', { line: 1 });
+  pbad('n = 3', 'js', 'undefined_name', { line: 1, hint: 'let n' });
+  pbad('carre()\ndef carre():\n    forward()', 'py', 'undefined_name', { line: 1 });
+  pbad('n = 2\ndef f():\n    forward(n)\nf()', 'py', 'undefined_name', { line: 3 });
+  pbad('def f():\n    forward()\ndef f():\n    turn_left()', 'py', 'duplicate_fn', { line: 3 });
+  pbad('function f() { forward() }\nfunction f() { forward() }', 'js', 'duplicate_fn', { line: 2 });
+  pbad('let n = 3\nif (n === 3) forward()', 'js', 'bad_expr', { line: 2, hint: '==' });
+  pbad('n = 3\nif n = 3:\n    forward()', 'py', 'bad_expr', { line: 2, hint: '==' });
+  pbad('n = 4\nforward(n / 2)', 'py', 'bad_expr', { line: 2 });
+  pbad('forward((1))', 'py', 'bad_expr', { line: 1 });
+  pbad('n = 1\nif not n < 3:\n    forward()', 'py', 'bad_expr', { line: 2 });
+  pbad('n = 1\nif n < 3 and wall():\n    forward()', 'py', 'bad_expr', { line: 2 });
+  pbad('n = 1\nif n <= 3:\n    forward()', 'py', 'bad_expr', { line: 2 });
+  pbad('def f(a, b):\n    forward()', 'py', 'syntax', { line: 1 });
+  pbad('def f():\n    forward()\nf(2)', 'py', 'syntax', { line: 3 });
+  pbad('def f(n):\n    forward(n)\nf()', 'py', 'syntax', { line: 3 });
+  pbad('for i in range(2):\n    def f():\n        forward()', 'py', 'syntax', { line: 2 });
+  pbad('let i = 0\ni++', 'js', 'syntax', { line: 2, hint: '+= 1' });
+});
+
+test('programmes: imbrication, lignes, récursion, noms réservés', () => {
+  const py4 = 'for a in range(2):\n  for b in range(2):\n    for c in range(2):\n      for d in range(2):\n        forward()';
+  pbad(py4, 'py', 'too_deep', { line: 4 });
+  pok('for a in range(2):\n  for b in range(2):\n    for c in range(2):\n      forward()', 'py');
+  pbad('for (let a = 0; a < 2; a++) { for (let b = 0; b < 2; b++) { while (!wall()) { if (wall()) { forward() } } } }', 'js', 'too_deep', { line: 1 });
+  pbad('if wall():\n  if wall():\n    if wall():\n      if wall():\n        forward()', 'py', 'too_deep');
+  pok('def f():\n  for a in range(2):\n    for b in range(2):\n      while not wall():\n        forward()\nf()', 'py');
+
+  const many = (n) => Array.from({ length: n }, () => 'forward()').join('\n');
+  assert.equal(pok(many(40), 'py').lines, 40);
+  pbad(many(41), 'py', 'too_many_lines', { line: 41 });
+  pbad(many(41), 'js', 'too_many_lines', { line: 41 });
+  assert.equal(pok(`${many(40)}\n\n\n# note\n`, 'py').lines, 40);
+
+  pbad('def f():\n    f()', 'py', 'recursion', { line: 2 });
+  pbad('function f() {\n  forward()\n  f()\n}', 'js', 'recursion', { line: 3 });
+  pbad('def f():\n    g()\ndef g():\n    f()\nf()', 'py', 'recursion', { line: 2 });
+  pbad('function f() { g() }\nfunction g() { f() }\nf()', 'js', 'recursion', { line: 1 });
+
+  const before = Object.getOwnPropertyNames(Object.prototype).join();
+  for (const name of ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf', 'range', 'wall', 'goal', 'def', 'if', 'not', 'turnLeft', 'turn_left', 'forward']) {
+    pbad(`${name} = 1`, 'py', 'reserved', { line: 1 });
+    pbad(`let ${name} = 1`, 'js', 'reserved', { line: 1 });
+    pbad(`def ${name}():\n    forward()`, 'py', 'reserved', { line: 1 });
+    pbad(`function ${name}() { forward() }`, 'js', 'reserved', { line: 1 });
+    pbad(`for ${name} in range(2):\n    forward()`, 'py', 'reserved', { line: 1 });
+    pbad(`def f(${name}):\n    forward()`, 'py', 'reserved', { line: 1 });
+  }
+  pbad('forward(constructor)', 'js', 'bad_expr');
+  pbad('toString()', 'js', 'unknown_command');
+  pbad('def carre():\n    forward()\ncarre = 2', 'py', 'reserved', { line: 3 });
+  assert.equal(Object.getOwnPropertyNames(Object.prototype).join(), before);
+  assert.equal(({}).polluted, undefined);
+});
+
+test('programmes: entrées hostiles, temps borné', () => {
+  const t0 = Date.now();
+  pbad(`forward()\n${'forward();'.repeat(40)}`, 'js', 'too_long', { line: 2 });
+  for (const s of ['\n'.repeat(100000), 'forward()\n'.repeat(5000), '('.repeat(100000), `${'  '.repeat(5000)}forward()`]) {
+    const r = parseProgram(s, 'py');
+    assert.equal(r.ok, false);
+  }
+  pbad('forward() 🐢', 'py', 'syntax', { line: 1 });
+  pbad('forward()\nforwärd()', 'js', 'syntax', { line: 2 });
+  pbad('for i in range(2):\n    forward()', 'py', 'indent', { line: 2 });
+  pbad('eval("1")', 'py', 'unknown_command');
+  pbad('__import__("os")', 'py', 'unknown_command');
+  assert.equal(parseProgram(null, 'py').ok, false);
+  assert.equal(parseProgram('forward()', 'ruby').ok, false);
+  const plus = `n = ${Array.from({ length: 140 }, () => '1').join('+')}`;
+  pok(Array.from({ length: 40 }, () => plus).join('\n'), 'py');
+  assert.ok(Date.now() - t0 < 1000, `${Date.now() - t0} ms`);
+});
+
+test('programmes: fuzz de 3000 chaînes, aucune exception', () => {
+  const rng = mulberry32(2026);
+  const alpha = ['forward', 'turn_left', 'turnLeft', 'wall', 'goal', 'for', 'if', 'else', 'while', 'not', 'in', 'range', 'let', 'def', 'function',
+    'i', 'n', 'f', 'constructor', '__proto__', '(', ')', '{', '}', ';', ':', '!', '<', '>', '=', '==', '===', '+', '-', '*', '+=', '++', '/', ',',
+    '0', '1', '3', '99', '100', '999', ' ', ' ', '\n', '\n', '\n  ', '\n    ', '\n\t', '#', '//', 'é', '\u{1F600}', ' ', '"', '\\', 'and'];
+  const t0 = Date.now();
+  let valid = 0;
+  for (let k = 0; k < 3000; k++) {
+    const len = 1 + Math.floor(rng() * 40);
+    let s = '';
+    for (let j = 0; j < len; j++) s += alpha[Math.floor(rng() * alpha.length)] + (rng() < 0.4 ? ' ' : '');
+    for (const lang of ['py', 'js']) {
+      const r = parseProgram(s, lang);
+      if (r.ok) { valid++; assert.ok(Array.isArray(r.program.body) && r.lines >= 1 && r.lines <= 40, s); } else {
+        assert.ok(r.error.code && r.error.message.length > 0, s);
+        assert.notEqual(r.error.message, 'Je ne comprends pas ce programme.', `erreur interne: ${JSON.stringify(s)}`);
+      }
+    }
+  }
+  assert.ok(valid > 0);
+  assert.ok(Date.now() - t0 < 5000);
 });
