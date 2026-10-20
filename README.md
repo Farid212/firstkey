@@ -51,7 +51,11 @@ Niveaux 1 à 57: « Que s'affiche-t-il ? » en choix multiple; niveaux 58 à 114
 
 ## Programmation en jeu (labyrinthes)
 
-Le bloc « Programmation » est un terminal: l'enfant tape de vraies commandes Python ou JavaScript (langage choisi dans les réglages) pour guider une créature de sa collection jusqu'à l'étoile. Chaque ligne s'exécute à l'appui sur Entrée. Commandes: `forward()`, `forward(3)`, `turn_left()` / `turnLeft()`, `turn_right()` / `turnRight()`, boucles `for` et conditions `if` / `while` avec `wall()` et `goal()`, sur une seule ligne. Code dans `assets/js/maze/`: `gen.js` (labyrinthe de chaque niveau, déterministe et solvable), `lang.js` (analyseur écrit à la main, jamais d'`eval`), `world.js` (exécution, événements); l'écran est `assets/js/ui-maze.js`. Pour ajouter une commande: la grammaire dans `lang.js`, son effet dans `world.js`, son aide dans `ui-maze.js` et ses tests.
+Le bloc « Programmation » est un terminal puis un éditeur: l'enfant tape de vraies commandes Python ou JavaScript (langage choisi dans les réglages) pour guider une créature de sa collection jusqu'à l'étoile. **Un niveau est un tour de 3 exercices du même style**, du plus facile au plus difficile; chaque tour reprend la notion du tour précédent (`assets/js/maze/curriculum.js` est la source de vérité: nom, notion et compétences cumulées de chaque tour).
+
+- **Niveaux 1 à 72, terminal ligne par ligne** (Entrée exécute): `forward()`, `forward(3)`, virages, boucle `for`, `if` / `while` sur une ligne.
+- **Niveaux 73 à 114, éditeur de programme**: plusieurs lignes, variables, boucles imbriquées (73-86), fonctions (87-100), programmes généraux testés dans 3 mondes avec `while` / `if` / `else` (101-114), avec un **budget de lignes** déduit d'un programme de référence.
+- Code dans `assets/js/maze/`: `gen.js` (segments étiquetés, solveur), `curriculum.js`, `levels.js` (`levelSpec(niveau, exercice)`: labyrinthes, références, budgets, mondes), `lang.js` (analyseur écrit à la main, jamais d'`eval`; `parse` pour une ligne, `parseProgram` pour un programme), `world.js` (exécution). Écran: `assets/js/ui-maze.js`. Pour ajouter un tour: une ligne dans `curriculum.js` et un segment ou une famille dans `levels.js`; les tests vérifient les règles de tour, la solubilité et que chaque programme de référence atteint l'étoile dans les deux langages.
 
 ## Show your support
 
