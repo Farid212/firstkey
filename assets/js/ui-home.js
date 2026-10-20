@@ -9,7 +9,7 @@ const el = (tag, cls, text) => {
   return e;
 };
 
-const ICONS = { letters: '🔤', words: '📖', math: '➕', js: '🟨', python: '🐍' };
+const ICONS = { letters: '🔤', words: '📖', math: '➕', js: '🟨', python: '🐍', maze: '🧭' };
 
 export function renderHome(root, state, handlers) {
   root.replaceChildren();

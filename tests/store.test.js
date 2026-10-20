@@ -73,3 +73,19 @@ test('localStorage global qui lève (stockage bloqué)', () => {
     delete globalThis.localStorage;
   }
 });
+
+test('codeLanguage: défaut py, invalide -> py, js conservé', () => {
+  assert.equal(defaultState().settings.codeLanguage, 'py');
+  const load = (v) => loadState({ getItem: () => JSON.stringify({ settings: { codeLanguage: v } }) }).settings.codeLanguage;
+  assert.equal(load('ruby'), 'py');
+  assert.equal(load('js'), 'js');
+});
+
+test('migration: anciennes sauvegardes reçoivent maze, progress.maze existe', () => {
+  const load = (blocks) => loadState({ getItem: () => JSON.stringify({ settings: { blocks } }) });
+  assert.ok(load(['letters', 'words', 'math', 'js', 'python']).settings.blocks.includes('maze'));
+  assert.ok(!load(['letters', 'words']).settings.blocks.includes('maze'));
+  assert.equal(load(['letters', 'words', 'math', 'js', 'python', 'maze']).settings.blocks.filter((b) => b === 'maze').length, 1);
+  assert.deepEqual(load([]).progress.maze, { level: 1, correct: 0 });
+  assert.ok(defaultState().settings.blocks.includes('maze'));
+});

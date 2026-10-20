@@ -3,12 +3,14 @@ import { defaultRewards, normalizeRewards } from './rewards/model.js';
 
 const KEY = 'firstkey.state.v1';
 const LANGS = ['fr', 'en', 'ja'];
+const CODE_LANGS = ['py', 'js'];
+const OLD_BLOCKS = ['letters', 'words', 'math', 'js', 'python'];
 const ids = BLOCKS.map((b) => b.id);
 
 export function defaultState() {
   return {
     score: 0,
-    settings: { age: 4, uppercase: true, language: 'fr', blocks: [...ids], rewardAnimations: true, rewardSounds: true },
+    settings: { age: 4, uppercase: true, language: 'fr', blocks: [...ids], rewardAnimations: true, rewardSounds: true, codeLanguage: 'py' },
     progress: Object.fromEntries(ids.map((id) => [id, { level: 1, correct: 0 }])),
     rewards: defaultRewards(),
   };
@@ -18,6 +20,9 @@ const int = (v, min, max, def) => {
   const n = Math.floor(Number(v));
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
 };
+
+// Anciens joueurs: le nouveau bloc Programmation ne doit pas leur rester caché.
+const migrateBlocks = (b) => (OLD_BLOCKS.every((id) => b.includes(id)) && !b.includes('maze') ? [...b, 'maze'] : b);
 
 export function loadState(storage) {
   const d = defaultState();
@@ -37,7 +42,8 @@ export function loadState(storage) {
       age: int(s.age, 1, 99, d.settings.age),
       uppercase: typeof s.uppercase === 'boolean' ? s.uppercase : d.settings.uppercase,
       language: LANGS.includes(s.language) ? s.language : d.settings.language,
-      blocks: Array.isArray(s.blocks) ? s.blocks.filter((b) => ids.includes(b)) : d.settings.blocks,
+      blocks: Array.isArray(s.blocks) ? migrateBlocks(s.blocks.filter((b) => ids.includes(b))) : d.settings.blocks,
+      codeLanguage: CODE_LANGS.includes(s.codeLanguage) ? s.codeLanguage : d.settings.codeLanguage,
       rewardAnimations: typeof s.rewardAnimations === 'boolean' ? s.rewardAnimations : true,
       rewardSounds: typeof s.rewardSounds === 'boolean' ? s.rewardSounds : true,
     },

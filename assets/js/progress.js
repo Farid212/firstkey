@@ -1,6 +1,6 @@
 import { BLOCKS, MAX_LEVEL } from './blocks.js';
 
-export const answersPerLevel = (age) => (age <= 3 ? 5 : age <= 5 ? 10 : 25);
+export const answersPerLevel = (age, blockId) => (blockId === 'maze' ? 1 : age <= 3 ? 5 : age <= 5 ? 10 : 25);
 
 export function recordCorrect(state, blockId, playedLevel) {
   const s = structuredClone(state);
@@ -9,7 +9,7 @@ export function recordCorrect(state, blockId, playedLevel) {
   let leveledUp = false;
   if (playedLevel === p.level && p.level < MAX_LEVEL) {
     p.correct += 1;
-    if (p.correct >= answersPerLevel(s.settings.age)) {
+    if (p.correct >= answersPerLevel(s.settings.age, blockId)) {
       p.level += 1;
       p.correct = 0;
       leveledUp = true;
@@ -27,7 +27,7 @@ export function jumpTo(state, blockId, level) {
 export function pickBlock(state, rng = Math.random) {
   const ok = state.settings.blocks.filter((id) => {
     const b = BLOCKS.find((x) => x.id === id);
-    return b?.playable && b.minAge <= state.settings.age;
+    return b?.playable && b.mix !== false && b.minAge <= state.settings.age;
   });
   return ok.length ? ok[Math.floor(rng() * ok.length)] : null;
 }

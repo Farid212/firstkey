@@ -127,7 +127,7 @@ export function startGame(root, state, target, handlers) {
     score.textContent = `⭐ ${s.score}`;
     const p = s.progress[blockId];
     // niveau rejoué (plus bas) ou dernier niveau: barre pleine
-    const pct = level < p.level || p.level >= MAX_LEVEL ? 100 : Math.round((100 * p.correct) / answersPerLevel(s.settings.age));
+    const pct = level < p.level || p.level >= MAX_LEVEL ? 100 : Math.round((100 * p.correct) / answersPerLevel(s.settings.age, blockId));
     fill.style.width = `${pct}%`;
     meter.setAttribute('aria-valuenow', String(pct));
     meter.setAttribute('aria-label', `Niveau ${level}`);
