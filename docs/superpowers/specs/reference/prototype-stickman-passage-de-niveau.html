@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Passage de niveau (prototype jetable v2)</title>
+<style>
+  body { margin:0; font-family: system-ui, sans-serif; background:#f6f1e7; color:#222; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 16px; }
+  h2 { margin: 0 0 4px; } p { margin: 0 0 12px; color:#555; }
+  .stage { border-radius: 18px; overflow: hidden; background: linear-gradient(135deg,#ffe08a,#ff9ec4,#9ed0ff); box-shadow: 0 6px 24px rgba(0,0,0,.18); }
+  svg { width: 100%; height: auto; display:block; }
+  button { margin-top: 12px; padding: 10px 18px; border:0; border-radius: 10px; background:#5a3b8c; color:#fff; font-size:15px; cursor:pointer; }
+</style></head>
+<body><div class="wrap">
+<h2>Passage de niveau: le stickman (prototype jetable, v2)</h2>
+<p>Marche avec foulée réelle, préparation du coup de pied, impact avec secousse, le « 2 » vole en arc, le stickman peint le « 3 » en suivant le tracé, puis deux sauts avec confettis. Boucle de 12 s.</p>
+<div class="stage">
+<svg id="sv" viewBox="0 0 800 400">
+  <g id="world">
+    <text id="hud" x="20" y="34" font-size="20" font-weight="700" fill="#2b2d54">Niveau 2</text>
+    <rect x="0" y="334" width="800" height="70" fill="#5a3b8c" opacity=".85"/>
+    <rect x="0" y="330" width="800" height="8" fill="#3d2766"/>
+    <ellipse id="shadow" cx="0" cy="334" rx="28" ry="5" fill="#000" opacity=".25"/>
+
+    <path id="guide" d="M 428 172 C 440 140 505 140 505 188 C 505 222 475 232 458 232 C 480 232 512 242 512 278 C 512 322 440 330 424 296" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="6" stroke-dasharray="2 14" stroke-linecap="round"/>
+    <path id="ink" d="M 428 172 C 440 140 505 140 505 188 C 505 222 475 232 458 232 C 480 232 512 242 512 278 C 512 322 440 330 424 296" fill="none" stroke="#ff4d6d" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+    <text id="two" font-size="170" font-weight="800" fill="#2b2d54" text-anchor="middle" dominant-baseline="central" font-family="system-ui,sans-serif">2</text>
+
+    <g id="fig" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="#222" stroke-width="8">
+      <polyline id="armB" stroke="#555"/>
+      <polyline id="legB" stroke="#555"/>
+      <line id="torso"/>
+      <polyline id="legF"/>
+      <circle id="head" r="21" fill="#fff"/>
+      <circle id="eye1" r="2.8" fill="#222" stroke="none"/>
+      <circle id="eye2" r="2.8" fill="#222" stroke="none"/>
+      <path id="mouth" stroke-width="3"/>
+      <line id="brush" stroke="#8b5a2b" stroke-width="7"/>
+      <line id="bristle" stroke="#ff4d6d" stroke-width="12"/>
+      <polyline id="armF"/>
+    </g>
+
+    <g id="pow" opacity="0">
+      <polygon id="burst" fill="#fff36b" stroke="#ff7a00" stroke-width="4"/>
+      <text x="0" y="8" font-size="26" font-weight="900" text-anchor="middle" fill="#d6001c" font-family="system-ui,sans-serif">POW!</text>
+    </g>
+    <g id="parts"></g>
+  </g>
+</svg>
+</div>
+<button id="replay">Rejouer depuis le début</button>
+</div>
+<script>
+const NS='http://www.w3.org/2000/svg', G=330, T=12;
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)), lerp=(a,b,t)=>a+(b-a)*t;
+const ease={ lin:t=>t, in2:t=>t*t, out2:t=>1-(1-t)*(1-t), io3:t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2 };
+function track(k){ return t=>{ if(t<=k[0][0]) return k[0][1];
+  for(let i=1;i<k.length;i++) if(t<=k[i][0]){ const [t0,v0]=k[i-1],[t1,v1,e]=k[i]; return lerp(v0,v1,ease[e||'io3']((t-t0)/(t1-t0))); }
+  return k[k.length-1][1]; }; }
+const dir=a=>[Math.sin(a),Math.cos(a)];                 // 0 = vers le bas, + = vers l'avant (droite)
+const L={torso:72,ua:36,fa:34,th:46,sh:46};
+
+// ---- pistes d'animation (secondes) ----
+const X0   = track([[0,-90],[2.4,330,'out2'],[4.6,330],[5.2,395]]);
+const legW = track([[0,1],[2.3,1],[2.7,0],[4.4,0],[4.9,1],[7.9,1],[8.2,0]]);
+const armWalkW = track([[0,1],[2.3,1],[2.7,0]]);
+const sT = track([[2.4,.05],[3.1,.35],[3.36,.15],[4.4,.05]]);
+const sS = track([[2.4,.05],[3.1,-.25],[3.36,-.1],[4.4,.05]]);
+const kT = track([[2.4,0],[3.15,-.95],[3.36,1.35,'in2'],[3.6,1.5,'out2'],[4.4,.05]]);
+const kS = track([[2.5,0],[3.15,-1.9],[3.36,1.4,'in2'],[3.6,1.2,'out2'],[4.4,.05]]);
+const lean0 = track([[0,.08],[2.4,.05],[3.1,-.18],[3.36,.28,'in2'],[3.7,.05,'out2'],[4.4,.05],[5.2,.18],[7.9,.18],[8.4,.35],[8.6,-.1],[9.5,0],[10,.05]]);
+const u0 = track([[2.4,.3],[3.1,-.9],[3.36,.9,'in2'],[4.2,.1],[5.2,.6],[7.9,.6],[8.4,-.5],[8.6,2.7,'out2'],[9.5,2.6],[10,.3]]);
+const u1 = track([[2.4,-.3],[3.1,.9],[3.36,-.9,'in2'],[4.2,-.1],[7.9,-.1],[8.4,-.5],[8.6,2.5,'out2'],[9.5,2.4],[10,.2]]);
+const ikW  = track([[4.4,0],[5.2,1],[7.9,1],[8.2,0]]);
+const squat= track([[8.0,0],[8.4,1],[8.55,0,'out2'],[9.85,0],[10.0,.7],[10.12,0,'out2']]);
+const jumpY= track([[8.55,0],[9.0,95,'out2'],[9.45,0,'in2'],[10.12,0],[10.4,48,'out2'],[10.72,0,'in2']]);
+const tuck = track([[8.55,0],[8.8,1,'out2'],[9.3,1],[9.45,0],[10.12,0],[10.3,.8],[10.6,.8],[10.72,0]]);
+const sceneA = track([[0,0],[.35,1],[11,1],[11.7,0]]);
+
+const ink=$('ink'), INK=ink.getTotalLength();
+const qTrack = t=>ease.io3(clamp((t-5.2)/2.5,0,1));
+const tipAt = t=>ink.getPointAtLength(qTrack(t)*INK);
+function X(t){ if(t<5.2) return X0(t); return 395+(tipAt(t).x-428)*.55; }
+const BV=[38,30];                                        // pinceau: de la main vers la pointe
+
+// ---- poses ----
+function legsWalk(p){ return [0,1].map(i=>{ const f=p+i*Math.PI, th=.5*Math.sin(f); return {t:th, s:th-.95*Math.max(0,Math.cos(f))}; }); }
+function armsWalk(p){ return [0,1].map(i=>{ const f=p+i*Math.PI, u=-.45*Math.sin(f); return {u, f:u+.55}; }); }
+function ik(sh,tg,l1,l2){ const dx=tg[0]-sh[0], dy=tg[1]-sh[1]; const d=clamp(Math.hypot(dx,dy),.01,l1+l2-.01);
+  const th=Math.atan2(dx,dy), al=Math.acos(clamp((l1*l1+d*d-l2*l2)/(2*l1*d),-1,1)); const a1=th-(th>0?al:-al);
+  const el=[sh[0]+l1*Math.sin(a1), sh[1]+l1*Math.cos(a1)]; return {u:a1, f:Math.atan2(tg[0]-el[0],tg[1]-el[1])}; }
+const fore=u=>u+.5-.4*clamp((u-1)/1.5,0,1);
+
+function build(t){
+  const x=X(t), p=x*.0327, wl=legW(t), c0=squat(t)+ (t>=5.2&&t<=8.2 ? clamp((tipAt(t).y-190)/110,0,1)*.9*ikW(t) : 0), tk=tuck(t);
+  const lw=legsWalk(p), lk=[{t:sT(t),s:sS(t)},{t:kT(t),s:kS(t)}];
+  const legs=[0,1].map(i=>({ t:lerp(lk[i].t,lw[i].t,wl)+.9*c0+.6*tk, s:lerp(lk[i].s,lw[i].s,wl)-.9*c0-1.1*tk }));
+  let lean=lean0(t); if(t>3.5&&t<4.4) lean+=.12*Math.exp(-6*(t-3.5))*Math.cos(18*(t-3.5));
+  lean+=.06*Math.sin(t*14)*0*wl;
+  const off=legs.map(l=>L.th*Math.cos(l.t)+L.sh*Math.cos(l.s));
+  const hipY=G-Math.max(off[0],off[1])-jumpY(t), hip=[x,hipY];
+  const td=[Math.sin(lean),-Math.cos(lean)], sh=[hip[0]+td[0]*L.torso*.92, hip[1]+td[1]*L.torso*.92], nk=[hip[0]+td[0]*L.torso, hip[1]+td[1]*L.torso];
+  const hc=[nk[0]+td[0]*24, nk[1]+td[1]*24];
+  const aw=armsWalk(p), aww=armWalkW(t);
+  const arms=[0,1].map(i=>{ const u=(i?u1:u0)(t); return {u:lerp(u, aw[i].u, aww), f:lerp(fore(u), aw[i].f, aww)}; });
+  const wI=ikW(t); let tip=null, hand=null;
+  if(wI>0){ tip=tipAt(Math.max(t,5.2)); const tg=[tip.x-BV[0], tip.y-BV[1]]; const s=ik(sh,tg,L.ua,L.fa);
+    arms[1]={u:lerp(arms[1].u,s.u,wI), f:lerp(arms[1].f,s.f,wI)}; }
+  const pts=(o,l1,l2,a)=>{ const A=a.u??a.t, B=a.f??a.s, k=[o[0]+l1*Math.sin(A), o[1]+l1*Math.cos(A)], f=[k[0]+l2*Math.sin(B), k[1]+l2*Math.cos(B)]; return [o,k,f]; };
+  return { x,hip,sh,nk,hc,legs:[pts(hip,L.th,L.sh,legs[0]),pts(hip,L.th,L.sh,legs[1])], arms:[pts(sh,L.ua,L.fa,arms[0]),pts(sh,L.ua,L.fa,arms[1])], wI, tip, jump:jumpY(t) };
+}
+const pl=a=>a.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ');
+
+// ---- effets ----
+let parts=[], fired={}, t0=performance.now(), last=0;
+function burst(n,x,y,spd,cols){ for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, s=spd*(.4+Math.random()); parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-spd*.4,life:1.2+Math.random()*.6,age:0,r:3+Math.random()*4,c:cols[i%cols.length],g:420}); } }
+const COLS=['#ff4d6d','#ffd23f','#3bceac','#4361ee','#fff'];
+function star(r1,r2,n){ let s=''; for(let i=0;i<n*2;i++){ const r=i%2?r1:r2, a=i*Math.PI/n; s+=(Math.cos(a)*r).toFixed(1)+','+(Math.sin(a)*r).toFixed(1)+' '; } return s; }
+$('burst').setAttribute('points', star(34,66,9));
+
+function frame(now){
+  const t=((now-t0)/1000)%T, dt=Math.min(.05,(now-last)/1000||0); last=now;
+  if(t<last*0+0.05 && fired.any){ fired={}; parts=[]; }
+  fired.any=true;
+  const P=build(t);
+  $('armB').setAttribute('points',pl(P.arms[0])); $('legB').setAttribute('points',pl(P.legs[0]));
+  $('torso').setAttribute('x1',P.hip[0]); $('torso').setAttribute('y1',P.hip[1]); $('torso').setAttribute('x2',P.nk[0]); $('torso').setAttribute('y2',P.nk[1]);
+  $('legF').setAttribute('points',pl(P.legs[1])); $('armF').setAttribute('points',pl(P.arms[1]));
+  const hc=P.hc, head=$('head'); head.setAttribute('cx',hc[0]); head.setAttribute('cy',hc[1]);
+  const blink=(t%3.1)<.12; const e1=$('eye1'), e2=$('eye2');
+  e1.setAttribute('cx',hc[0]+4); e1.setAttribute('cy',hc[1]-3); e2.setAttribute('cx',hc[0]+13); e2.setAttribute('cy',hc[1]-3);
+  e1.setAttribute('ry',blink?.6:2.8); e2.setAttribute('ry',blink?.6:2.8);
+  const open=(t>3.1&&t<3.9)||(t>8.5&&t<10.8);
+  $('mouth').setAttribute('d', open ? `M ${hc[0]+5} ${hc[1]+6} a 5 6 0 1 0 10 0 a 5 6 0 1 0 -10 0` : `M ${hc[0]+3} ${hc[1]+7} q 6 6 12 0`);
+  $('mouth').setAttribute('fill', open?'#7a1d1d':'none');
+  const hand=P.arms[1][2], br=$('brush'), bs=$('bristle');
+  const showBr = t>4.7&&t<8.3, tipPt = P.tip ? [P.tip.x,P.tip.y] : [hand[0]+BV[0],hand[1]+BV[1]];
+  br.style.display=bs.style.display=showBr?'':'none';
+  br.setAttribute('x1',hand[0]-6); br.setAttribute('y1',hand[1]-5); br.setAttribute('x2',tipPt[0]-8); br.setAttribute('y2',tipPt[1]-6);
+  bs.setAttribute('x1',tipPt[0]-8); bs.setAttribute('y1',tipPt[1]-6); bs.setAttribute('x2',tipPt[0]); bs.setAttribute('y2',tipPt[1]);
+  const sh=$('shadow'); sh.setAttribute('cx',P.x); sh.setAttribute('rx',28*(1-P.jump/260)); sh.setAttribute('opacity',.25*(1-P.jump/200));
+
+  // "2": posé, puis tiré en arc
+  const two=$('two'), kt=3.36;
+  if(t<kt){ two.setAttribute('transform','translate(470 252)'); two.style.opacity=1; }
+  else { const s=t-kt, x=470+430*s, y=252-650*s+450*s*s; two.setAttribute('transform',`translate(${x} ${y}) rotate(${1000*s}) scale(${lerp(1,.5,clamp(s/1,0,1))})`); two.style.opacity=(x<860)?1:0; }
+  // encre du "3"
+  const q=qTrack(t); ink.style.strokeDasharray=INK; ink.style.strokeDashoffset=INK*(1-q); ink.style.opacity=t>=5.2?1:0;
+  $('guide').style.opacity = t>4.4&&t<7.9?1:0;
+  $('hud').textContent = t>7.9?'Niveau 3':'Niveau 2';
+  // impact + secousse
+  if(t>=kt && !fired.hit){ fired.hit=1; burst(26,425,300,300,COLS); }
+  const pw=$('pow'), ps=t-kt;
+  if(ps>0&&ps<.6){ const sc=ps<.12?lerp(.2,1.3,ps/.12):lerp(1.3,1,clamp((ps-.12)/.2,0,1)); pw.setAttribute('transform',`translate(430 285) scale(${sc}) rotate(-8)`); pw.setAttribute('opacity',ps>.45?1-(ps-.45)/.15:1); } else pw.setAttribute('opacity',0);
+  const sk=(t>kt&&t<kt+.3)?(1-(t-kt)/.3)*5:0; $('world').setAttribute('transform',`translate(${(Math.random()-.5)*sk} ${(Math.random()-.5)*sk})`);
+  // gouttes de peinture
+  if(P.tip && t<7.95 && Math.random()<.5) parts.push({x:P.tip.x,y:P.tip.y,vx:(Math.random()-.5)*30,vy:-20,life:.7,age:0,r:3,c:'#ff4d6d',g:520});
+  // confettis au saut
+  if(t>=8.55&&!fired.c1){ fired.c1=1; burst(40,P.x,P.hip[1]-70,330,COLS); }
+  if(t>=10.3&&!fired.c2){ fired.c2=1; burst(24,P.x,P.hip[1]-70,260,COLS); }
+  const pg=$('parts'); let html='';
+  parts=parts.filter(o=>(o.age+=dt)<o.life); for(const o of parts){ o.vy+=o.g*dt; o.x+=o.vx*dt; o.y+=o.vy*dt; html+=`<circle cx="${o.x.toFixed(1)}" cy="${o.y.toFixed(1)}" r="${o.r}" fill="${o.c}" opacity="${clamp(1-o.age/o.life,0,1)}"/>`; }
+  pg.innerHTML=html;
+  $('sv').style.opacity=sceneA(t);
+  requestAnimationFrame(frame);
+}
+$('replay').onclick=()=>{ t0=performance.now(); fired={}; parts=[]; };
+requestAnimationFrame(frame);
+</script></body></html>
