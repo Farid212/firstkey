@@ -49,6 +49,10 @@ Les récompenses vivent dans `assets/js/rewards/`. Pour ajouter une créature: u
 
 Niveaux 1 à 57: « Que s'affiche-t-il ? » en choix multiple; niveaux 58 à 114: retaper une ligne de code. Les exemples sont dans `assets/js/data/code-js.js` et `code-python.js` (`quiz` et `lines`); `npm test` exécute chaque programme (JavaScript dans Node, Python avec `python3` s'il est installé) pour vérifier sa réponse. « Tout mélangé » ne tire un bloc que si l'âge réglé atteint son âge minimal (`minAge` dans `blocks.js`).
 
+## Programmation en jeu (labyrinthes)
+
+Le bloc « Programmation » est un terminal: l'enfant tape de vraies commandes Python ou JavaScript (langage choisi dans les réglages) pour guider une créature de sa collection jusqu'à l'étoile. Chaque ligne s'exécute à l'appui sur Entrée. Commandes: `forward()`, `forward(3)`, `turn_left()` / `turnLeft()`, `turn_right()` / `turnRight()`, boucles `for` et conditions `if` / `while` avec `wall()` et `goal()`, sur une seule ligne. Code dans `assets/js/maze/`: `gen.js` (labyrinthe de chaque niveau, déterministe et solvable), `lang.js` (analyseur écrit à la main, jamais d'`eval`), `world.js` (exécution, événements); l'écran est `assets/js/ui-maze.js`. Pour ajouter une commande: la grammaire dans `lang.js`, son effet dans `world.js`, son aide dans `ui-maze.js` et ses tests.
+
 ## Show your support
 
 Give a ⭐️ if this project helped you!
