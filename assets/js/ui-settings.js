@@ -26,7 +26,9 @@ export function openSettings(root, state, handlers) {
   const back = el('button', 'back', '←');
   back.setAttribute('aria-label', 'Retour');
   back.onclick = handlers.onClose;
-  root.append(back, box);
+  const page = el('div', 'settings-page');
+  page.append(back, box);
+  root.append(page);
 
   let gate = makeGate();
   const prompt = el('p', 'gate-q');

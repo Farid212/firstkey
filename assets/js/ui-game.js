@@ -1,4 +1,5 @@
-import { pickBlock, recordCorrect } from './progress.js';
+import { pickBlock, recordCorrect, answersPerLevel } from './progress.js';
+import { MAX_LEVEL } from './blocks.js';
 import { makeQuestion, answerKind } from './questions.js';
 import { createTyper } from './typer.js';
 
@@ -13,10 +14,18 @@ export function startGame(root, state, target, handlers) {
   const div = (cls) => Object.assign(document.createElement('div'), { className: cls });
   root.replaceChildren();
   const bar = div('bar');
-  const back = Object.assign(document.createElement('button'), { className: 'back', textContent: '←', tabIndex: -1 });
+  const back = Object.assign(document.createElement('button'), { className: 'back round', textContent: '←', tabIndex: -1 });
   back.setAttribute('aria-label', 'Retour');
-  const info = div('info');
-  bar.append(back, info);
+  const score = div('pill score');
+  const meter = div('meter');
+  meter.setAttribute('role', 'progressbar');
+  meter.setAttribute('aria-valuemin', '0');
+  meter.setAttribute('aria-valuemax', '100');
+  const fill = div('fill');
+  const lvlTag = div('lvl-tag');
+  meter.append(fill, lvlTag);
+  bar.append(back, score, meter);
+  const card = div('qcard');
   const hint = div('hint');
   const shown = div('display');
   const lead = document.createElement('span'); // énoncé de calcul (vide pour lettres et mots)
@@ -25,7 +34,12 @@ export function startGame(root, state, target, handlers) {
   const rest = document.createElement('span');
   shown.append(lead, done, rest);
   const choices = div('choices');
-  root.append(bar, hint, shown, choices);
+  card.append(hint, shown, choices);
+  const stage = div('stage');
+  stage.append(card);
+  const screen = div('game');
+  screen.append(bar, stage);
+  root.append(screen);
 
   let s = handlers.getState();
   let blockId, level, question, typer;
@@ -41,11 +55,15 @@ export function startGame(root, state, target, handlers) {
     const isCode = blockId === 'js' || blockId === 'python';
     shown.classList.toggle('code', isCode);
     choices.classList.toggle('code', isCode);
+    // réponses sur plusieurs lignes (étroites): une seule rangée de colonnes pour tenir en hauteur
+    choices.classList.toggle('tall', isCode && (q.choices ?? []).some((c) => c.includes('\n')));
     if (isCode) {
       // monospace ~0,62em par caractère; le texte passe à la ligne plutôt que de déborder (pre-wrap)
       const rows = q.display.split('\n');
       const w = 0.62 * Math.min(28, Math.max(...rows.map((r) => r.length))); // au-delà de 28 caractères la ligne passe à la ligne
-      shown.style.fontSize = `max(14px, min(48px, ${(80 / w).toFixed(2)}vw, ${Math.round(640 / w)}px, ${Math.round(280 / rows.length)}px))`;
+      // hauteur: lignes visibles (repliées comprises) dans ~18 % de l'écran, la carte doit tenir dans les 62 % du haut
+      const vis = rows.reduce((n, r) => n + Math.max(1, Math.ceil(r.length / 28)), 0);
+      shown.style.fontSize = `max(14px, min(40px, ${(72 / w).toFixed(2)}vw, ${Math.round(560 / w)}px, ${(18 / vis).toFixed(2)}vh))`;
     } else if (blockId === 'math') {
       // une seule ligne tant que possible: ~0,6em par caractère dans la largeur de #app (688px au plus)
       const len = q.display.length + (q.math ? 3 + q.accepts[0].length : 0);
@@ -66,6 +84,10 @@ export function startGame(root, state, target, handlers) {
       return b;
     }));
     paint();
+    // relancer le « pop » de la carte (CSS, coupé sous prefers-reduced-motion)
+    card.classList.remove('pop');
+    void card.offsetWidth;
+    card.classList.add('pop');
   }
 
   function choose(i) {
@@ -99,7 +121,14 @@ export function startGame(root, state, target, handlers) {
   }
 
   function paint() {
-    info.textContent = `Score ${s.score} · Niveau ${level}`;
+    score.textContent = `⭐ ${s.score}`;
+    const p = s.progress[blockId];
+    // niveau rejoué (plus bas) ou dernier niveau: barre pleine
+    const pct = level < p.level || p.level >= MAX_LEVEL ? 100 : Math.round((100 * p.correct) / answersPerLevel(s.settings.age));
+    fill.style.width = `${pct}%`;
+    meter.setAttribute('aria-valuenow', String(pct));
+    meter.setAttribute('aria-label', `Niveau ${level}`);
+    lvlTag.textContent = `Niveau ${level}`;
     if (question.kind === 'choice') {
       lead.textContent = question.display;
       done.textContent = rest.textContent = '';
