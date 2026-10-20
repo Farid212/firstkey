@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeMaze, tierOf, solve, solutionPath, DIRS, SEGMENTS, carve, walkCells, mulberry32, compressedLength } from '../assets/js/maze/gen.js';
+import { makeMaze, solve, solutionPath, DIRS, SEGMENTS, carve, walkCells, mulberry32, compressedLength } from '../assets/js/maze/gen.js';
 
 const LEVELS = Array.from({ length: 114 }, (_, i) => i + 1);
 const free = (m, x, y) => x >= 0 && y >= 0 && x < m.w && y < m.h && !m.walls[y][x];
@@ -14,10 +14,6 @@ function replay(m, path) {
   }
   return x === m.goal.x && y === m.goal.y;
 }
-
-test('tierOf (compatibilité ui-maze.js) suit les anciens paliers de la spec 5', () => {
-  assert.deepEqual([1, 12, 13, 30, 31, 48, 49, 72, 73, 94, 95, 114].map(tierOf), [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
-});
 
 test('tous les niveaux et exercices: solvable, déterministe, départ/arrivée libres et distincts', () => {
   for (const l of LEVELS) for (const e of [0, 1, 2]) {

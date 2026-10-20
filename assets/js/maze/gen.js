@@ -4,10 +4,6 @@ import { levelSpec } from './levels.js';
 export const DIRS = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }]; // nord, est, sud, ouest
 export const MAX_SIZE = 11;
 
-// shortcut: anciens paliers de la spec 5, gardés pour ui-maze.js (encadré « Nouveau », aide); la tâche 3 passe au CURRICULUM.
-const TIER_ENDS = [12, 30, 48, 72, 94, 114];
-export const tierOf = (level) => TIER_ENDS.findIndex((end) => level <= end) + 1 || 6;
-
 export const sizeOf = (level) => Math.max(5, Math.min(MAX_SIZE, Math.round(5 + (6 * (level - 1)) / 113)));
 
 export function mulberry32(seed) {

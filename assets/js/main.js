@@ -1,7 +1,7 @@
 import { loadState, saveState } from './store.js';
 import { renderHome } from './ui-home.js';
 import { startGame } from './ui-game.js';
-import { startMaze } from './ui-maze.js';
+import { startMaze, warmMaze } from './ui-maze.js';
 import { renderCollection } from './ui-collection.js';
 import { openSettings } from './ui-settings.js';
 import { createAudio } from './rewards/audio.js';
@@ -47,3 +47,5 @@ function game(target) {
 
 gear.onclick = () => { director.clear(); openSettings(root, state, { onChange, onClose: home }); };
 home();
+// les labyrinthes se génèrent dans l'ordre (≈ 1,7 s jusqu'au tour 114): on les prépare en tâche de fond
+if (state.settings.blocks.includes('maze')) warmMaze(state.progress.maze.level + 1);
