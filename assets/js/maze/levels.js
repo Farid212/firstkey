@@ -327,20 +327,48 @@ export const difficulty = (spec) => spec.worlds.reduce((s, w) => s + w.par, 0);
 const specs = [];
 const taken = new Set();
 
-function generate(level, ex) {
-  const prev = specs.slice(specs.length - ex);
+const POOL = 16; // candidats valides comparés pour régler la difficulté
+const caps = new Map(); // niveau -> difficulté du plus dur des exercices 3 possibles
+function poolOf(level, ex, prev, size = POOL) { // jusqu'à POOL candidats valides, triés du plus facile au plus dur
   const build = level <= 72 ? buildRepl : level <= 100 ? buildProgram : buildGeneral;
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+  const pool = [];
+  for (let attempt = 0; attempt < MAX_ATTEMPTS && pool.length < size; attempt++) {
     const rng = mulberry32(level * 7919 + ex * 15485863 + attempt * 104729 + 12345);
     const c = build(level, ex, rng);
     if (!c || !tourOk(level, ex, c.tags)) continue;
-    if (ex && difficulty(c) < difficulty(prev[ex - 1])) continue;
-    if (c.worlds.some((w) => taken.has(sig(w))) || prev.some((p) => p.reference.py === c.reference.py)) continue;
+    if (ex && prev && difficulty(c) < difficulty(prev[ex - 1])) continue;
+    if (prev && (c.worlds.some((w) => taken.has(sig(w))) || prev.some((p) => p.reference.py === c.reference.py))) continue;
+    if (pool.some((p) => p.reference.py === c.reference.py && sig(p.worlds[0]) === sig(c.worlds[0]))) continue;
     if (level >= 41 && level <= 72 && !loopDemanded(c)) continue;
-    for (const w of c.worlds) taken.add(sig(w));
-    return { level, exercise: ex, ...c, hint: HINTS[row(level).focus] };
+    pool.push(c);
   }
-  throw new Error(`exercice introuvable: niveau ${level}, exercice ${ex}`); // inatteignable: vérifié par les tests
+  return pool.sort((a, b) => difficulty(a) - difficulty(b));
+}
+
+// Dans un bloc de tours de même notion, la difficulté monte: le premier tour prend un candidat facile,
+// le dernier un des plus durs, et un tour n'est jamais plus facile que le précédent quand c'est possible.
+// Les exercices 1 et 2 ne dépassent pas le plus dur des exercices 3 possibles, pour que le tour reste croissant.
+function generate(level, ex) {
+  const prev = specs.slice(specs.length - ex);
+  const focus = row(level).focus;
+  const first = CURRICULUM.findIndex((r) => r.focus === focus) + 1;
+  const len = CURRICULUM.filter((r) => r.focus === focus).length;
+  const below = level > first ? specs[(level - 2) * 3 + ex] : null;
+  const capped = (size) => {
+    const pool = poolOf(level, ex, prev, size);
+    if (!pool.length) throw new Error(`exercice introuvable: niveau ${level}, exercice ${ex}`); // inatteignable: vérifié par les tests
+    if (ex === 2) return pool;
+    if (!caps.has(level)) caps.set(level, difficulty(poolOf(level, 2, null).at(-1) ?? pool[0]));
+    const ok = pool.filter((p) => difficulty(p) <= caps.get(level));
+    return ok.length ? ok : pool.slice(0, 1);
+  };
+  let pool = capped(POOL);
+  if (below && !pool.some((p) => difficulty(p) >= difficulty(below))) pool = capped(6 * POOL); // chercher plus loin
+  const q = len > 1 ? ((level - first) * 3 + ex) / (len * 3 - 1) : ex / 2;
+  let c = pool[Math.round(q * (pool.length - 1))];
+  if (below && difficulty(c) < difficulty(below)) c = pool.find((p) => difficulty(p) >= difficulty(below)) ?? pool.at(-1);
+  for (const w of c.worlds) taken.add(sig(w));
+  return { level, exercise: ex, ...c, hint: HINTS[focus] };
 }
 
 export function levelSpec(level, exercise = 0) {

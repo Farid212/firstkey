@@ -76,6 +76,18 @@ test('un tour: 3 exercices différents (labyrinthe et référence), difficulté 
   }
 });
 
+test('dans un bloc de même notion, la difficulté ne baisse jamais d’un tour au suivant et le dernier est plus dur que le premier', () => {
+  const diff = (l, e) => spec(l, e).worlds.reduce((n, w) => n + w.par, 0);
+  for (let l = 2; l <= 114; l++) {
+    if (focus(l) !== focus(l - 1)) continue;
+    for (const e of [0, 1, 2]) assert.ok(diff(l, e) >= diff(l - 1, e), `niveau ${l}.${e}: ${diff(l - 1, e)} -> ${diff(l, e)}`);
+  }
+  const blocks = [...new Set(CURRICULUM.map((r) => r.focus))].map((f) => CURRICULUM.filter((r) => r.focus === f).map((r) => r.level));
+  for (const b of blocks.filter((x) => x.length > 1)) {
+    for (const e of [0, 1, 2]) assert.ok(diff(b.at(-1), e) > diff(b[0], e), `bloc ${b[0]}-${b.at(-1)}, exercice ${e}`);
+  }
+});
+
 test('les 342 exercices (et tous les mondes) sont distincts', () => {
   const all = ALL.flatMap(([l, e]) => spec(l, e).worlds.map(sig));
   assert.equal(new Set(all).size, all.length);
