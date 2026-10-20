@@ -65,9 +65,10 @@ export function startGame(root, state, target, handlers) {
       const vis = rows.reduce((n, r) => n + Math.max(1, Math.ceil(r.length / 28)), 0);
       shown.style.fontSize = `max(14px, min(40px, ${(72 / w).toFixed(2)}vw, ${Math.round(560 / w)}px, ${(18 / vis).toFixed(2)}vh))`;
     } else if (blockId === 'math') {
-      // une seule ligne tant que possible: ~0,6em par caractère dans la largeur de #app (688px au plus)
+      // une seule ligne tant que possible: ~0,6em par caractère plafonnée en px pour les écrans larges
       const len = q.display.length + (q.math ? 3 + q.accepts[0].length : 0);
-      shown.style.fontSize = `min(10rem, ${(150 / len).toFixed(1)}vw, ${Math.round(1100 / len)}px)`;
+      // plafond en vh: avec les boutons du QCM, la carte doit tenir entre la barre et la ligne des 62 %
+      shown.style.fontSize = `min(10rem, ${(150 / len).toFixed(1)}vw, ${Math.round(1100 / len)}px, ${q.kind === 'choice' ? 10 : 16}vh)`;
     } else {
       // texte long: la taille de base (clamp du CSS) rétrécit pour tenir en quelques lignes
       const len = q.display.length;
