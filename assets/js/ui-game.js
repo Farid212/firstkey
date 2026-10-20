@@ -45,7 +45,7 @@ export function startGame(root, state, target, handlers) {
       // monospace ~0,62em par caractère; le texte passe à la ligne plutôt que de déborder (pre-wrap)
       const rows = q.display.split('\n');
       const w = 0.62 * Math.min(28, Math.max(...rows.map((r) => r.length))); // au-delà de 28 caractères la ligne passe à la ligne
-      shown.style.fontSize = `max(14px, min(48px, ${(88 / w).toFixed(2)}vw, ${Math.round(640 / w)}px, ${Math.round(280 / rows.length)}px))`;
+      shown.style.fontSize = `max(14px, min(48px, ${(80 / w).toFixed(2)}vw, ${Math.round(640 / w)}px, ${Math.round(280 / rows.length)}px))`;
     } else if (blockId === 'math') {
       // une seule ligne tant que possible: ~0,6em par caractère dans la largeur de #app (688px au plus)
       const len = q.display.length + (q.math ? 3 + q.accepts[0].length : 0);
@@ -122,7 +122,8 @@ export function startGame(root, state, target, handlers) {
 
   function onKey(e) {
     if (e.repeat) return;
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    // AltGr (Windows: Ctrl+Alt) et Option (Mac) servent à taper [ ] { } sur AZERTY: seuls Ctrl seul et Cmd sont des raccourcis
+    if (e.metaKey || (e.ctrlKey && !e.altKey)) return;
     if (question.kind === 'choice') {
       // chiffre de la rangée du haut ou du pavé; AZERTY sans Maj: repli sur e.code
       const k = /^\d$/.test(e.key) ? e.key : /^(Digit|Numpad)\d$/.test(e.code) ? e.code.at(-1) : '';

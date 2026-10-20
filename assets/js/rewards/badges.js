@@ -18,7 +18,9 @@ export const BADGES = [
   b('total_500', '500 bonnes réponses', '500 correct answers', '500もんせいかい', stat('totalCorrect', 500)),
   b('total_1000', '1000 bonnes réponses', '1000 correct answers', '1000もんせいかい', stat('totalCorrect', 1000)),
   b('explorer', 'Explorateur', 'Explorer', 'たんけんか', (s) => {
-    const on = (s.settings?.blocks ?? []).filter((id) => playable.includes(id));
+    // blocs activés ET adaptés à l'âge (même règle que « Tout mélangé »)
+    const age = s.settings?.age ?? 4;
+    const on = (s.settings?.blocks ?? []).filter((id) => playable.includes(id) && BLOCKS.find((b) => b.id === id).minAge <= age);
     return on.length > 0 && on.every((id) => s.rewards.stats.blocksTried.includes(id));
   }),
   b('first_word', 'Premier mot', 'First word', 'はじめてのことば', (s) => s.rewards.stats.wordTyped),
