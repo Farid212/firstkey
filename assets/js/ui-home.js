@@ -18,7 +18,7 @@ export const categoryGames = (state, catId) =>
 export const visibleCategories = (state) =>
   CATEGORIES.filter((c) => categoryGames(state, c.id).some((b) => b.playable));
 
-export function renderHome(root, state, handlers, focusId) {
+export function renderHome(root, state, handlers, focusBlock) {
   root.replaceChildren();
   const home = el('div', 'home');
 
@@ -35,27 +35,32 @@ export function renderHome(root, state, handlers, focusId) {
   mix.onclick = () => handlers.onPlay('random');
   home.append(mix);
 
-  const cats = el('div', 'cats');
+  // une section par catégorie, toutes sur la même page
   for (const c of visibleCategories(state)) {
     const games = categoryGames(state, c.id);
-    const best = games.filter((b) => b.playable).reduce((a, b) => (state.progress[b.id].level > state.progress[a.id].level ? b : a));
-    const n = `${games.length} jeu${games.length > 1 ? 'x' : ''}`;
-    const btn = el('button', `cat cat-${c.id}`);
-    btn.dataset.cat = c.id;
-    btn.setAttribute('aria-label', `${c.name}, ${n}`);
-    btn.append(el('span', 'icon', c.icon), el('span', 'name', c.name), el('span', 'count', n),
-      el('span', 'sum', `${best.label} · niveau ${state.progress[best.id].level}`));
-    for (const s of btn.children) s.setAttribute('aria-hidden', 'true');
-    btn.onclick = () => handlers.onOpenCategory(c.id);
-    cats.append(btn);
+    const sec = el('section', `section cat-${c.id}`);
+    const h = el('h2', 'section-title');
+    h.append(el('span', 'icon', c.icon), el('span', '', c.name));
+    sec.append(h);
+    const row = (list) => {
+      const r = el('div', 'blocks');
+      for (const b of list) r.append(gameCard(b, state, handlers));
+      return r;
+    };
+    const plain = games.filter((x) => !x.group);
+    if (plain.length) sec.append(row(plain));
+    for (const [g, name] of [['py', 'Python'], ['js', 'JavaScript']]) {
+      const list = games.filter((x) => x.group === g);
+      if (list.length) sec.append(el('h3', `cat-sub sub-${g}`, name), row(list));
+    }
+    home.append(sec);
   }
-  home.append(cats);
   const col = el('button', 'big collection-btn', `🎒 Ma collection · ${state.rewards.unlocked} / 24`);
   if (hasNew(state.rewards)) col.append(el('span', 'dot'));
   col.onclick = handlers.onOpenCollection;
   home.append(col);
   root.append(home);
-  home.querySelector(`[data-cat="${focusId}"]`)?.focus(); // retour d'une catégorie: focus sur sa carte
+  home.querySelector(`[data-block="${focusBlock}"]`)?.focus(); // retour d'une partie: focus sur son jeu
 }
 
 function gameCard(b, state, handlers) {
@@ -86,38 +91,4 @@ function gameCard(b, state, handlers) {
   // le niveau actuel reste visible dans la grille défilante
   requestAnimationFrame(() => { grid.scrollTop += now.getBoundingClientRect().top - grid.getBoundingClientRect().top - 60; });
   return card;
-}
-
-export function renderCategory(root, state, catId, handlers, focusBlock) {
-  const cat = CATEGORIES.find((c) => c.id === catId);
-  root.replaceChildren();
-  const page = el('div', `cat-page cat-${catId}`);
-  const bar = el('div', 'bar');
-  const back = el('button', 'back', '← Retour');
-  back.onclick = handlers.onBack;
-  const h = el('h1', 'cat-title');
-  h.append(el('span', 'icon', cat.icon), el('span', '', cat.name));
-  bar.append(back, h);
-  page.append(bar);
-
-  const games = categoryGames(state, catId);
-  const grid = () => el('div', 'blocks');
-  const plain = grid();
-  for (const b of games.filter((x) => !x.group)) plain.append(gameCard(b, state, handlers));
-  if (plain.children.length) page.append(plain);
-  for (const [g, name] of [['py', 'Python'], ['js', 'JavaScript']]) {
-    const list = games.filter((x) => x.group === g);
-    if (!list.length) continue;
-    const sec = grid();
-    for (const b of list) sec.append(gameCard(b, state, handlers));
-    page.append(el('h2', `cat-sub sub-${g}`, name), sec);
-  }
-  root.append(page);
-
-  const ac = new AbortController();
-  document.addEventListener('keydown', (e) => {
-    if (!page.isConnected) return ac.abort(); // page quittée (partie, réglages): l'écouteur s'en va
-    if (e.key === 'Escape') { ac.abort(); handlers.onBack(); }
-  }, { signal: ac.signal });
-  (page.querySelector(`[data-block="${focusBlock}"]`) ?? back).focus({ preventScroll: !focusBlock });
 }
