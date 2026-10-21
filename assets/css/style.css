@@ -46,7 +46,7 @@ button:disabled { cursor: default; }
 .title .ch:nth-child(5n+4) { color: #0a8f62; }
 .title .ch:nth-child(5n) { color: #d9590b; transform: rotate(-3deg); }
 .title .kbd { font-size: .6em; margin-left: .2em; vertical-align: middle; }
-.home > .big, .blocks { width: 100%; }
+.home > .big, .blocks, .cats { width: 100%; }
 .mix {
   display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 22px 20px;
   background: #5b4bd6; color: #fff; box-shadow: 0 8px 0 #3b2f9e; font-size: 2.4rem;
@@ -66,6 +66,10 @@ button:disabled { cursor: default; }
 .block-js { --c: #f2c200; --t: #fff6cc; }
 .block-python { --c: #8e6cf0; --t: #ece6ff; }
 .block-maze { --c: #ff8a3d; --t: #ffeadb; }
+.block-logic { --c: #14b8a6; --t: #d5f5f0; }
+.block-guess { --c: #8e6cf0; --t: #ece6ff; }
+.block-hangman { --c: #8e6cf0; --t: #ece6ff; }
+.block-cookie { --c: #f2c200; --t: #fff6cc; }
 .block-main {
   display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center;
   width: 100%; min-height: 72px; padding: 10px 14px; border-radius: 18px; background: var(--t, #fff); text-align: left;
@@ -85,6 +89,34 @@ button:disabled { cursor: default; }
 .lvl.now { background: var(--t, #fff); border-color: var(--c, #eee); } /* niveau actuel */
 .lvl.locked { background: #ffffff59; border-color: #ffffff80; color: #2b2b4a80; box-shadow: none; cursor: not-allowed; }
 .lvl:not(:disabled):active { box-shadow: 0 1px 0 var(--c, var(--shadow)); transform: translateY(3px); }
+/* cartes de catégorie (accueil) et page de catégorie */
+.cats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; }
+.cat-read { --c: #ff6f9c; --t: #ffe3ec; --d: #d94a7a; }
+.cat-logic { --c: #2fbf71; --t: #ddf7e8; --d: #1f9456; }
+.cat-code { --c: #8e6cf0; --t: #ece6ff; --d: #6a48cc; }
+.cat {
+  display: grid; grid-template-columns: auto 1fr; grid-template-areas: "i n" "i c" "s s"; column-gap: 14px; row-gap: 2px; align-items: center;
+  min-height: 120px; padding: 16px 18px; border: 0; border-radius: 26px; text-align: left;
+  background: linear-gradient(135deg, #fff 30%, var(--t)); border-top: 8px solid var(--c); box-shadow: 0 6px 0 var(--d);
+  transition: transform .08s, box-shadow .08s, filter .15s;
+}
+@media (hover: hover) { .cat:hover { filter: brightness(1.04); } }
+.cat:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--d); }
+.cat .icon { grid-area: i; font-size: 3.4rem; line-height: 1; }
+.cat .name { grid-area: n; font-size: 1.6rem; font-weight: 900; line-height: 1.1; }
+.cat .count { grid-area: c; font-size: 1.05rem; font-weight: 800; color: var(--d); }
+.cat .sum { grid-area: s; margin-top: 10px; padding: 6px 12px; border-radius: 999px; background: #ffffffc0; font-size: 1rem; font-weight: 700; color: var(--ink-soft); justify-self: start; }
+.cat-page { display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px; animation: cat-in .22s ease-out; }
+@keyframes cat-in { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+.cat-page .bar { flex-wrap: wrap; padding-right: 56px; } /* place pour la roue des réglages */
+.cat-page .back { flex: none; white-space: nowrap; font-size: 1.4rem; }
+.cat-title { flex: 1 1 240px; min-width: 0; margin: 0; display: flex; align-items: center; gap: .3em; line-height: 1.1; font-size: clamp(1.7rem, 6vw, 2.4rem); font-weight: 900; color: var(--d); text-shadow: 0 3px 0 #ffffffb0; }
+.cat-sub { margin: 10px 0 -4px; padding: 4px 16px; align-self: flex-start; border-radius: 999px; background: #ffffffd9; font-size: 1.3rem; font-weight: 900; box-shadow: 0 3px 0 var(--shadow); }
+.sub-py { color: #6a48cc; }
+.sub-js { color: #9a7400; }
+.soon .block-main { cursor: not-allowed; }
+.soon .lvl-now { display: inline-block; justify-self: start; padding: 0 10px; border-radius: 999px; background: #fff; }
+@media (prefers-reduced-motion: reduce) { .cat-page { animation: none; } .cat { transition: none; } }
 .collection-btn { background: #00876c; color: #fff; box-shadow: 0 6px 0 #005c49; position: relative; font-size: 1.6rem; }
 .collection-btn:not(:disabled):active { box-shadow: 0 2px 0 #005c49; }
 .dot { position: absolute; top: 10px; right: 14px; width: 18px; height: 18px; border-radius: 50%; background: #ff4d6d; border: 3px solid #fff; }

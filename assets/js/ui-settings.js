@@ -107,7 +107,7 @@ export function openSettings(root, state, handlers) {
 
     const fs = el('fieldset');
     fs.append(el('legend', '', 'Blocs actifs'));
-    for (const b of BLOCKS) {
+    for (const b of BLOCKS.filter((x) => x.playable)) { // les jeux « bientôt » s'affichent toujours, sans case
       const c = el('input');
       c.type = 'checkbox';
       c.checked = cur.settings.blocks.includes(b.id);

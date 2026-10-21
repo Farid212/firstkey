@@ -37,6 +37,13 @@
 
 Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](https://github.com/Farid212/firstkey/issues).
 
+## Catégories de l'accueil
+
+L'accueil montre « ▶ Jouer · tout mélangé », puis trois catégories (`CATEGORIES` dans `assets/js/blocks.js`, dans l'ordre d'affichage): Lire et écrire, Nombres et logique, Programmer. Un clic ouvre la page de la catégorie (← Retour ou Échap) avec les cartes de jeux et leur grille de niveaux; en sortant d'une partie, on revient à cette page. Une catégorie n'est affichée que si au moins un de ses jeux jouables est coché dans les réglages; les jeux « bientôt » (`playable: false`) y apparaissent toujours, désactivés, et n'ont pas de case dans les réglages.
+
+- **Ajouter un jeu**: une entrée dans `BLOCKS` avec un `id` stable (clé de la progression sauvegardée), `label`, `minAge`, `playable`, `category` et `group` (`'py'` / `'js'` dans Programmer, sinon `null`), plus une icône dans `ICONS` (`assets/js/ui-home.js`) et ses couleurs `.block-<id>` dans `style.css`. Ne jamais renommer un `id` existant.
+- **Ajouter une catégorie**: une entrée dans `CATEGORIES` (id, nom, icône) et ses couleurs `.cat-<id>` dans `style.css`.
+
 ## Récompenses et collection
 
 Les récompenses vivent dans `assets/js/rewards/`. Pour ajouter une créature: une entrée dans `creatures.js` (id, famille `animal` ou `character`, noms fr/en/ja, à la fin pour garder l'ordre de déblocage), un module d'art dans `art/` qui exporte `ART = { id: { draw, cry, act } }`, puis l'ajouter au registre `art/index.js`. Passer `CREATURE_COUNT` dans `model.js` à la nouvelle taille. `npm test` échoue tant qu'une créature n'a pas d'art. Pour revoir une animation sans jouer: `document.dispatchEvent(new CustomEvent('firstkey:preview', { detail: { id: 'cow' } }))` (aussi `badge:<id>`, `levelup:stickman`, `levelup:party`).
