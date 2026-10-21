@@ -1,5 +1,6 @@
 // Table des chapitres des jeux (module pur, sans DOM). Chaque jeu: tranches contiguës de niveaux couvrant 1..114.
 import { CURRICULUM } from './maze/curriculum.js';
+import { DISCOVER_CHAPTERS } from './discover.js';
 
 const MAX = 114;
 const PALETTE = ['#e4572e', '#f2a007', '#2eab6f', '#1d9bd1', '#7a5cd6', '#d6439b', '#16a8a0', '#8a6d3b'];
@@ -61,6 +62,7 @@ export const CHAPTERS = {
   maze: build('maze', mazeRows),
   python: build('python', QUIZ_PY),
   js: build('js', QUIZ_JS),
+  discover: DISCOVER_CHAPTERS, // bornes et noms dans discover.js (même forme que build)
 };
 
 export const chapterOf = (blockId, level) => {
