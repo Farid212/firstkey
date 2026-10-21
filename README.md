@@ -39,10 +39,16 @@ Contributions, issues and feature requests are welcome!<br />Feel free to check 
 
 ## Catégories de l'accueil
 
-L'accueil montre « ▶ Jouer · tout mélangé », puis trois catégories (`CATEGORIES` dans `assets/js/blocks.js`, dans l'ordre d'affichage): Lire et écrire, Nombres et logique, Programmer. Un clic ouvre la page de la catégorie (← Retour ou Échap) avec les cartes de jeux et leur grille de niveaux; en sortant d'une partie, on revient à cette page. Une catégorie n'est affichée que si au moins un de ses jeux jouables est coché dans les réglages; les jeux « bientôt » (`playable: false`) y apparaissent toujours, désactivés, et n'ont pas de case dans les réglages.
+L'accueil montre « ▶ Jouer · tout mélangé », puis trois catégories (`CATEGORIES` dans `assets/js/blocks.js`, dans l'ordre d'affichage): Lire et écrire, Nombres et logique, Programmer. Chaque catégorie est une section de la page avec les cartes de ses jeux (voir « Chapitres »). Une catégorie n'est affichée que si au moins un de ses jeux jouables est coché dans les réglages; les jeux « bientôt » (`playable: false`) y apparaissent toujours, désactivés, et n'ont pas de case dans les réglages.
 
 - **Ajouter un jeu**: une entrée dans `BLOCKS` avec un `id` stable (clé de la progression sauvegardée), `label`, `minAge`, `playable`, `category` et `group` (`'py'` / `'js'` dans Programmer, sinon `null`), plus une icône dans `ICONS` (`assets/js/ui-home.js`) et ses couleurs `.block-<id>` dans `style.css`. Ne jamais renommer un `id` existant.
 - **Ajouter une catégorie**: une entrée dans `CATEGORIES` (id, nom, icône) et ses couleurs `.cat-<id>` dans `style.css`.
+
+## Chapitres
+
+Les 114 niveaux de chaque jeu sont découpés en chapitres dans `assets/js/chapters.js` (`CHAPTERS`): pour chaque jeu, une liste `[premier niveau, nom, nom court ≤ 18 caractères, icône]`; chaque chapitre finit où commence le suivant, le dernier à 114. Le labyrinthe déduit ses bornes de `CURRICULUM` (un chapitre par notion nouvelle, seuls les noms sont dans `MAZE_NAMES`). Pour ajouter ou modifier un chapitre, changer sa ligne puis lancer `npm test` (couverture 1..114, 4 à 14 chapitres, thèmes des quiz). Ne pas renuméroter les chapitres existants sans raison: leur `id` (`jeu:index`) est celui des autocollants gagnés.
+
+Sur l'accueil, la carte d'un jeu montre « ▶ Continuer » (niveau en cours), les vignettes des chapitres (terminé, en cours, verrouillé) et le chemin du chapitre ouvert (`assets/js/ui-home.js`, géométrie `pathPoints`): étapes faites rejouables, créature sur l'étape en cours, autocollant au bout. Échap replie le chemin.
 
 ## Récompenses et collection
 

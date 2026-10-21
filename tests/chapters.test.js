@@ -82,3 +82,21 @@ for (const [id, { data, kw }] of Object.entries(THEMES)) {
     }
   });
 }
+
+test('pathPoints: n points dans la boîte, sans chevauchement, extrémités, déterministe', async () => {
+  const { pathPoints, PATH } = await import('../assets/js/ui-home.js');
+  for (const width of [280, 320, 600, 1200]) {
+    for (const n of [2, 4, 7, 15, 31]) {
+      const pts = pathPoints(n, width);
+      assert.equal(pts.length, n);
+      assert.deepEqual(pts, pathPoints(n, width));
+      for (const q of pts) assert.ok(q.x >= PATH.pad - 1e-9 && q.x <= width - PATH.pad + 1e-9 && q.y >= PATH.pad);
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+        assert.ok(Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y) >= 76, `${width}/${n}: ${i} et ${j} trop proches`);
+      }
+      assert.deepEqual(pts[0], { x: PATH.pad, y: PATH.pad });
+      const lastRow = Math.max(...pts.map((q) => q.y)) - PATH.wave;
+      assert.ok(pts.at(-1).y >= lastRow - 1e-9, 'le dernier point est sur la dernière rangée');
+    }
+  }
+});
