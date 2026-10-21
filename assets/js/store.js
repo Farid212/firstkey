@@ -46,6 +46,8 @@ export function loadState(storage) {
   const rewards = normalizeRewards(raw.rewards);
   // une seule fois: dès la première sauvegarde suivante, le champ existe (même vide)
   if (!Array.isArray(raw.rewards?.stickers)) rewards.stickers = stickersFromProgress(progress);
+  // anciennes sauvegardes: les autocollants déjà là ne sont pas « nouveaux »
+  if (!Array.isArray(raw.rewards?.stickersSeen)) rewards.stickersSeen = [...rewards.stickers];
   return {
     score: int(raw.score, 0, Number.MAX_SAFE_INTEGER, 0),
     settings: {

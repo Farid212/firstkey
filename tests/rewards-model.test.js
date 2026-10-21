@@ -14,6 +14,7 @@ test('entrée invalide -> défauts', () => {
     stats: { totalCorrect: 0, streak: 0, bestStreak: 0, blocksTried: [], wordTyped: false, sentenceTyped: false, lastDay: '', dayStreak: 0 },
     badges: { earned: [], seen: [] },
     stickers: [],
+    stickersSeen: [],
   });
 });
 
@@ -65,4 +66,9 @@ test('stickersFromProgress: chapitres terminés seulement', () => {
   assert.deepEqual(stickersFromProgress({ letters: { level: 17 }, math: { level: 24 } }), ['letters:0']);
   assert.deepEqual(stickersFromProgress({}), []);
   assert.ok(!stickersFromProgress({ letters: { level: 114 } }).includes('letters:6')); // 114 jamais « terminé »
+});
+test('stickersSeen: unique, sous-ensemble de stickers', () => {
+  assert.deepEqual(normalizeRewards({}).stickersSeen, []);
+  const r = normalizeRewards({ stickers: ['letters:0'], stickersSeen: ['letters:0', 'letters:0', 'maze:1', 3] });
+  assert.deepEqual(r.stickersSeen, ['letters:0']);
 });

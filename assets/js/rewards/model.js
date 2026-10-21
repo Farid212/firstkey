@@ -16,6 +16,7 @@ export function defaultRewards() {
     stats: { totalCorrect: 0, streak: 0, bestStreak: 0, blocksTried: [], wordTyped: false, sentenceTyped: false, lastDay: '', dayStreak: 0 },
     badges: { earned: [], seen: [] },
     stickers: [],
+    stickersSeen: [],
   };
 }
 
@@ -33,6 +34,7 @@ export function normalizeRewards(raw) {
   const unlocked = int(raw.unlocked, START_UNLOCKED, CREATURE_COUNT, START_UNLOCKED);
   const streak = count(t.streak);
   const earned = uniq(b.earned, (x) => typeof x === 'string');
+  const stickers = uniq(raw.stickers, (x) => STICKER_IDS.includes(x));
   return {
     levelUps: count(raw.levelUps),
     unlocked,
@@ -48,7 +50,8 @@ export function normalizeRewards(raw) {
       dayStreak: count(t.dayStreak),
     },
     badges: { earned, seen: uniq(b.seen, (x) => earned.includes(x)) },
-    stickers: uniq(raw.stickers, (x) => STICKER_IDS.includes(x)),
+    stickers,
+    stickersSeen: uniq(raw.stickersSeen, (x) => stickers.includes(x)),
   };
 }
 

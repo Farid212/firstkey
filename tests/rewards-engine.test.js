@@ -110,3 +110,8 @@ test('awardSticker pur et sans doublon', () => {
   assert.deepEqual(r1.stickers, ['letters:0']);
   assert.deepEqual(awardSticker(r1, 'letters:0').stickers, ['letters:0']);
 });
+test('markSeen copie les autocollants dans stickersSeen', () => {
+  const r = { ...defaultRewards(), stickers: ['letters:0'] };
+  assert.deepEqual(markSeen(r).stickersSeen, ['letters:0']);
+  assert.deepEqual(r.stickersSeen, []);
+});

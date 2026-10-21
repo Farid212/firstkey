@@ -1,6 +1,6 @@
 import { BLOCKS, CATEGORIES, MAX_LEVEL } from './blocks.js';
 import { pickBlock, answersPerLevel } from './progress.js';
-import { hasNew } from './ui-collection.js';
+import { hasNew, collectionCounts } from './ui-collection.js';
 import { CHAPTERS, chapterOf, chapterState, chapterProgress, chapterColor } from './chapters.js';
 import { stickerSvg } from './rewards/sticker-art.js';
 import { getArt } from './rewards/art/index.js';
@@ -64,7 +64,7 @@ export function renderHome(root, state, handlers, focusBlock) {
     }
     home.append(sec);
   }
-  const col = el('button', 'big collection-btn', `🎒 Ma collection · ${state.rewards.unlocked} / 24`);
+  const col = el('button', 'big collection-btn', `🎒 Ma collection · ${collectionCounts(state.rewards).have} / ${collectionCounts(state.rewards).total}`);
   if (hasNew(state.rewards)) col.append(el('span', 'dot'));
   col.onclick = handlers.onOpenCollection;
   home.append(col);

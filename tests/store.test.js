@@ -140,3 +140,8 @@ test('migration de discover une seule fois: ajouté si tout était coché, déco
   assert.ok(!loadState(s).settings.blocks.includes('discover'));
   assert.ok(defaultState().settings.blocks.includes('discover'));
 });
+test('backfill: autocollants des anciennes sauvegardes déjà vus', () => {
+  const st = loadState(fake(JSON.stringify({ progress: { letters: { level: 30 } } })));
+  assert.deepEqual(st.rewards.stickersSeen, ['letters:0']);
+  assert.deepEqual(loadState(fake(JSON.stringify({ rewards: { stickers: ['math:0'], stickersSeen: [] } }))).rewards.stickersSeen, []);
+});

@@ -14,7 +14,18 @@ const el = (tag, cls, text) => {
   return e;
 };
 
-export const hasNew = (r) => r.unlocked > r.seen || r.badges.earned.some((id) => !r.badges.seen.includes(id));
+export const hasNew = (r) => r.unlocked > r.seen || r.badges.earned.some((id) => !r.badges.seen.includes(id))
+  || (r.stickers ?? []).some((id) => !(r.stickersSeen ?? []).includes(id));
+
+// Compteurs de la collection: créatures, badges et autocollants.
+export function collectionCounts(r) {
+  const k = (have, total) => ({ have, total });
+  const creatures = k(r.unlocked, CREATURES.length);
+  const badges = k(r.badges.earned.length, BADGES.length);
+  const shown = BLOCKS.filter((x) => x.playable && CHAPTERS[x.id]).flatMap((x) => CHAPTERS[x.id].map((c) => c.id)); // ceux de la page
+  const stickers = k(shown.filter((id) => (r.stickers ?? []).includes(id)).length, shown.length);
+  return { creatures, badges, stickers, have: creatures.have + badges.have + stickers.have, total: creatures.total + badges.total + stickers.total };
+}
 
 // Cartes d'une famille, avec leur état (calculé sur l'état AVANT markSeen).
 export function creatureCards(rewards, kind) {
@@ -28,11 +39,12 @@ export function renderCollection(root, state, handlers) {
   root.replaceChildren();
   const page = el('div', 'collection');
 
+  const counts = collectionCounts(rewards);
   const bar = el('div', 'bar');
   const back = el('button', 'back', '←');
   back.setAttribute('aria-label', 'Retour');
   back.onclick = handlers.onBack;
-  bar.append(back, el('h1', 'col-title', 'Ma collection'), el('span', 'pill', `${rewards.unlocked} / ${CREATURES.length} découverts`));
+  bar.append(back, el('h1', 'col-title', 'Ma collection'), el('span', 'pill', `${counts.have} / ${counts.total} découverts`));
   page.append(bar);
 
   const section = (title) => { const h = el('h2', null, title); const g = el('div', 'cards'); page.append(h, g); return g; };
@@ -56,7 +68,7 @@ export function renderCollection(root, state, handlers) {
     }
   }
 
-  const grid = section('Badges');
+  const grid = section(`Badges ${counts.badges.have} / ${counts.badges.total}`);
   const style = badgeStyle(settings.age);
   for (const b of BADGES) {
     const locked = !rewards.badges.earned.includes(b.id);
@@ -68,7 +80,7 @@ export function renderCollection(root, state, handlers) {
     grid.append(card);
   }
 
-  page.append(el('h2', null, 'Autocollants'));
+  page.append(el('h2', null, `Autocollants ${counts.stickers.have} / ${counts.stickers.total}`));
   for (const b of BLOCKS.filter((x) => x.playable && CHAPTERS[x.id])) {
     page.append(el('h3', null, b.label));
     const g = el('div', 'cards');
@@ -78,6 +90,7 @@ export function renderCollection(root, state, handlers) {
       const pic = el('div', 'pic');
       pic.append(stickerSvg(ch.id, locked));
       card.append(pic, el('span', 'name', (locked ? '🔒 ' : '') + ch.short));
+      if (!locked && !(rewards.stickersSeen ?? []).includes(ch.id)) card.append(tag());
       g.append(card);
     }
     page.append(g);
