@@ -1,5 +1,6 @@
 import { CREATURES } from './creatures.js';
 import { BADGES } from './badges.js';
+import { CHAPTERS } from '../chapters.js';
 import { CREATURE_COUNT, START_UNLOCKED, LEVELS_PER_UNLOCK } from './model.js';
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -45,6 +46,16 @@ export const newBadges = (state) => BADGES.filter((b) => !state.rewards.badges.e
 export function awardBadges(rewards, ids) {
   const r = structuredClone(rewards);
   for (const id of ids) if (!r.badges.earned.includes(id)) r.badges.earned.push(id);
+  return r;
+}
+
+// Chapitre dont `finishedLevel` est le dernier niveau. Le dernier chapitre (to = 114) n'est jamais
+// renvoyé en pratique: le niveau 114 ne monte pas (MAX_LEVEL), donc aucun firstkey:levelup avec level 114.
+export const chapterToAward = (blockId, finishedLevel) => CHAPTERS[blockId]?.find((c) => c.to === finishedLevel)?.id ?? null;
+
+export function awardSticker(rewards, id) {
+  const r = structuredClone(rewards);
+  if (!r.stickers.includes(id)) r.stickers.push(id);
   return r;
 }
 

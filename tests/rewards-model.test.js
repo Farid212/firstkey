@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { defaultRewards, normalizeRewards, CREATURE_COUNT, START_UNLOCKED, LEVELS_PER_UNLOCK } from '../assets/js/rewards/model.js';
+import { defaultRewards, normalizeRewards, stickersFromProgress, STICKER_IDS, CREATURE_COUNT, START_UNLOCKED, LEVELS_PER_UNLOCK } from '../assets/js/rewards/model.js';
 import { BLOCKS } from '../assets/js/blocks.js';
 
 test('constantes', () => {
@@ -13,6 +13,7 @@ test('entrée invalide -> défauts', () => {
     levelUps: 0, unlocked: 2, seen: 2,
     stats: { totalCorrect: 0, streak: 0, bestStreak: 0, blocksTried: [], wordTyped: false, sentenceTyped: false, lastDay: '', dayStreak: 0 },
     badges: { earned: [], seen: [] },
+    stickers: [],
   });
 });
 
@@ -49,4 +50,19 @@ test('lastDay et booleans', () => {
 test('badges: chaînes uniques, seen inclus dans earned', () => {
   const r = normalizeRewards({ badges: { earned: ['a', 'a', 'b', 3], seen: ['b', 'z', 'b'] } });
   assert.deepEqual(r.badges, { earned: ['a', 'b'], seen: ['b'] });
+});
+
+test('stickers: absent -> [], ids de chapitres uniques seulement', () => {
+  assert.deepEqual(normalizeRewards({}).stickers, []);
+  for (const v of ['letters:0', 5, null, {}]) assert.deepEqual(normalizeRewards({ stickers: v }).stickers, []);
+  const r = normalizeRewards({ stickers: ['letters:0', 'letters:0', 'letters:99', 'nope', 3, null, 'maze:1'] });
+  assert.deepEqual(r.stickers, ['letters:0', 'maze:1']);
+  assert.ok(STICKER_IDS.includes('js:0') && new Set(STICKER_IDS).size === STICKER_IDS.length);
+});
+
+test('stickersFromProgress: chapitres terminés seulement', () => {
+  assert.deepEqual(stickersFromProgress({ letters: { level: 30 } }), ['letters:0']);
+  assert.deepEqual(stickersFromProgress({ letters: { level: 17 }, math: { level: 24 } }), ['letters:0']);
+  assert.deepEqual(stickersFromProgress({}), []);
+  assert.ok(!stickersFromProgress({ letters: { level: 114 } }).includes('letters:6')); // 114 jamais « terminé »
 });

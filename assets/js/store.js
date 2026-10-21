@@ -1,5 +1,5 @@
 import { BLOCKS, MAX_LEVEL } from './blocks.js';
-import { defaultRewards, normalizeRewards } from './rewards/model.js';
+import { defaultRewards, normalizeRewards, stickersFromProgress } from './rewards/model.js';
 
 const KEY = 'firstkey.state.v1';
 const LANGS = ['fr', 'en', 'ja'];
@@ -37,6 +37,13 @@ export function loadState(storage) {
   if (!raw || typeof raw !== 'object') return d;
   const s = raw.settings ?? {};
   const p = raw.progress ?? {};
+  const progress = Object.fromEntries(ids.map((id) => [id, {
+    level: int(p[id]?.level, 1, MAX_LEVEL, 1),
+    correct: int(p[id]?.correct, 0, Number.MAX_SAFE_INTEGER, 0),
+  }]));
+  const rewards = normalizeRewards(raw.rewards);
+  // une seule fois: dès la première sauvegarde suivante, le champ existe (même vide)
+  if (!Array.isArray(raw.rewards?.stickers)) rewards.stickers = stickersFromProgress(progress);
   return {
     score: int(raw.score, 0, Number.MAX_SAFE_INTEGER, 0),
     settings: {
@@ -48,11 +55,8 @@ export function loadState(storage) {
       rewardAnimations: typeof s.rewardAnimations === 'boolean' ? s.rewardAnimations : true,
       rewardSounds: typeof s.rewardSounds === 'boolean' ? s.rewardSounds : true,
     },
-    progress: Object.fromEntries(ids.map((id) => [id, {
-      level: int(p[id]?.level, 1, MAX_LEVEL, 1),
-      correct: int(p[id]?.correct, 0, Number.MAX_SAFE_INTEGER, 0),
-    }])),
-    rewards: normalizeRewards(raw.rewards),
+    progress,
+    rewards,
   };
 }
 

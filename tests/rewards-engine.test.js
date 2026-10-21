@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { todayString, applyCorrect, applyWrong, applyLevelUp, newBadges, awardBadges, markSeen, nextGap, pickReward } from '../assets/js/rewards/engine.js';
+import { todayString, applyCorrect, applyWrong, applyLevelUp, newBadges, awardBadges, markSeen, nextGap, pickReward, chapterToAward, awardSticker } from '../assets/js/rewards/engine.js';
 import { defaultRewards } from '../assets/js/rewards/model.js';
 
 const ok = (r, today, kind = 'letter', blockId = 'b1') => applyCorrect(r, { blockId, kind, today });
@@ -91,4 +91,22 @@ test('entrées jamais modifiées', () => {
   const copy = structuredClone(r);
   ok(r, '2026-10-19', 'sentence'); applyWrong(r); applyLevelUp(r); awardBadges(r, ['x']); markSeen(r, {}); pickReward(r, { lastFamily: null, lastCreatureId: null });
   assert.deepEqual(r, copy);
+});
+
+test('chapterToAward aux bornes', () => {
+  assert.equal(chapterToAward('letters', 16), 'letters:0');
+  assert.equal(chapterToAward('letters', 15), null);
+  assert.equal(chapterToAward('letters', 17), null);
+  assert.equal(chapterToAward('math', 24), 'math:0');
+  assert.equal(chapterToAward('nope', 16), null);
+  // le dernier chapitre finit à 114, mais le niveau 114 ne monte jamais (MAX_LEVEL): aucun levelup ne le demande
+  assert.equal(chapterToAward('letters', 114), 'letters:6');
+});
+
+test('awardSticker pur et sans doublon', () => {
+  const r0 = defaultRewards();
+  const r1 = awardSticker(r0, 'letters:0');
+  assert.deepEqual(r0.stickers, []);
+  assert.deepEqual(r1.stickers, ['letters:0']);
+  assert.deepEqual(awardSticker(r1, 'letters:0').stickers, ['letters:0']);
 });

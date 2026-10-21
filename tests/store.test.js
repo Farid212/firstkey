@@ -103,3 +103,23 @@ test('migration de maze une seule fois: un parent qui décoche Programmation le 
   const partial = fake(JSON.stringify({ settings: { blocks: ['letters', 'math'] } }));
   assert.deepEqual(loadState(partial).settings.blocks, ['letters', 'math']);
 });
+
+test('backfill des autocollants: ancienne sauvegarde sans champ stickers', () => {
+  const st = loadState(fake(JSON.stringify({ progress: { letters: { level: 30, correct: 0 } }, rewards: { levelUps: 29 } })));
+  assert.deepEqual(st.rewards.stickers, ['letters:0']);
+  assert.equal(loadState(fake(JSON.stringify({ progress: { letters: { level: 30 } }, rewards: 'x' }))).rewards.stickers[0], 'letters:0');
+  assert.deepEqual(loadState(fake(JSON.stringify({ progress: { letters: { level: 30 } } }))).rewards.stickers, ['letters:0']);
+});
+
+test('pas de second backfill quand le champ existe (même vide ou partiellement invalide)', () => {
+  const p = { letters: { level: 30, correct: 0 } };
+  assert.deepEqual(loadState(fake(JSON.stringify({ progress: p, rewards: { stickers: [] } }))).rewards.stickers, []);
+  assert.deepEqual(loadState(fake(JSON.stringify({ progress: p, rewards: { stickers: ['x', 'math:0'] } }))).rewards.stickers, ['math:0']);
+});
+
+test('saut parent: aucun autocollant gagné en direct', async () => {
+  const { jumpTo } = await import('../assets/js/progress.js');
+  const s = fake();
+  saveState(jumpTo(defaultState(), 'letters', 40), s);
+  assert.deepEqual(loadState(s).rewards.stickers, []);
+});

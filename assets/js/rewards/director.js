@@ -1,4 +1,6 @@
-import { todayString, applyCorrect, applyWrong, applyLevelUp, newBadges, awardBadges, nextGap, pickReward } from './engine.js';
+import { todayString, applyCorrect, applyWrong, applyLevelUp, newBadges, awardBadges, chapterToAward, awardSticker, nextGap, pickReward } from './engine.js';
+import { STICKER_IDS } from './model.js';
+import { celebrateSticker } from './sticker-art.js';
 import { CREATURES } from './creatures.js';
 import { BADGES } from './badges.js';
 import { getArt } from './art/index.js';
@@ -19,6 +21,7 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
   const settings = () => getState().settings;
   const lang = () => settings().language;
   const badge = (badgeId) => celebrateBadge(fx, { badgeId, style: badgeStyle(settings().age), lang: lang() });
+  const sticker = (chapterId) => celebrateSticker(fx, { chapterId, lang: lang() });
   const save = (rewards) => onChange({ ...getState(), rewards });
   const levelup = (ctx, variant = pickLevelup(rng)) => LEVELUPS[variant](fx, ctx);
 
@@ -62,15 +65,22 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
     }
   }
 
-  function onLevelUp({ level, newLevel }) {
+  function onLevelUp({ blockId, level, newLevel }) {
     const { rewards, unlockedId } = applyLevelUp(getState().rewards);
     play(() => levelup({ oldLevel: level, newLevel }), 'queue');
     if (unlockedId) play(() => reveal(fx, { creatureId: unlockedId, lang: lang() }), 'queue');
     award(rewards);
+    // autocollant: dernier niveau d'un chapitre vraiment passé, fêté après niveau, créature et badges
+    const id = chapterToAward(blockId, level);
+    if (id && !getState().rewards.stickers.includes(id)) {
+      save(awardSticker(getState().rewards, id));
+      play(() => sticker(id), 'queue');
+    }
   }
 
   function onPreview({ id }) {
     if (id.startsWith('badge:')) return playBadge(id.slice(6));
+    if (id.startsWith('sticker:')) return playSticker(id.slice(8));
     if (id === 'levelup:stickman' || id === 'levelup:party') return play(() => levelup({ oldLevel: 1, newLevel: 2 }, id.slice(8)), 'preview');
     replay(id);
   }
@@ -100,6 +110,10 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
     prepare();
     if (BADGES.some((b) => b.id === badgeId)) play(() => badge(badgeId), 'preview');
   }
+  function playSticker(chapterId) {
+    prepare();
+    if (STICKER_IDS.includes(chapterId)) play(() => sticker(chapterId), 'preview');
+  }
   // Vide la file et efface l'animation en cours (retour à l'accueil).
   function clear() {
     queue.length = 0;
@@ -114,5 +128,6 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
     clear,
     replay,
     playBadge,
+    playSticker,
   };
 }

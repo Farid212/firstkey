@@ -3,6 +3,9 @@ import { BADGES } from './rewards/badges.js';
 import { getArt } from './rewards/art/index.js';
 import { badgeSvg, badgeStyle } from './rewards/badge-art.js';
 import { markSeen } from './rewards/engine.js';
+import { stickerSvg } from './rewards/sticker-art.js';
+import { CHAPTERS } from './chapters.js';
+import { BLOCKS } from './blocks.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -63,6 +66,21 @@ export function renderCollection(root, state, handlers) {
     card.append(pic, el('span', 'name', (locked ? '🔒 ' : '') + (b.names[lang] ?? b.names.fr)));
     if (!locked && !rewards.badges.seen.includes(b.id)) card.append(tag());
     grid.append(card);
+  }
+
+  page.append(el('h2', null, 'Autocollants'));
+  for (const b of BLOCKS.filter((x) => x.playable && CHAPTERS[x.id])) {
+    page.append(el('h3', null, b.label));
+    const g = el('div', 'cards');
+    for (const ch of CHAPTERS[b.id]) {
+      const locked = !rewards.stickers.includes(ch.id);
+      const card = el('div', 'card sticker' + (locked ? ' locked-badge' : ''));
+      const pic = el('div', 'pic');
+      pic.append(stickerSvg(ch.id, locked));
+      card.append(pic, el('span', 'name', (locked ? '🔒 ' : '') + ch.short));
+      g.append(card);
+    }
+    page.append(g);
   }
 
   root.append(page);

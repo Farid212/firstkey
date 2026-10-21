@@ -258,9 +258,10 @@ const DUR = 3.4;
 const nameOf = (id, lang) => { const n = BADGES.find((b) => b.id === id)?.names; return n?.[lang] ?? n?.fr ?? id; };
 
 // Dans la bande basse: le badge rebondit, une aura douce respire (< 1 Hz), étincelles, nom, puis départ.
-export function celebrateBadge(fx, { badgeId, style, lang }) {
-  const name = nameOf(badgeId, lang);
-  const draw = () => badgeSvg(badgeId, style, false);
+export const celebrateBadge = (fx, { badgeId, style, lang }) => celebrateCard(fx, () => badgeSvg(badgeId, style, false), nameOf(badgeId, lang));
+
+// Fête de la bande basse (badges, autocollants): `draw()` rend un SVG en repère 100 x 100.
+export function celebrateCard(fx, draw, name) {
   if (fx.reduced) return showCard(fx, draw, SFX.sparkle, name);
   return fx.run(async (g) => {
     const glow = svgEl('circle', { r: 50, fill: '#fff3b0' });
