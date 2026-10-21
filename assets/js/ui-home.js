@@ -53,7 +53,7 @@ export function renderHome(root, state, handlers, focusBlock) {
     sec.append(h);
     const row = (list) => {
       const r = el('div', 'blocks');
-      for (const b of list) r.append(gameCard(b, state, handlers, ac.signal));
+      for (const b of list) r.append(gameCard(b, state, handlers, ac.signal, b.id === focusBlock));
       return r;
     };
     const plain = games.filter((x) => !x.group);
@@ -99,7 +99,7 @@ const curve = (pts) => pts.map((p, i) => {
   return `C${b.x + (p.x - a.x) / 6} ${b.y + (p.y - a.y) / 6} ${p.x - (d.x - b.x) / 6} ${p.y - (d.y - b.y) / 6} ${p.x} ${p.y}`;
 }).join(' ');
 
-function gameCard(b, state, handlers, signal) {
+function gameCard(b, state, handlers, signal, openNow) {
   const card = el('section', `block block-${b.id}` + (b.playable ? '' : ' soon'));
   if (!b.playable) {
     const main = el('button', 'block-main');
@@ -172,7 +172,8 @@ function gameCard(b, state, handlers, signal) {
   signal.addEventListener('abort', () => ro.disconnect());
 
   card.append(head, go, row, panel);
-  show(CHAPTERS[b.id].indexOf(cur));
+  // chemins repliés par défaut (accueil court); celui du jeu qu'on vient de quitter est déplié
+  if (openNow) show(CHAPTERS[b.id].indexOf(cur));
   // rangée défilante (téléphone): la vignette en cours reste visible
   requestAnimationFrame(() => {
     const t = thumbs[CHAPTERS[b.id].indexOf(cur)];
@@ -192,7 +193,7 @@ function buildPath(panel, b, ch, index, { state, handlers, level, need, lastDone
   top.append(el('span', 'chap-title', `${ch.icon} ${ch.name}`), el('span', 'chap-count', `${n} / ${total} niveaux`));
   const box = el('div', 'path');
   panel.append(top, box);
-  const curLevel = !lastDone && level >= ch.from && level <= ch.to ? level : null;
+  const curLevel = !done && !lastDone && level >= ch.from && level <= ch.to ? level : null;
   if (curLevel) {
     const play = el('button', 'path-play', `▶ Jouer le niveau ${curLevel}`);
     play.onclick = () => handlers.onPlay(b.id);
@@ -218,7 +219,7 @@ function buildPath(panel, b, ch, index, { state, handlers, level, need, lastDone
     svg.append(svgEl('path', { d: curve(pts), class: 'road-dash' }));
     const ol = el('ol', 'steps');
     levels.forEach((lv, k) => {
-      const st = lv < level || (lv === level && lastDone) ? 'done' : lv === curLevel ? 'cur' : 'todo';
+      const st = done || lv < level || (lv === level && lastDone) ? 'done' : lv === curLevel ? 'cur' : 'todo';
       const btn = el('button', `step ${st}`);
       btn.dataset.level = lv;
       btn.append(el('span', 'step-n', String(lv)));
