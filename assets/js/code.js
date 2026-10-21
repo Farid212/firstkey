@@ -18,7 +18,7 @@ function shuffle(arr, rng) {
 }
 
 // Fenêtre de 10 éléments qui avance sur toute la liste pendant la plage de niveaux du mode.
-function windowOf(list, level) {
+export function windowOf(list, level) {
   const [lo, hi] = level <= QUIZ_LAST ? [1, QUIZ_LAST] : [QUIZ_LAST + 1, MAX_LEVEL];
   const start = Math.round(((level - lo) / (hi - lo)) * Math.max(0, list.length - WINDOW));
   return list.slice(start, start + WINDOW);
