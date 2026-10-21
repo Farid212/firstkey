@@ -43,3 +43,16 @@ test('ignored after done', () => {
 test('space bar', () => {
   assert.deepEqual(run([' '], [' ']), ['done']);
 });
+
+test('caseSensitive: la casse compte; par défaut elle est ignorée', () => {
+  const t = createTyper(['Ab'], { caseSensitive: true });
+  assert.equal(t.press('a'), 'wrong');
+  assert.equal(t.typed, 0);
+  assert.equal(t.press('A'), 'right');
+  assert.equal(t.press('B'), 'wrong');
+  assert.equal(t.press('b'), 'done');
+  assert.deepEqual(run(['Ab'], ['a', 'B']), ['right', 'done']);
+  assert.deepEqual(run(['Ab'], ['A', 'b']), ['right', 'done']);
+  const u = createTyper(['a b'], { caseSensitive: true });
+  assert.deepEqual(['a', ' ', 'b'].map((k) => u.press(k)), ['right', 'right', 'done']);
+});
