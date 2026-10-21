@@ -6,7 +6,7 @@ import { pickBlock } from '../assets/js/progress.js';
 import { BADGES } from '../assets/js/rewards/badges.js';
 import { categoryGames, visibleCategories } from '../assets/js/ui-home.js';
 
-const SOON = ['logic', 'guess', 'hangman', 'cookie'];
+const SOON = ['logic', 'draw', 'music', 'bugs', 'pixel', 'trainer', 'guess', 'hangman', 'vault', 'caesar', 'cookie', 'rps', 'transform'];
 const OLD = ['letters', 'words', 'math', 'maze', 'js', 'python'];
 const fake = (raw) => ({ getItem: () => JSON.stringify(raw), setItem() {} });
 
@@ -53,9 +53,9 @@ test('« tout mélangé » et explorateur ignorent les jeux « bientôt »', () 
 test('catégories visibles: au moins un jeu jouable coché; « bientôt » toujours listés', () => {
   const s = defaultState();
   assert.deepEqual(visibleCategories(s).map((c) => c.id), ['read', 'logic', 'code']);
-  assert.deepEqual(categoryGames(s, 'code').map((b) => b.id), ['maze', 'python', 'guess', 'hangman', 'js', 'cookie']);
+  assert.deepEqual(categoryGames(s, 'code').map((b) => b.id), ['maze', 'draw', 'music', 'bugs', 'pixel', 'trainer', 'python', 'guess', 'hangman', 'vault', 'caesar', 'js', 'cookie', 'rps', 'transform']);
   s.settings.blocks = ['letters', ...SOON]; // logic et code: seuls des « bientôt » -> cachées
   assert.deepEqual(visibleCategories(s).map((c) => c.id), ['read']);
   s.settings.blocks = ['js'];
-  assert.deepEqual(categoryGames(s, 'code').map((b) => b.id), ['guess', 'hangman', 'js', 'cookie']);
+  assert.deepEqual(categoryGames(s, 'code').map((b) => b.id), ['draw', 'music', 'bugs', 'pixel', 'trainer', 'guess', 'hangman', 'vault', 'caesar', 'js', 'cookie', 'rps', 'transform']);
 });

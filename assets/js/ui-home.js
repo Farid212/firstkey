@@ -14,7 +14,7 @@ const el = (tag, cls, text) => {
   return e;
 };
 
-const ICONS = { letters: '🔤', words: '📖', math: '➕', logic: '🔷', js: '🟨', python: '🐍', maze: '🧭', guess: '🔢', hangman: '🪢', cookie: '🍪' };
+const ICONS = { letters: '🔤', words: '📖', math: '➕', logic: '🔷', js: '🟨', python: '🐍', maze: '🧭', guess: '🔢', hangman: '🪢', cookie: '🍪', draw: '🖍️', music: '🎵', bugs: '🐛', pixel: '🟦', trainer: '🐾', vault: '🔐', caesar: '✉️', rps: '✊', transform: '⚙️' };
 
 // Jeux montrés dans une catégorie: jouables cochés par le parent, plus les « bientôt » (toujours visibles)
 export const categoryGames = (state, catId) =>
