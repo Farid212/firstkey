@@ -1,10 +1,12 @@
 import { BLOCKS } from '../blocks.js';
+import { CHAPTERS, chapterState } from '../chapters.js';
 
 export const CREATURE_COUNT = 24;
 export const START_UNLOCKED = 2;
 export const LEVELS_PER_UNLOCK = 5;
 
 const ids = BLOCKS.map((b) => b.id);
+export const STICKER_IDS = Object.values(CHAPTERS).flat().map((c) => c.id);
 
 export function defaultRewards() {
   return {
@@ -13,6 +15,7 @@ export function defaultRewards() {
     seen: START_UNLOCKED,
     stats: { totalCorrect: 0, streak: 0, bestStreak: 0, blocksTried: [], wordTyped: false, sentenceTyped: false, lastDay: '', dayStreak: 0 },
     badges: { earned: [], seen: [] },
+    stickers: [],
   };
 }
 
@@ -45,5 +48,10 @@ export function normalizeRewards(raw) {
       dayStreak: count(t.dayStreak),
     },
     badges: { earned, seen: uniq(b.seen, (x) => earned.includes(x)) },
+    stickers: uniq(raw.stickers, (x) => STICKER_IDS.includes(x)),
   };
 }
+
+// Anciennes sauvegardes: autocollants des chapitres déjà terminés d'après la progression (sans fête).
+export const stickersFromProgress = (progress) => Object.entries(CHAPTERS).flatMap(([blockId, list]) =>
+  list.filter((c) => chapterState(blockId, c, progress?.[blockId]?.level ?? 1) === 'done').map((c) => c.id));

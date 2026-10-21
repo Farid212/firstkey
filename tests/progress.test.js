@@ -14,6 +14,9 @@ test('answersPerLevel', () => {
   assert.equal(answersPerLevel(2), 5);
   assert.equal(answersPerLevel(5), 10);
   assert.equal(answersPerLevel(8), 25);
+  assert.equal(answersPerLevel(8, 'maze'), 3); // un tour = 3 exercices
+  assert.equal(answersPerLevel(2, 'maze'), 3);
+  assert.equal(answersPerLevel(8, 'letters'), 25);
 });
 
 test('25 bonnes réponses à 8 ans -> niveau 2', () => {
@@ -41,13 +44,17 @@ test('rejouer un niveau plus bas: score seul', () => {
   assert.equal(r.leveledUp, false);
 });
 
-test('pas de dépassement à MAX_LEVEL', () => {
+test('dernier niveau: pas de dépassement, mais le terminer compte une seule fois', () => {
   const s = st8();
   s.progress.letters = { level: MAX_LEVEL, correct: 24 };
   const r = recordCorrect(s, 'letters', MAX_LEVEL);
-  assert.deepEqual(r.state.progress.letters, { level: MAX_LEVEL, correct: 24 });
-  assert.equal(r.leveledUp, false);
+  assert.deepEqual(r.state.progress.letters, { level: MAX_LEVEL, correct: 25 });
+  assert.equal(r.leveledUp, true); // finale: déclenche le dernier autocollant
   assert.equal(r.state.score, s.score + MAX_LEVEL);
+  const r2 = recordCorrect(r.state, 'letters', MAX_LEVEL);
+  assert.deepEqual(r2.state.progress.letters, { level: MAX_LEVEL, correct: 25 });
+  assert.equal(r2.leveledUp, false); // pas de seconde finale
+  assert.equal(r2.state.score, r.state.score + MAX_LEVEL);
 });
 
 test('état d\'entrée non modifié', () => {
@@ -89,4 +96,22 @@ test('pickBlock', () => {
   s.settings.blocks = ['js'];
   s.settings.age = 4;
   assert.equal(pickBlock(s), null);
+});
+
+test('maze: un niveau par tour de 3 exercices réussis, jamais tiré au hasard', () => {
+  const s = st8();
+  let r = { state: s };
+  for (let i = 0; i < 2; i++) {
+    r = recordCorrect(r.state, 'maze', 1);
+    assert.equal(r.leveledUp, false);
+    assert.equal(r.state.progress.maze.correct, i + 1);
+  }
+  r = recordCorrect(r.state, 'maze', 1);
+  assert.equal(r.state.progress.maze.level, 2);
+  assert.equal(r.state.progress.maze.correct, 0);
+  assert.equal(r.leveledUp, true);
+  s.settings.blocks = ['maze'];
+  assert.equal(pickBlock(s), null);
+  s.settings.blocks = ['maze', 'letters'];
+  for (let i = 0; i < 20; i++) assert.equal(pickBlock(s, () => i / 20), 'letters');
 });
