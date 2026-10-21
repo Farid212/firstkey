@@ -63,6 +63,7 @@ export function markSeen(rewards) {
   const r = structuredClone(rewards);
   r.seen = r.unlocked;
   r.badges.seen = [...r.badges.earned];
+  r.stickersSeen = [...r.stickers];
   return r;
 }
 

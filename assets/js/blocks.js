@@ -25,6 +25,7 @@ export const BLOCKS = [
   { id: 'hangman', minAge: 8, label: 'Pendu', playable: false, category: 'code', group: 'py' },
   { id: 'vault', minAge: 9, label: 'Coffre-fort', playable: false, category: 'code', group: 'py' },
   { id: 'caesar', minAge: 9, label: 'Message secret', playable: false, category: 'code', group: 'py' },
+  { id: 'discover', minAge: 8, label: 'Découvre le JavaScript', playable: true, mix: false, category: 'code', group: 'js' },
   { id: 'js', minAge: 8, label: 'Quiz JavaScript', playable: true, category: 'code', group: 'js' },
   { id: 'cookie', minAge: 8, label: 'Cookie clicker', playable: false, category: 'code', group: 'js' },
   { id: 'rps', minAge: 8, label: 'Pierre-feuille-ciseaux', playable: false, category: 'code', group: 'js' },

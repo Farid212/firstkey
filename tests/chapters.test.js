@@ -6,7 +6,7 @@ import { CODE_JS } from '../assets/js/data/code-js.js';
 import { CODE_PYTHON } from '../assets/js/data/code-python.js';
 import { windowOf } from '../assets/js/code.js';
 
-const IDS = ['letters', 'words', 'math', 'maze', 'python', 'js'];
+const IDS = ['letters', 'words', 'math', 'maze', 'python', 'js', 'discover'];
 
 for (const id of IDS) {
   test(`${id}: couverture exacte 1..114, noms et champs`, () => {
@@ -50,6 +50,12 @@ for (const id of IDS) {
 
 test('labyrinthe: un chapitre par niveau isNew de CURRICULUM', () => {
   assert.deepEqual(CHAPTERS.maze.map((c) => c.from), CURRICULUM.filter((c) => c.isNew).map((c) => c.level));
+});
+
+test('discover: les 12 chapitres de DISCOVER_CHAPTERS', async () => {
+  const { DISCOVER_CHAPTERS } = await import('../assets/js/discover.js');
+  assert.equal(CHAPTERS.discover.length, 12);
+  assert.deepEqual(CHAPTERS.discover, DISCOVER_CHAPTERS);
 });
 
 test('calcul: bornes des opérations', () => {

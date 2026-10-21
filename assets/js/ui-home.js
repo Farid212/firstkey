@@ -1,6 +1,6 @@
 import { BLOCKS, CATEGORIES, MAX_LEVEL } from './blocks.js';
 import { pickBlock, answersPerLevel } from './progress.js';
-import { hasNew } from './ui-collection.js';
+import { hasNew, collectionCounts } from './ui-collection.js';
 import { CHAPTERS, chapterOf, chapterState, chapterProgress, chapterColor } from './chapters.js';
 import { stickerSvg } from './rewards/sticker-art.js';
 import { getArt } from './rewards/art/index.js';
@@ -14,7 +14,7 @@ const el = (tag, cls, text) => {
   return e;
 };
 
-const ICONS = { letters: '🔤', words: '📖', math: '➕', logic: '🔷', js: '🟨', python: '🐍', maze: '🧭', guess: '🔢', hangman: '🪢', cookie: '🍪', draw: '🖍️', music: '🎵', bugs: '🐛', pixel: '🟦', trainer: '🐾', vault: '🔐', caesar: '✉️', rps: '✊', transform: '⚙️' };
+const ICONS = { letters: '🔤', words: '📖', math: '➕', logic: '🔷', js: '🟨', python: '🐍', maze: '🧭', discover: '🔎', guess: '🔢', hangman: '🪢', cookie: '🍪', draw: '🖍️', music: '🎵', bugs: '🐛', pixel: '🟦', trainer: '🐾', vault: '🔐', caesar: '✉️', rps: '✊', transform: '⚙️' };
 
 // Jeux montrés dans une catégorie: jouables cochés par le parent, plus les « bientôt » (toujours visibles)
 export const categoryGames = (state, catId) =>
@@ -64,7 +64,7 @@ export function renderHome(root, state, handlers, focusBlock) {
     }
     home.append(sec);
   }
-  const col = el('button', 'big collection-btn', `🎒 Ma collection · ${state.rewards.unlocked} / 24`);
+  const col = el('button', 'big collection-btn', `🎒 Ma collection · ${collectionCounts(state.rewards).have} / ${collectionCounts(state.rewards).total}`);
   if (hasNew(state.rewards)) col.append(el('span', 'dot'));
   col.onclick = handlers.onOpenCollection;
   home.append(col);
@@ -223,7 +223,7 @@ function buildPath(panel, b, ch, index, { state, handlers, level, need, lastDone
       const btn = el('button', `step ${st}`);
       btn.dataset.level = lv;
       btn.append(el('span', 'step-n', String(lv)));
-      if (b.id === 'maze') {
+      if (b.id === 'maze' || b.id === 'discover') { // tours de 3 exercices: un point par exercice
         const pips = el('span', 'pips');
         const full = st === 'done' ? need : st === 'cur' ? Math.min(p.correct, need) : 0;
         for (let j = 0; j < need; j++) pips.append(el('i', j < full ? 'on' : ''));

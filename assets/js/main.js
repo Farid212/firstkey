@@ -2,6 +2,7 @@ import { loadState, saveState } from './store.js';
 import { renderHome } from './ui-home.js';
 import { startGame } from './ui-game.js';
 import { startMaze } from './ui-maze.js';
+import { startDiscover } from './ui-discover.js';
 import { renderCollection } from './ui-collection.js';
 import { openSettings } from './ui-settings.js';
 import { createAudio } from './rewards/audio.js';
@@ -42,8 +43,9 @@ function collection() {
 function game(target) {
   gear.hidden = true; // pas de réglages pendant une partie (écouteurs clavier actifs)
   const onExit = () => home(target.blockId);
-  // « tout mélangé » ne tire jamais le labyrinthe (mix: false)
-  (target.blockId === 'maze' ? startMaze : startGame)(root, state, target, { onChange, getState: () => state, onExit });
+  // « tout mélangé » ne tire jamais le labyrinthe ni Découvre le JavaScript (mix: false)
+  const start = { maze: startMaze, discover: startDiscover }[target.blockId] ?? startGame;
+  start(root, state, target, { onChange, getState: () => state, onExit });
 }
 
 gear.onclick = () => { director.clear(); openSettings(root, state, { onChange, onClose: () => home() }); };

@@ -71,6 +71,13 @@ Le bloc « Programmation » est un terminal puis un éditeur: l'enfant tape de v
 - Code dans `assets/js/maze/`: `gen.js` (segments étiquetés, solveur), `curriculum.js`, `levels-gen.js` (générateur: labyrinthes, références, budgets, mondes), `levels.js` (`levelSpec(niveau, exercice)`, lit les 342 exercices précalculés de `levels-data.js`), `lang.js` (analyseur écrit à la main, jamais d'`eval`; `parse` pour une ligne, `parseProgram` pour un programme), `world.js` (exécution). Écran: `assets/js/ui-maze.js`. Pour ajouter un tour: une ligne dans `curriculum.js` et un segment ou une famille dans `levels-gen.js`; les tests vérifient les règles de tour, la solubilité, que chaque programme de référence atteint l'étoile dans les deux langages et que la notion est vraiment demandée (sans elle, le programme dépasse le budget).
 - **Après toute modification du générateur** (`levels-gen.js`, `gen.js`, `lang.js`, `world.js`): `npm run build:levels` (ou `node scripts/build-levels.mjs`) régénère `assets/js/maze/levels-data.js`; `npm test` échoue tant que ce fichier est périmé.
 
+## Découvre le JavaScript (sans mots)
+
+Jeu inspiré du principe de Silent Teacher: une console montre 3 exemples résolus (`code → résultat`) et une ligne à compléter; l'enfant devine la règle et tape la sortie, **sensible à la casse**, sans aucun texte d'explication. Après 2 erreurs sur un exercice, la partie des exemples qui porte la règle s'allume (indice muet). Un niveau = un tour de 3 exercices (comme le labyrinthe), 12 chapitres.
+
+- Données: `assets/js/data/discover-js.js`, généré par `npm run build:discover` (`scripts/build-discover.mjs`, vrai JavaScript évalué à la construction seulement); `assets/js/discover.js` (`discoverExercise(niveau, exercice)`, `DISCOVER_CHAPTERS`); `tests/discover.test.js` ré-évalue chaque exemple. L'application n'exécute jamais de code.
+- Écran: `assets/js/ui-discover.js` (frappe via `createTyper(..., { caseSensitive: true })`).
+
 ## Show your support
 
 Give a ⭐️ if this project helped you!

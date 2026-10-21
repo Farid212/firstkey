@@ -123,3 +123,25 @@ test('saut parent: aucun autocollant gagné en direct', async () => {
   saveState(jumpTo(defaultState(), 'letters', 40), s);
   assert.deepEqual(loadState(s).rewards.stickers, []);
 });
+
+test('migration de discover une seule fois: ajouté si tout était coché, décoché reste décoché', () => {
+  const ALL = ['letters', 'words', 'math', 'js', 'python', 'maze'];
+  assert.ok(loadState(fake(JSON.stringify({ settings: { blocks: ALL } }))).settings.blocks.includes('discover'));
+  // sauvegarde d'avant le labyrinthe: les deux arrivent
+  const five = loadState(fake(JSON.stringify({ settings: { blocks: ALL.slice(0, 5) } }))).settings.blocks;
+  assert.ok(five.includes('maze') && five.includes('discover'));
+  assert.ok(!loadState(fake(JSON.stringify({ settings: { blocks: ['letters', 'maze'] } }))).settings.blocks.includes('discover'));
+  assert.equal(loadState(fake(JSON.stringify({ settings: { blocks: [...ALL, 'discover'] } }))).settings.blocks.filter((b) => b === 'discover').length, 1);
+  const s = fake(JSON.stringify({ settings: { blocks: ALL }, progress: { maze: { level: 4, correct: 1 } } }));
+  const st = loadState(s);
+  assert.deepEqual(st.progress.discover, { level: 1, correct: 0 });
+  st.settings.blocks = st.settings.blocks.filter((b) => b !== 'discover');
+  saveState(st, s);
+  assert.ok(!loadState(s).settings.blocks.includes('discover'));
+  assert.ok(defaultState().settings.blocks.includes('discover'));
+});
+test('backfill: autocollants des anciennes sauvegardes déjà vus', () => {
+  const st = loadState(fake(JSON.stringify({ progress: { letters: { level: 30 } } })));
+  assert.deepEqual(st.rewards.stickersSeen, ['letters:0']);
+  assert.deepEqual(loadState(fake(JSON.stringify({ rewards: { stickers: ['math:0'], stickersSeen: [] } }))).rewards.stickersSeen, []);
+});

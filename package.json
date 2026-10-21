@@ -2,5 +2,5 @@
   "name": "firstkey",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test", "build:levels": "node scripts/build-levels.mjs" }
+  "scripts": { "test": "node --test", "build:levels": "node scripts/build-levels.mjs", "build:discover": "node scripts/build-discover.mjs" }
 }
