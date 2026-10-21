@@ -25,7 +25,7 @@ export const RULES_BY_CHAPTER = [
   ['length', 'lengthSpace', 'upper', 'lower', 'case', 'concatLength', 'upperConcat', 'lengthMath', 'concatUpper'],
   ['var', 'varExpr', 'twoVars', 'varTwice', 'varStr', 'varStrMethod', 'varFromExpr', 'varChain', 'varMix'],
   ['reassign', 'incr', 'updateExpr', 'plusEq', 'opEq', 'plusPlus', 'multiUpdate', 'strPlusEq', 'varPlusVar'],
-  ['lt', 'gt', 'ltgtEq', 'leGe', 'eq', 'neq', 'eqStr', 'cmpExpr', 'cmpVar', 'eqType'],
+  ['lt', 'gt', 'ltgtEq', 'leGe', 'eq', 'neq', 'eqStr', 'cmpExpr', 'cmpVar', 'eqType', 'cmpPair'],
   ['log', 'ifElse', 'ifVar', 'ifCalc', 'ifStr', 'ifNoElse', 'elseIf', 'ifUpdate', 'ifMix'],
   ['forLog', 'forRange', 'forRepeat', 'forExpr', 'forStep', 'forDown', 'forSum', 'forConcat', 'forConcatI', 'forProd'],
   ['index', 'arrLength', 'arrVar', 'join', 'push', 'arrSet', 'arrLast', 'arrLoop'],

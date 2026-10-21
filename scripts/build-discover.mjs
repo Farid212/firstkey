@@ -19,6 +19,11 @@ const NAMES = ['Tom', 'Lea', 'Zoe', 'Max', 'Noa', 'Ali', 'Sam', 'Lou', 'Eva', 'L
 const SOUNDS = ['ha', 'oh', 'bip', 'la', 'do', 'hop', 'zou'];
 const LETTERS = ['a', 'b', 'n', 'x', 'y', 'k'];
 const VARS = ['age', 'prix', 'score', 'total', 'nb'];
+// Vrais mots composés (pas de « veloours » inventé): plus faciles à lire et à taper.
+const COMP2 = [['chou', 'fleur'], ['tourne', 'sol'], ['para', 'pluie'], ['cerf', 'volant'], ['sous', 'marin'], ['garde', 'robe'],
+  ['mille', 'pattes'], ['rouge', 'gorge'], ['pique', 'nique'], ['casse', 'tete'], ['grand', 'pere'], ['porte', 'cle'], ['tire', 'bouchon']];
+const COMP3 = [['arc', 'en', 'ciel'], ['pomme', 'de', 'terre'], ['pot', 'au', 'feu'], ['sac', 'a', 'dos'], ['tete', 'a', 'tete'], ['moulin', 'a', 'vent']];
+const VAR_HINT = [...VARS, ...LETTERS]; // indice = la variable de la question (les noms longs d'abord: « age » avant « a »)
 
 const ints = (n, lo, hi, r) => shuffle(Array.from({ length: hi - lo + 1 }, (_, k) => lo + k), r).slice(0, n);
 const word = (r, max = 6) => pick(WORDS.filter((w) => w.length <= max), r);
@@ -99,7 +104,7 @@ const C3 = [
   F('strNum', '"', byEx((r) => ints(2, 1, 9, r).map(q).join(' + '), (r) => ints(2, 1, 9, r).map(q).join(' + '),
     (r) => [String(int(10, 20, r)), String(int(1, 9, r))].map(q).join(' + '))),
   // Contraste nombres / textes de chiffres: les deux sortes figurent dans les exemples.
-  F('strNum', '"', (r, e, i) => {
+  F('strNum', ['"', '+'], (r, e, i) => {
     const [a, b] = ints(2, 1, 9 + 5 * e, r);
     return (i === 3 ? r() < 0.5 : i % 2 === 1) ? `${q(a)} + ${q(b)}` : `${a} + ${b}`;
   }),
@@ -109,10 +114,10 @@ const C3 = [
     if (i === 0) return `${a} + ${b}`;
     return (i === 1 || (i === 3 && r() < 0.5)) ? `${q(a)} + ${b}` : `${a} + ${q(b)}`;
   }),
-  F('concat', '+', byEx((r) => words(2, r, 4).map(q).join(' + '), (r) => words(2, r, 6).map(q).join(' + '),
-    (r) => words(3, r, 4).map(q).join(' + ')), { ok: (c, outs) => outs.every((o) => o.length <= 13) }),
+  F('concat', '+', byEx((r) => pick(COMP2, r).map(q).join(' + '), (r) => pick(COMP2, r).map(q).join(' + '),
+    (r) => pick(COMP3, r).map(q).join(' + '))),
   // Espace: d'abord " " au milieu; puis un exemple sans espace en contraste; enfin l'espace dans les guillemets.
-  F('concatSpace', '" "', byEx(
+  F('concatSpace', ['" "', ' " +'], byEx(
     (r) => { const [a, b] = words(2, r, 5); return `${q(a)} + " " + ${q(b)}`; },
     (r, e, i) => { const [a, b] = words(2, r, 5); return i === 0 ? `${q(a)} + ${q(b)}` : `${q(a)} + " " + ${q(b)}`; },
     (r, e, i) => { const [a, b] = words(2, r, 5); return i === 0 ? `${q(a)} + " " + ${q(b)}` : i === 1 ? `${q(a)} + ${q(b)}` : `${q(a + ' ')} + ${q(b)}`; })),
@@ -141,7 +146,7 @@ const C4 = [
   F('lower', '.toLowerCase()', byEx((r) => `${q(word(r).toUpperCase())}.toLowerCase()`,
     (r) => { const w = word(r); return `${q(w[0].toUpperCase() + w.slice(1))}.toLowerCase()`; },
     (r) => `${q(caseMix(word(r), r))}.toLowerCase()`), { ok: (codes, outs) => codes.every((c, k) => !c.startsWith(q(outs[k]))) }),
-  F('case', '.toUpperCase()', (r, e, i) => {
+  F('case', ['.toUpperCase()', '.toLowerCase()'], (r, e, i) => {
     const w = caseMix(word(r), r);
     return (i === 3 ? r() < 0.5 : i % 2 === 0) ? `${q(w)}.toUpperCase()` : `${q(w)}.toLowerCase()`;
   }, { ok: (codes, outs) => codes.every((c, k) => !c.startsWith(q(outs[k]))) }),
@@ -153,7 +158,7 @@ const C4 = [
     (r) => `${q(pick(SHORT, r))}.toUpperCase() + ${q(pick(['!', '?', ' !', '...'], r))}`)),
   F('lengthMath', '.length', byEx((r) => `${q(word(r))}.length + ${int(1, 5, r)}`, (r) => `${q(word(r))}.length * ${int(2, 3, r)}`,
     (r) => `${q(word(r))}.length + ${q(word(r))}.length`)),
-  F('concatUpper', '.toUpperCase()', byEx((r) => `(${words(2, r, 4).map(q).join(' + ')}).toUpperCase()`,
+  F('concatUpper', '.toUpperCase()', byEx((r) => `(${pick(COMP2, r).map(q).join(' + ')}).toUpperCase()`,
     (r) => `(${q(word(r, 5))} + " " + ${q(pick(SHORT, r))}).toUpperCase()`,
     (r, e, i) => (i % 2 ? `(${q(word(r, 5))} + " " + ${q(pick(SHORT, r))}).toUpperCase()` : `(${q(word(r, 5))} + ${q(word(r, 5))}).length`))),
 ];
@@ -162,13 +167,13 @@ const C4 = [
 const C5 = [
   F('var', 'let', byEx((r) => `let a = ${int(1, 9, r)}\na`, (r) => { const v = pick(LETTERS, r); return `let ${v} = ${int(1, 20, r)}\n${v}`; },
     (r) => { const v = pick(VARS, r); return `let ${v} = ${int(5, 50, r)}\n${v}`; })),
-  F('varExpr', 'a', byEx((r) => `let a = ${int(1, 5, r)}\na + ${int(1, 4, r)}`, (r) => `let a = ${int(2, 9, r)}\na + ${int(2, 9, r)}`,
+  F('varExpr', VAR_HINT, byEx((r) => `let a = ${int(1, 5, r)}\na + ${int(1, 4, r)}`, (r) => `let a = ${int(2, 9, r)}\na + ${int(2, 9, r)}`,
     (r) => { const v = pick(LETTERS, r); return `let ${v} = ${int(10, 20, r)}\n${v} - ${int(1, 9, r)}`; })),
-  F('varExpr', 'n', (r, e) => { const v = e === 2 ? pick(VARS, r) : 'n'; return `let ${v} = ${int(3, 9, r)}\n${v} ${pick(['*', '+', '-'], r)} ${int(2, 3 + e, r)}`; }),
-  F('twoVars', 'b', byEx((r) => `let a = ${int(1, 5, r)}\nlet b = ${int(1, 5, r)}\na + b`,
+  F('varExpr', VAR_HINT, (r, e) => { const v = e === 2 ? pick(VARS, r) : 'n'; return `let ${v} = ${int(3, 9, r)}\n${v} ${pick(['*', '+', '-'], r)} ${int(2, 3 + e, r)}`; }),
+  F('twoVars', ['b', 'y'], byEx((r) => `let a = ${int(1, 5, r)}\nlet b = ${int(1, 5, r)}\na + b`,
     (r) => `let a = ${int(2, 6, r)}\nlet b = ${int(2, 6, r)}\na * b`,
     (r) => `let x = ${int(10, 20, r)}\nlet y = ${int(1, 9, r)}\nx ${pick(['+', '-'], r)} y`)),
-  F('varTwice', 'a', byEx((r) => `let a = ${int(2, 9, r)}\na + a`, (r) => `let a = ${int(2, 9, r)}\na * a`,
+  F('varTwice', ['a', 'n'], byEx((r) => `let a = ${int(2, 9, r)}\na + a`, (r) => `let a = ${int(2, 9, r)}\na * a`,
     (r) => `let n = ${int(2, 6, r)}\nn * n + n`)),
   F('varStr', 'nom', byEx((r) => `let nom = ${q(pick(NAMES, r))}\n"Salut " + nom`,
     (r) => `let nom = ${q(pick(NAMES, r))}\n"Bravo " + nom + "!"`, (r) => `let nom = ${q(pick(NAMES, r))}\nnom + nom`)),
@@ -193,14 +198,14 @@ const C6 = [
   F('updateExpr', 'a = a', byEx((r) => `let a = ${int(1, 9, r)}\na = a + ${int(2, 5, r)}\na`,
     (r) => `let a = ${int(2, 9, r)}\na = a * ${int(2, 3, r)}\na`, (r) => `let a = ${int(10, 20, r)}\na = a ${pick(['+', '-', '*'], r)} ${int(2, 4, r)}\na`)),
   F('plusEq', '+=', (r, e) => `let a = ${int(1, 5 + 5 * e, r)}\na += ${int(1, 3 + 3 * e, r)}\na`),
-  F('opEq', '=', byEx((r) => `let a = ${int(8, 15, r)}\na -= ${int(1, 7, r)}\na`, (r) => `let a = ${int(2, 9, r)}\na *= ${int(2, 4, r)}\na`,
+  F('opEq', ['-=', '*=', '+='], byEx((r) => `let a = ${int(8, 15, r)}\na -= ${int(1, 7, r)}\na`, (r) => `let a = ${int(2, 9, r)}\na *= ${int(2, 4, r)}\na`,
     (r) => `let a = ${int(5, 12, r)}\na ${pick(['+=', '-=', '*='], r)} ${int(2, 4, r)}\na`)),
-  F('plusPlus', '++', byEx((r) => `let a = ${int(1, 20, r)}\na++\na`, (r, e, i) => `let a = ${int(1, 20, r)}\na${i === 0 ? '++' : '--'}\na`,
+  F('plusPlus', ['++', '--'], byEx((r) => `let a = ${int(1, 20, r)}\na++\na`, (r, e, i) => `let a = ${int(1, 20, r)}\na${i === 0 ? '++' : '--'}\na`,
     (r) => `let a = ${int(1, 9, r)}\na${pick(['++', '--'], r)}\na${pick(['++', '--'], r)}\na`), { ok: noNeg }),
-  F('multiUpdate', '*=', (r, e) => `let a = ${int(1, 5, r)}\na += ${int(1, 4 + e, r)}\na ${e === 2 ? pick(['*=', '-='], r) : '*='} ${int(2, 3, r)}\na`, { ok: noNeg }),
+  F('multiUpdate', ['*=', '-='], (r, e) => `let a = ${int(1, 5, r)}\na += ${int(1, 4 + e, r)}\na ${e === 2 ? pick(['*=', '-='], r) : '*='} ${int(2, 3, r)}\na`, { ok: noNeg }),
   F('strPlusEq', '+=', byEx((r) => { const [a, b] = pick(SYL, r); return `let t = ${q(a)}\nt += ${q(b)}\nt`; },
     (r) => `let t = ${q(pick(SHORT, r))}\nt += ${int(1, 9, r)}\nt`, (r) => `let t = ${q(pick(SOUNDS, r))}\nt += t\nt += "!"\nt`)),
-  F('varPlusVar', '+=', byEx((r) => `let a = ${int(1, 9, r)}\nlet b = ${int(1, 9, r)}\na += b\na`,
+  F('varPlusVar', ['+=', '*='], byEx((r) => `let a = ${int(1, 9, r)}\nlet b = ${int(1, 9, r)}\na += b\na`,
     (r) => `let a = ${int(2, 6, r)}\nlet b = ${int(2, 4, r)}\na *= b\na`,
     (r) => `let a = ${int(1, 9, r)}\nlet b = ${int(1, 9, r)}\nb += a\nb * a`)),
 ];
@@ -213,17 +218,17 @@ const cmp = (op, lo, hi) => (r, e, i) => {
 };
 const free = (op, lo, hi) => (r, e, i) => (i < 2 ? cmp(op, lo, hi)(r, e, i) : `${int(lo, hi + 5 * e, r)} ${op} ${int(lo, hi + 5 * e, r)}`);
 const C7 = [
-  F('lt', '<', free('<', 1, 9)),
-  F('gt', '>', free('>', 1, 9)),
+  F('lt', '<', free('<', 1, 9), { pair: true }),
+  F('gt', '>', free('>', 1, 9), { pair: true }),
   // Égalité: 4 < 4 donne false; un exemple égal est toujours montré.
-  F('ltgtEq', '<', (r, e, i) => { const op = e === 1 ? '>' : e === 0 ? '<' : pick(['<', '>'], r); const a = int(1, 20, r);
-    return i === 0 ? `${a} ${op} ${a}` : free(op, 1, 9)(r, e, i === 1 ? 0 : i); }),
-  F('leGe', '<=', (r, e, i) => { const op = e === 1 ? '>=' : e === 0 ? '<=' : pick(['<=', '>='], r); const [a, b] = ints(2, 1, 9 + 5 * e, r);
+  F('ltgtEq', ['<', '>'], (r, e, i) => { const op = e === 1 ? '>' : e === 0 ? '<' : pick(['<', '>'], r); const a = int(1, 20, r);
+    return i === 0 ? `${a} ${op} ${a}` : free(op, 1, 9)(r, e, i === 1 ? 0 : i); }, { pair: true }),
+  F('leGe', ['<=', '>='], (r, e, i) => { const op = e === 1 ? '>=' : e === 0 ? '<=' : pick(['<=', '>='], r); const [a, b] = ints(2, 1, 9 + 5 * e, r);
     if (i === 0) return `${a} ${op} ${a}`; // égalité: true
     const lo = Math.min(a, b), hi = Math.max(a, b);
-    return i === 1 ? (op === '<=' ? `${hi} <= ${lo}` : `${lo} >= ${hi}`) : `${a} ${op} ${b}`; }),
-  F('eq', '===', (r, e, i) => { const a = int(1, 9 + 10 * e, r); return i === 0 || (i > 1 && r() < 0.5) ? `${a} === ${a}` : `${a} === ${a + int(1, 3, r)}`; }),
-  F('neq', '!==', (r, e, i) => { const a = int(1, 9 + 10 * e, r); return i === 1 || (i > 1 && r() < 0.5) ? `${a} !== ${a}` : `${a} !== ${a + int(1, 3, r)}`; }),
+    return i === 1 ? (op === '<=' ? `${hi} <= ${lo}` : `${lo} >= ${hi}`) : `${a} ${op} ${b}`; }, { pair: true }),
+  F('eq', '===', (r, e, i) => { const a = int(1, 9 + 10 * e, r); return i === 0 || (i > 1 && r() < 0.5) ? `${a} === ${a}` : `${a} === ${a + int(1, 3, r)}`; }, { pair: true }),
+  F('neq', '!==', (r, e, i) => { const a = int(1, 9 + 10 * e, r); return i === 1 || (i > 1 && r() < 0.5) ? `${a} !== ${a}` : `${a} !== ${a + int(1, 3, r)}`; }, { pair: true }),
   F('eqStr', '===', (r, e, i) => {
     const [a, b] = words(2, r);
     if (i === 0) return `${q(a)} === ${q(a)}`;
@@ -233,11 +238,11 @@ const C7 = [
   }),
   // Le type compte: "3" === 3 donne false, montré à côté de 3 === 3 et "3" === "3".
   F('eqType', '"', (r, e, i) => { const a = int(1, 9 + 10 * e, r); const k = i < 3 ? i : r() < 0.6 ? 1 : 2; // la question porte surtout sur le piège "3" === 3
-    return [`${a} === ${a}`, `${q(a)} === ${a}`, `${q(a)} === ${q(a)}`][k]; }),
-  F('cmpExpr', '>', (r, e, i) => { const a = int(1, 5, r), b = int(1, 5, r), op = pick(['>', '<'], r);
+    return [`${a} === ${a}`, `${q(a)} === ${a}`, `${q(a)} === ${q(a)}`][k]; }, { pair: true }),
+  F('cmpExpr', ['>', '<'], (r, e, i) => { const a = int(1, 5, r), b = int(1, 5, r), op = pick(['>', '<'], r);
     const c = i === 0 ? (op === '>' ? a + b - 1 : a + b + 1) : i === 1 ? a + b : int(2, 10, r);
-    return e === 2 ? `${a} * ${b} ${op} ${c + 3}` : `${a} + ${b} ${op} ${c}`; }),
-  F('cmpVar', '>', byEx((r, e, i) => { const a = int(1, 9, r); return `let a = ${a}\na > ${i === 0 ? a - 1 : i === 1 ? a + 1 : int(1, 9, r)}`; },
+    return e === 2 ? `${a} * ${b} ${op} ${c + 3}` : `${a} + ${b} ${op} ${c}`; }, { pair: true }),
+  F('cmpVar', ['.length', '>', '==='], byEx((r, e, i) => { const a = int(1, 9, r); return `let a = ${a}\na > ${i === 0 ? a - 1 : i === 1 ? a + 1 : int(1, 9, r)}`; },
     (r, e, i) => { const a = int(1, 9, r); return `let a = ${a}\na === ${i === 0 ? a : i === 1 ? a + 1 : pick([a, a + 2], r)}`; },
     (r, e, i) => { const w = word(r); return `${q(w)}.length ${pick(['>', '<'], r)} ${i === 0 ? w.length - 1 : i === 1 ? w.length : int(3, 6, r)}`; })),
 ];
@@ -274,13 +279,13 @@ const C9 = [
   F('forRange', 'i <= ', byEx((r) => { const a = int(1, 3, r); return loop(a, `i <= ${a + int(1, 3, r)}`, 'i++', 'console.log(i)'); },
     (r) => { const a = int(1, 6, r); return loop(a, `i <= ${a + int(2, 4, r)}`, 'i++', 'console.log(i)'); },
     (r, e, i) => { const a = int(1, 4, r); return loop(a, `i ${i === 1 || (i > 1 && r() < 0.5) ? '<' : '<='} ${a + int(2, 4, r)}`, 'i++', 'console.log(i)'); })),
-  F('forRepeat', 'console.log', (r, e) => loop(0, `i < ${int(2, 3 + (e > 0), r)}`, 'i++', `console.log(${q(pick(SOUNDS, r))})`)),
-  F('forExpr', 'console.log', (r, e) => loop(e, `i < ${int(3, 5, r)}`, 'i++', `console.log(i ${pick(['* 2', '+ 1', '* 10', '+ 5'].slice(0, 2 + e), r)})`)),
+  F('forRepeat', 'i < ', (r, e) => loop(0, `i < ${int(2, 3 + (e > 0), r)}`, 'i++', `console.log(${q(pick(SOUNDS, r))})`)),
+  F('forExpr', ['i * 2', 'i + 1', 'i * 10', 'i + 5'], (r, e) => loop(e, `i < ${int(3, 5, r)}`, 'i++', `console.log(i ${pick(['* 2', '+ 1', '* 10', '+ 5'].slice(0, 2 + e), r)})`)),
   F('forStep', 'i += ', (r, e) => { const s = int(2, 3 + e, r); return loop(0, `i < ${s * int(2, 4, r) - int(0, s - 1, r)}`, `i += ${s}`, 'console.log(i)'); }),
-  F('forDown', 'i--', byEx((r) => loop(int(2, 5, r), 'i > 0', 'i--', 'console.log(i)'),
+  F('forDown', ['i--', 'i -= '], byEx((r) => loop(int(2, 5, r), 'i > 0', 'i--', 'console.log(i)'),
     (r) => { const a = int(5, 9, r); return loop(a, `i > ${a - int(2, 4, r)}`, 'i--', 'console.log(i)'); },
     (r) => loop(int(6, 10, r), `i >= ${int(0, 1, r)}`, 'i -= 2', 'console.log(i)'))),
-  F('forSum', 's += i', (r, e) => `let s = 0\n${loop(1, `i <= ${int(2, 5 + e, r)}`, 'i++', e === 2 ? `s += ${pick(['i * 2', 'i + 1', '10'], r)}` : 's += i')}\nconsole.log(s)`),
+  F('forSum', ['s += i', 's += '], (r, e) => `let s = 0\n${loop(1, `i <= ${int(2, 5 + e, r)}`, 'i++', e === 2 ? `s += ${pick(['i * 2', 'i + 1', '10'], r)}` : 's += i')}\nconsole.log(s)`),
   F('forConcat', 't += ', (r, e) => `let t = ${e === 2 ? q(pick(['x', 'o', '-'], r)) : '""'}\n${loop(0, `i < ${int(2, 4, r)}`, 'i++', `t += ${q(pick(SOUNDS, r))}`)}\nconsole.log(t)`),
   F('forConcatI', 't += i', (r, e) => { const a = int(0, 3, r); return `let t = ""\n${loop(a, `i < ${a + int(3, 5 - e, r)}`, 'i++', e === 2 ? `t += i + ${q(pick(['-', '.', '+'], r))}` : 't += i')}\nconsole.log(t)`; }),
   F('forProd', 'p *= ', (r, e) => { const k = e === 2 ? 3 : 2; return `let p = ${e === 1 ? int(2, 5, r) : 1}\n${loop(0, `i < ${int(1, k === 3 ? 4 : 5, r)}`, 'i++', `p *= ${k}`)}\nconsole.log(p)`; }),
@@ -288,8 +293,8 @@ const C9 = [
 
 // ---- 10. Tableaux (l'indice commence à 0: les exemples montrent [0]) ----
 const C10 = [
-  F('index', '[0]', (r, e, i) => { const t = ints(3 + e, 3, 20 + 20 * e, r); return `${arr(t)}[${i < 3 ? [0, 1, 2][i] : int(0, t.length - 1, r)}]`; }),
-  F('index', '[', (r, e, i) => { const t = words(3 + (e > 0), r).map(q); return `${arr(t)}[${i < 2 ? i : int(0, t.length - 1, r)}]`; }),
+  F('index', ['[0]', ']['], (r, e, i) => { const t = ints(3 + e, 3, 20 + 20 * e, r); return `${arr(t)}[${i < 3 ? [0, 1, 2][i] : int(0, t.length - 1, r)}]`; }),
+  F('index', '][', (r, e, i) => { const t = words(3 + (e > 0), r).map(q); return `${arr(t)}[${i < 2 ? i : int(0, t.length - 1, r)}]`; }),
   F('arrLength', '.length', (r, e, i) => `${arr(ints(int(1, 4 + e, r), 1, 9, r))}.length`),
   F('arrVar', 't[', byEx((r) => `let t = ${arr(ints(3, 2, 9, r))}\nt[${int(0, 2, r)}]`, (r) => `let t = ${arr(ints(3, 2, 9, r))}\nt[0] + t[${int(1, 2, r)}]`,
     (r) => `let t = ${arr(ints(4, 2, 9, r))}\nt[${int(0, 3, r)}] * t[${int(0, 3, r)}]`)),
@@ -318,7 +323,7 @@ const C11 = [
     (r) => `${fn('f', 'n', 'n * 3')}\nf(${int(1, 5, r)}) * f(${int(1, 3, r)})`)),
   F('fnNested', 'f(f(', (r, e) => `${fn('f', 'n', ['n + 1', 'n * 2', 'n * 2 + 1'][e])}\nf(f(${int(1, 9, r)}))`),
   F('fnVar', 'f(a)', (r, e) => `let a = ${int(2, 9, r)}\n${fn('f', 'n', ['n + 5', 'n * 3', 'n * n'][e])}\nf(a)${e === 2 ? ` + ${int(1, 9, r)}` : ''}`),
-  F('fnCompose', 'g(f(', (r, e) => `${fn('f', 'n', 'n + 1')}\n${fn('g', 'n', 'n * 2')}\n${e === 0 ? 'g(f' : e === 1 ? 'f(g' : pick(['g(f', 'f(g'], r)}(${int(1, 9, r)}))`),
+  F('fnCompose', ['g(f(', 'f(g('], (r, e) => `${fn('f', 'n', 'n + 1')}\n${fn('g', 'n', 'n * 2')}\n${e === 0 ? 'g(f' : e === 1 ? 'f(g' : pick(['g(f', 'f(g'], r)}(${int(1, 9, r)}))`),
   F('fnStrMethod', 'return', byEx((r) => `${fn('taille', 'm', 'm.length')}\ntaille(${q(word(r))})`,
     (r) => `${fn('crie', 'm', 'm.toUpperCase() + "!"')}\ncrie(${q(word(r, 5))})`, (r) => `${fn('f', 'm', 'm.length * 2')}\nf(${q(word(r))})`)),
   F('fnBody', 'let', (r, e) => `function f(n) { let m = n ${['+ 1', '* 2', '* n'][e]}; return m + m }\nf(${int(1, 9, r)})`),
@@ -373,17 +378,25 @@ function makeExercise(fam, level, ex, used) {
   for (let attempt = 0; attempt < 2000; attempt++) {
     const r = mulberry32(level * 7919 + ex * 104729 + attempt * 15485863 + 2026);
     r.perm = shuffle([0, 1, 2], r);
-    const codes = [0, 1, 2, 3].map((i) => fit(fam.gen(r, ex, i)));
+    // Paire (chapitre 7, exercice 3): deux comparaisons sur une ligne; les 4 cas vrai/faux sont tous différents,
+    // la question est le seul cas pas encore montré: plus de réponse à pile ou face.
+    const pair = fam.pair && ex === 2;
+    const codes = pair
+      ? shuffle([[0, 0], [0, 1], [1, 0], [1, 1]], r).map(([a, b]) => `(${fam.gen(r, ex, a)}) + " " + (${fam.gen(r, ex, b)})`)
+      : [0, 1, 2, 3].map((i) => fit(fam.gen(r, ex, i)));
+    const rule = pair ? 'cmpPair' : fam.rule;
     if (new Set(codes).size < 4 || used.has(codes[3])) continue;
     const outs = codes.map(runJs);
     if (!outs.every(printable)) continue;
     const ex3 = new Set(outs.slice(0, 3));
     if (ex3.size < 2) continue;
-    if (CATEGORICAL.has(fam.rule) ? !ex3.has(outs[3]) : new Set(outs).size < 4) continue;
+    if (CATEGORICAL.has(rule) ? !ex3.has(outs[3]) : new Set(outs).size < 4) continue;
     if (fam.ok && !fam.ok(codes, outs)) continue;
+    // indice: le premier morceau qui est dans la question ET dans un exemple (ex.: .toLowerCase() si la question l'utilise)
+    const hint = [fam.hint].flat().find((h) => codes[3].includes(h) && codes.slice(0, 3).some((c) => c.includes(h)));
+    if (!hint) continue;
     used.add(codes[3]);
-    const hint = codes.slice(0, 3).some((c) => c.includes(fam.hint)) ? fam.hint : ''; // indice seulement s'il est visible
-    return [fam.rule, hint, ...codes.flatMap((c, k) => [c, outs[k]])];
+    return [rule, hint, ...codes.flatMap((c, k) => [c, outs[k]])];
   }
   throw new Error(`niveau ${level}.${ex} (${fam.rule}): aucun exercice valide`);
 }

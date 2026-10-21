@@ -60,7 +60,23 @@ test('3 exemples de la même règle, distincts, qui ne donnent pas la réponse',
     } else {
       assert.equal(new Set([...outs, x.question.out]).size, 4, `${l}.${e}: sorties non distinctes`);
     }
-    if (x.hintCode) assert.ok(x.examples.some((v) => v.code.includes(x.hintCode)), `${l}.${e}: indice absent`);
+  }
+});
+
+test('indice: toujours présent, dans la question et dans au moins un exemple', () => {
+  for (const [l, e, x] of ALL) {
+    assert.ok(x.hintCode, `${l}.${e}: pas d'indice`);
+    assert.ok(x.question.code.includes(x.hintCode), `${l}.${e}: indice ${x.hintCode} absent de la question`);
+    assert.ok(x.examples.some((v) => v.code.includes(x.hintCode)), `${l}.${e}: indice absent des exemples`);
+  }
+});
+
+test('Comparer: le 3e exercice de chaque niveau n\'est pas à pile ou face (paire, 4 sorties différentes)', () => {
+  const pairs = ALL.filter(([, , x]) => x.rule === 'cmpPair');
+  assert.ok(pairs.length >= 7, `${pairs.length} paires`);
+  for (const [l, e, x] of pairs) {
+    assert.ok(e === 2 && chapterIndex(l) === 6, `${l}.${e}`);
+    assert.ok(!x.examples.some((v) => v.out === x.question.out), `${l}.${e}: réponse déjà montrée`);
   }
 });
 
