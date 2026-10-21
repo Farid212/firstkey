@@ -44,13 +44,17 @@ test('rejouer un niveau plus bas: score seul', () => {
   assert.equal(r.leveledUp, false);
 });
 
-test('pas de dépassement à MAX_LEVEL', () => {
+test('dernier niveau: pas de dépassement, mais le terminer compte une seule fois', () => {
   const s = st8();
   s.progress.letters = { level: MAX_LEVEL, correct: 24 };
   const r = recordCorrect(s, 'letters', MAX_LEVEL);
-  assert.deepEqual(r.state.progress.letters, { level: MAX_LEVEL, correct: 24 });
-  assert.equal(r.leveledUp, false);
+  assert.deepEqual(r.state.progress.letters, { level: MAX_LEVEL, correct: 25 });
+  assert.equal(r.leveledUp, true); // finale: déclenche le dernier autocollant
   assert.equal(r.state.score, s.score + MAX_LEVEL);
+  const r2 = recordCorrect(r.state, 'letters', MAX_LEVEL);
+  assert.deepEqual(r2.state.progress.letters, { level: MAX_LEVEL, correct: 25 });
+  assert.equal(r2.leveledUp, false); // pas de seconde finale
+  assert.equal(r2.state.score, r.state.score + MAX_LEVEL);
 });
 
 test('état d\'entrée non modifié', () => {

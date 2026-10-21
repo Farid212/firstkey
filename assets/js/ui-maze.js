@@ -340,7 +340,7 @@ export function startMaze(root, state, target, handlers) {
     m.setAttribute('aria-label', `Monde ${i + 1} : ${state === 'ok' ? 'réussi' : state === 'ko' ? 'raté' : 'pas encore testé'}`);
   }
 
-  const counted = () => level === s.progress.maze.level && level < MAX_LEVEL; // recordCorrect compte ce tour
+  const counted = () => level === s.progress.maze.level && (level < MAX_LEVEL || s.progress.maze.correct < answersPerLevel(s.settings.age, 'maze')); // recordCorrect compte ce tour
   const draftKey = () => `${level}:${ex}:${lang}`;
 
   // ---------- tour / exercice ----------

@@ -7,13 +7,18 @@ export function recordCorrect(state, blockId, playedLevel) {
   const p = s.progress[blockId];
   s.score += playedLevel;
   let leveledUp = false;
+  const need = answersPerLevel(s.settings.age, blockId);
   if (playedLevel === p.level && p.level < MAX_LEVEL) {
     p.correct += 1;
-    if (p.correct >= answersPerLevel(s.settings.age, blockId)) {
+    if (p.correct >= need) {
       p.level += 1;
       p.correct = 0;
       leveledUp = true;
     }
+  } else if (playedLevel === p.level && p.correct < need) {
+    // dernier niveau: le niveau ne monte plus, mais le terminer compte une seule fois (finale, dernier autocollant)
+    p.correct += 1;
+    leveledUp = p.correct >= need;
   }
   return { state: s, leveledUp };
 }
