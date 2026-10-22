@@ -1,6 +1,6 @@
 import { BLOCKS, MAX_LEVEL } from './blocks.js';
 
-export const answersPerLevel = (age, blockId) => (blockId === 'maze' || blockId === 'discover' ? 3 : age <= 3 ? 5 : age <= 5 ? 10 : 25);
+export const answersPerLevel = (age, blockId) => (['maze', 'discover', 'discover2'].includes(blockId) ? 3 : age <= 3 ? 5 : age <= 5 ? 10 : 25);
 
 export function recordCorrect(state, blockId, playedLevel) {
   const s = structuredClone(state);
@@ -16,7 +16,6 @@ export function recordCorrect(state, blockId, playedLevel) {
       leveledUp = true;
     }
   } else if (playedLevel === p.level && p.correct < need) {
-    // dernier niveau: le niveau ne monte plus, mais le terminer compte une seule fois (finale, dernier autocollant)
     p.correct += 1;
     leveledUp = p.correct >= need;
   }

@@ -1,5 +1,3 @@
-// Listes intégrées. Mots séparés par des espaces, phrases par des retours à la ligne.
-// Chaque liste est triée du plus court au plus long (mots, puis phrases, puis petites histoires).
 import { kana } from './letters.js';
 
 const list = (words, sentences) => [...words.split(/\s+/), ...sentences.trim().split('\n')];
@@ -56,7 +54,6 @@ a little mouse found a big piece of cheese
 in the forest a young fox looks for his best friend the owl`,
 ).sort(byLength);
 
-// Romaji hepburn; la variante kunrei (si, ti, tu...) est ajoutée par kana().
 const JA_WORDS = `あめ ame|いし ishi|いえ ie|うみ umi|かお kao|くち kuchi|はな hana|そら sora|つき tsuki|ほし hoshi
 |やま yama|かわ kawa|ねこ neko|いぬ inu|さる saru|うま uma|とり tori|かめ kame|くま kuma|ふね fune
 |くつ kutsu|かさ kasa|あひる ahiru|さくら sakura|ひかり hikari|さかな sakana|たまご tamago|りんご ringo

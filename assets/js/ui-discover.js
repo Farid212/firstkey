@@ -1,8 +1,7 @@
-// Écran « Découvre le JavaScript » (spec 9): une console sans mots. 3 exemples résolus, puis une ligne à compléter;
-// l'enfant devine la règle et tape la sortie. Un niveau = un tour de 3 exercices (comme le labyrinthe).
 import { recordCorrect, answersPerLevel } from './progress.js';
 import { MAX_LEVEL } from './blocks.js';
 import { discoverExercise } from './discover.js';
+import { discover2Exercise } from './discover2.js';
 import { createTyper } from './typer.js';
 import { getArt } from './rewards/art/index.js';
 import { CREATURES } from './rewards/creatures.js';
@@ -11,7 +10,7 @@ const play = (id) => {
   const a = document.getElementById(id);
   if (!a) return;
   a.currentTime = 0;
-  a.play().catch(() => {}); // lecture refusée: sans importance
+  a.play().catch(() => {});
 };
 
 const el = (tag, cls, text) => {
@@ -22,11 +21,10 @@ const el = (tag, cls, text) => {
 };
 
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-const ID = 'discover';
-const OPS = /===|!==|>=|<=|\+=|-=|\*=|\/=|\+\+|[-+*/<>]/g; // indice sans hintCode: les opérateurs
+const EXERCISES = { discover: discoverExercise, discover2: discover2Exercise };
+const OPS = /===|!==|>=|<=|\+=|-=|\*=|\/=|\+\+|[-+*/<>]/g;
 const escape = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-// code affiché tel quel; les morceaux qui portent la règle sont dans des <mark> (visibles seulement avec l'indice)
 function codeEl(code, hint) {
   const pre = el('pre', 'dc-code');
   const re = hint ? new RegExp(escape(hint), 'g') : new RegExp(OPS.source, 'g');
@@ -40,6 +38,8 @@ function codeEl(code, hint) {
 }
 
 export function startDiscover(root, state, target, handlers) {
+  const ID = target.blockId;
+  const exercise = EXERCISES[ID];
   root.replaceChildren();
   const bar = el('div', 'bar');
   const back = el('button', 'back round', '←');
@@ -56,8 +56,8 @@ export function startDiscover(root, state, target, handlers) {
   bar.append(back, score, meter);
 
   const con = el('div', 'dc');
-  const rows = el('div', 'dc-rows'); // exemples: défilent si l'écran est trop bas, la ligne à compléter reste visible
-  const buddy = el('div', 'dc-buddy'); // la créature attend au bout de la ligne à compléter
+  const rows = el('div', 'dc-rows');
+  const buddy = el('div', 'dc-buddy');
   buddy.setAttribute('aria-hidden', 'true');
   con.append(rows);
   const stage = el('div', 'dc-stage');
@@ -67,10 +67,10 @@ export function startDiscover(root, state, target, handlers) {
   root.append(screen);
 
   let s = handlers.getState();
-  let fixed = target.level; // niveau choisi par une pastille; suit le niveau si on le termine
-  let local = 0; // exercice d'un tour rejoué (non compté par recordCorrect): 0, 1, 2, 0…
+  let fixed = target.level;
+  let local = 0;
   let level, ex, item, typer, slots, qrow, misses;
-  let token = 0; // change à chaque sortie: le passage à l'exercice suivant est annulé
+  let token = 0;
   let timer;
   const ac = new AbortController();
 
@@ -80,7 +80,7 @@ export function startDiscover(root, state, target, handlers) {
   function row(code, out, cls) {
     const r = el('div', `dc-row ${cls}`);
     const o = el('span', 'dc-out', out);
-    const res = el('span', 'dc-res'); // flèche et résultat passent à la ligne ensemble
+    const res = el('span', 'dc-res');
     res.append(el('span', 'dc-arrow', '→ '), o);
     r.append(codeEl(code, item.hintCode), res);
     return [r, o];
@@ -90,27 +90,30 @@ export function startDiscover(root, state, target, handlers) {
     level = fixed ?? s.progress[ID].level;
     local %= 3;
     ex = counted() ? Math.min(2, s.progress[ID].correct) : local;
-    item = discoverExercise(level, ex);
+    item = exercise(level, ex);
     typer = createTyper([item.question.out], { caseSensitive: true });
     misses = 0;
-    con.classList.remove('hint', 'win');
+    con.classList.remove('dc-hint', 'win');
     const list = item.examples.map((e) => row(e.code, e.out, 'dc-ex')[0]);
     let o;
     [qrow, o] = row(item.question.code, '', 'dc-q');
     o.setAttribute('aria-hidden', 'true');
     slots = [...item.question.out].map((c) => o.appendChild(el('span', c === ' ' ? 'dc-slot sp' : 'dc-slot')));
     qrow.append(buddy);
-    rows.replaceChildren(...list);
+    rows.replaceChildren(...(item.page ? [el('pre', 'dc-page', item.page)] : []), ...list);
     con.replaceChildren(rows, qrow);
-    // taille: la ligne la plus longue tient dans la largeur, toutes les lignes dans la hauteur; sinon pre-wrap (téléphone)
     const all = [...item.examples, item.question];
-    const w = Math.max(...all.flatMap((e) => {
+    const wCode = Math.max(...all.flatMap((e) => {
       const ls = e.code.split('\n');
       return [...ls.slice(0, -1).map((l) => l.length), ls.at(-1).length + 3 + e.out.length];
     }));
-    const lines = all.reduce((n, e) => n + e.code.split('\n').length, 0);
-    con.style.fontSize = `max(13px, min(46px, calc((90vw - 64px) / ${(0.61 * w).toFixed(1)}), calc((62vh - 150px) / ${(1.45 * lines + 2.4).toFixed(1)})))`;
-    const c = CREATURES[s.rewards.unlocked - 1] ?? CREATURES[0]; // relu: un tour a pu débloquer une créature
+    const pageLines = item.page ? item.page.split('\n') : [];
+    const w = Math.max(wCode, ...pageLines.map((l) => 0.8 * l.length + 2));
+    const lines = all.reduce((n, e) => n + e.code.split('\n').length, 0) + 0.8 * pageLines.length + (item.page ? 1 : 0);
+    const k = 1.45 * lines + 2.4, tall = (0.62 * innerHeight - 150) / k < 16;
+    screen.classList.toggle('dc-tall', tall);
+    con.style.fontSize = `max(13px, min(46px, calc((90vw - 64px) / ${(0.61 * w).toFixed(1)}), calc((${tall ? '100vh - 170px' : '62vh - 150px'}) / ${k.toFixed(1)})))`;
+    const c = CREATURES[s.rewards.unlocked - 1] ?? CREATURES[0];
     buddy.replaceChildren(getArt(c.id).draw());
     paint();
   }
@@ -125,7 +128,7 @@ export function startDiscover(root, state, target, handlers) {
     lvlTag.textContent = `Niveau ${level} · ${Math.min(done, total)}/${total}`;
   }
 
-  const restart = (node, cls) => { // relance une animation CSS (coupée sous prefers-reduced-motion)
+  const restart = (node, cls) => {
     node.classList.remove(cls);
     void node.offsetWidth;
     node.classList.add(cls);
@@ -133,10 +136,10 @@ export function startDiscover(root, state, target, handlers) {
 
   function wrong() {
     document.dispatchEvent(new CustomEvent('firstkey:wrong', { detail: { blockId: ID, level } }));
-    s = handlers.getState(); // la série remise à zéro par le directeur ne doit pas être écrasée
+    s = handlers.getState();
     play('wrongAnswer');
     restart(qrow, 'shake');
-    if (++misses >= 2) con.classList.add('hint');
+    if (++misses >= 2) con.classList.add('dc-hint');
   }
 
   function correct() {
@@ -149,17 +152,17 @@ export function startDiscover(root, state, target, handlers) {
     document.dispatchEvent(new CustomEvent('firstkey:correct', { detail: { ...detail, kind: 'letter', display: item.question.code, rect: { x, y, width, height } } }));
     if (res.leveledUp && fixed === level) fixed = res.state.progress[ID].level;
     if (res.leveledUp) document.dispatchEvent(new CustomEvent('firstkey:levelup', { detail: { ...detail, newLevel: res.state.progress[ID].level } }));
-    s = handlers.getState(); // relire l'état: un écouteur a pu y ajouter des récompenses
+    s = handlers.getState();
     if (!wasCounted) local += 1;
-    paint(before + 1); // 1/3, 2/3 puis 3/3; le tour suivant repart de 0/3 à son chargement
+    paint(before + 1);
   }
 
   function win() {
-    con.classList.remove('hint');
+    con.classList.remove('dc-hint');
     con.classList.add('win');
     restart(buddy, 'hop');
     play('correctAnswer');
-    correct(); // compté tout de suite: un « retour » pendant la fête ne perd pas l'exercice
+    correct();
     const t = token;
     timer = setTimeout(() => { if (t === token) load(); }, reduced() ? 600 : 1100);
   }
@@ -167,12 +170,10 @@ export function startDiscover(root, state, target, handlers) {
   function onKey(e) {
     if (e.key === 'Escape') return exit();
     if (e.repeat || e.isComposing) return;
-    // AltGr (Windows: Ctrl+Alt) et Option (Mac) tapent [ ] { } sur AZERTY: seuls Ctrl seul et Cmd sont des raccourcis
     if (e.metaKey || (e.ctrlKey && !e.altKey)) return;
-    if (e.key.length !== 1) return; // Tab, Entrée, flèches, Retour arrière…: rôle normal (aucun recul)
-    e.preventDefault(); // Espace ne fait pas défiler
+    if (e.key.length !== 1) return;
+    e.preventDefault();
     let r = typer.press(e.key);
-    // AZERTY: les chiffres demandent Maj; sans Maj on retente avec le chiffre de la touche (avec Maj, QWERTY tape « ( »)
     if (r === 'wrong' && /^(Digit|Numpad)\d$/.test(e.code) && !e.shiftKey) r = typer.press(e.code.at(-1));
     if (r === 'ignored') return;
     if (r === 'wrong') return wrong();

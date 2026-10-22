@@ -1,8 +1,6 @@
-// Ordre d'apprentissage. ja: on AFFICHE le kana, l'enfant TAPE le romaji.
 const az = [...'abcdefghijklmnopqrstuvwxyz'];
 const digits = [...'0123456789'];
 
-// Une entrée japonaise; ajoute la variante kunrei (si, ti, tu, hu, zi) quand elle diffère.
 export function kana(display, romaji, hint) {
   const kunrei = romaji.replace(/shi/g, 'si').replace(/chi/g, 'ti').replace(/tsu/g, 'tu')
     .replace(/fu/g, 'hu').replace(/ji/g, 'zi');
@@ -23,7 +21,6 @@ const HIRAGANA = `あ a い i う u え e お o か ka き ki く ku け ke こ 
 const hira = [];
 for (let i = 0; i < HIRAGANA.length; i += 2) hira.push([HIRAGANA[i], HIRAGANA[i + 1]]);
 
-// Katakana = hiragana décalé de 0x60 dans Unicode.
 const toKata = (c) => String.fromCharCode(c.charCodeAt(0) + 0x60);
 
 const KANJI = [

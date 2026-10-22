@@ -55,7 +55,7 @@ test('segments: chaque étiquette donne un chemin qui se creuse, murs épais', (
 
 test('carve: refuse un chemin qui se touche ou dépasse 11 cases', () => {
   const rng = mulberry32(1);
-  assert.equal(carve(walkCells(['f', 'r', 'f', 'r', 'f'], 1), 1, 5, rng, []), null); // carré 1×1: se touche
+  assert.equal(carve(walkCells(['f', 'r', 'f', 'r', 'f'], 1), 1, 5, rng, []), null);
   assert.equal(carve(walkCells(Array(11).fill('f'), 1), 1, 5, rng, []), null);
   const m = carve(walkCells(['f', 'f', 'r', 'f', 'f'], 1), 1, 5, rng, ['L']);
   assert.equal(m.par, 5);
@@ -70,7 +70,7 @@ test('compressedLength: forward(n) compte pour une commande', () => {
 test('solve: valeur connue et cas sans solution', () => {
   const T = true, F = false;
   const m = { w: 3, h: 3, walls: [[F, F, F], [T, T, F], [T, T, F]], start: { x: 0, y: 0, dir: 1 }, goal: { x: 2, y: 2 } };
-  assert.equal(solve(m), 5); // f f r f f
+  assert.equal(solve(m), 5);
   assert.deepEqual(solutionPath(m), ['f', 'f', 'r', 'f', 'f']);
   assert.equal(solve({ ...m, walls: [[F, T, F], [T, T, F], [T, T, F]] }), -1);
   assert.equal(solutionPath({ ...m, walls: [[F, T, F], [T, T, F], [T, T, F]] }), null);

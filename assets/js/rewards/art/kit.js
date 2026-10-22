@@ -1,4 +1,3 @@
-// Outils partagés des modules d'art (animaux, personnages). Le DOM n'est touché que dans les fonctions.
 import { track, clamp } from '../anim.js';
 import { svgEl } from '../fx.js';
 import { particles } from '../levelup/stickman.js';
@@ -11,7 +10,6 @@ export const path = (d, fill, extra = {}) => svgEl('path', { d, fill, ...OUT, ..
 export const group = (parent, attrs = {}) => { const g = svgEl('g', attrs); parent.append(g); return g; };
 export const rot = (el, deg, x = 0, y = 0) => el.setAttribute('transform', `rotate(${deg.toFixed(2)} ${x} ${y})`);
 
-// Trait épais cerné (queue, bras): un tracé foncé large puis le même en couleur par-dessus.
 export function tube(parent, d, color, w = 14) {
   const g = group(parent);
   g.append(
@@ -20,7 +18,6 @@ export function tube(parent, d, color, w = 14) {
   return g;
 }
 
-// Œil rond: set(lx, ly, blink) avec lx, ly dans [-1, 1] (regard) et blink dans [0, 1] (paupière).
 export function eye(parent, x, y, r) {
   const lid = group(group(parent, { transform: `translate(${x} ${y})` }));
   lid.append(svgEl('circle', { r, fill: '#fff', ...OUT, 'stroke-width': 4 }));
@@ -35,11 +32,8 @@ export function eyes(parent, pts, r) {
   const es = pts.map(([x, y]) => eye(parent, x, y, r));
   return (...a) => es.forEach((e) => e(...a));
 }
-// Clignement: pics 0 -> 1 -> 0 autour des instants donnés.
 export const blinkAt = (t, times, w = 0.09) => Math.max(0, ...times.map((ti) => 1 - Math.abs(t - ti) / w));
 
-// Surgit du bas (outBack), s'écrase en atterrissant, respire, puis saute et replonge.
-// Renvoie { y, sx, sy } pour un corps dont les pieds sont en (0, 0).
 export function popper(dur) {
   const L = dur - 0.6;
   const y = track([[0, 330], [0.55, 0, 'outBack'], [L, 0], [L + 0.22, -40, 'out2'], [dur, 340, 'in2']]);
@@ -48,7 +42,6 @@ export function popper(dur) {
   return (t) => { const q = sq(t) + Math.sin(t * 5) * 0.015; return { y: y(t), sx: 1 + q, sy: 1 - q, landed: t > 0.5 && t < L }; };
 }
 
-// Ombre au sol + corps; place(x, pose) applique la pose de popper (et une compression en plus).
 export function actor(parent, build) {
   const shadow = svgEl('ellipse', { cx: 0, cy: 2, rx: 70, ry: 10, fill: '#000', opacity: 0 });
   parent.append(shadow);
@@ -63,7 +56,6 @@ export function actor(parent, build) {
   return { ...parts, body, place };
 }
 
-// Portrait statique 100 x 100: disque coloré, créature posée dessus (pieds en bas), rognée au disque.
 export function portrait(build, bg, { scale = 0.4, y = 92 } = {}) {
   const svg = svgEl('svg', { viewBox: '0 0 100 100' });
   const id = `art-clip-${Math.random().toString(36).slice(2)}`;
@@ -75,7 +67,6 @@ export function portrait(build, bg, { scale = 0.4, y = 92 } = {}) {
   return svg;
 }
 
-// Scène du tiers bas (y >= 0.62 h), recalée sur fx.size() à chaque image: sol en y = 0, ~300 unités de haut.
 export function stage(fx, g) {
   const id = `fx-band-${Math.random().toString(36).slice(2)}`;
   const cp = svgEl('clipPath', { id });
@@ -98,9 +89,6 @@ export function stage(fx, g) {
   return S;
 }
 
-// Boucle d'une animation de dur secondes: setup(S) construit et renvoie frame(t, once).
-// S.parts: particules au premier plan (S.parts.shoot), avancées automatiquement.
-// once(key, t, at, fn): fn une seule fois quand t atteint at.
 export function play(fx, dur, setup) {
   return fx.run(async (g) => {
     const S = stage(fx, g);
@@ -115,6 +103,5 @@ export function play(fx, dur, setup) {
   });
 }
 
-// Petit nuage de poussière au sol (atterrissage, départ).
 export const DUST = ['#ffffff', '#f1ece4', '#e3dccf'];
 export const dust = (S, x) => S.parts.shoot(12, x, -6, 160, { a0: -Math.PI / 2, spread: Math.PI * 1.2, g: 300, rect: false, cols: DUST });

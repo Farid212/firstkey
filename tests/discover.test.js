@@ -7,7 +7,6 @@ import { buildDiscover } from '../scripts/build-discover.mjs';
 const ALL = Array.from({ length: 114 }, (_, i) => i + 1).flatMap((l) => [0, 1, 2].map((e) => [l, e, discoverExercise(l, e)]));
 const chapterIndex = (level) => DISCOVER_CHAPTERS.findIndex((c) => level >= c.from && level <= c.to);
 
-// Vrai moteur JavaScript (test seulement): sans console.log dans le code, la dernière ligne est affichée (comme une console).
 function run(code) {
   const out = [];
   const lines = code.split('\n');
@@ -55,7 +54,6 @@ test('3 exemples de la même règle, distincts, qui ne donnent pas la réponse',
     const outs = x.examples.map((v) => v.out);
     assert.ok(new Set(outs).size >= 2, `${l}.${e}: règle triviale`);
     if (CATEGORICAL_RULES.includes(x.rule)) {
-      // shortcut: règles à sorties fixes (true/false, oui/non…): la réponse est forcément une sortie déjà montrée.
       assert.ok(outs.includes(x.question.out), `${l}.${e}: sortie jamais montrée`);
     } else {
       assert.equal(new Set([...outs, x.question.out]).size, 4, `${l}.${e}: sorties non distinctes`);
@@ -96,9 +94,6 @@ test('règles: déjà vues (chapitre courant ou précédent), et chaque chapitre
   for (const [i, rules] of RULES_BY_CHAPTER.entries()) for (const r of rules) assert.ok(used[i].has(r), `chapitre ${i + 1}: ${r} jamais introduite`);
 });
 
-// Difficulté d'un niveau = moyenne (longueur du code de la question + 3 × nombre d'opérations).
-// Tolérance: un niveau peut redescendre jusqu'à 50 % du niveau le plus dur déjà vu dans le chapitre
-// (la mesure compte des caractères: une règle nouvelle aux codes courts, comme "10" + 5 après des mots longs, repart plus bas), et le dernier niveau est au moins aussi dur que le premier.
 const OPS = /===|!==|<=|>=|\+=|-=|\*=|\+\+|--|[-+*/<>=]|\.\w+|\[|\bif\b|\bfor\b|\bfunction\b|\breturn\b/g;
 const difficulty = (code) => code.length + 3 * (code.match(OPS) ?? []).length;
 test('difficulté non décroissante dans un chapitre (tolérance 50 %)', () => {

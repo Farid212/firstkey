@@ -75,7 +75,7 @@ test('toutes les questions fr/en ont des accepts valides', () => {
         const q = makeQuestion('words', level, S(lang), fixed(k / 10));
         assert.ok(q.accepts.length > 0);
         for (const a of q.accepts) assert.match(a, ok);
-        assert.match(q.accepts.at(-1), /^[a-z0-9 ']+$/); // tapable sans touche morte
+        assert.match(q.accepts.at(-1), /^[a-z0-9 ']+$/);
       }
 });
 

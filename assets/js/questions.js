@@ -4,10 +4,8 @@ import { WORDS } from './data/words.js';
 import { makeMathQuestion } from './math.js';
 import { makeCodeQuestion } from './code.js';
 
-const WINDOW = 10; // taille de la réserve de mots
+const WINDOW = 10;
 
-// accepts (fr/en): minuscules, ponctuation retirée sauf l'apostrophe (toujours ' simple), espaces conservés.
-// fr: forme accentuée + forme sans accents (tapable au clavier).
 function textAccepts(text, lang) {
   const t = text.toLowerCase().replace(/[’‘]/g, "'").replace(/[^\p{L}\p{N} ']/gu, '').replace(/\s+/g, ' ').trim();
   if (lang !== 'fr') return [t];
@@ -34,16 +32,14 @@ export function makeQuestion(blockId, level, settings, rng = Math.random) {
   let pool;
   if (blockId === 'letters') {
     const n = Math.min(list.length, 2 + Math.floor(((list.length - 2) * (level - 1)) / (MAX_LEVEL - 1)));
-    pool = list.slice(0, n); // niveau 1: 2 items, niveau max: toute la liste
+    pool = list.slice(0, n);
   } else {
-    // fenêtre qui avance de la fin du début de liste (niveau 1) à la fin de liste (niveau max)
     const start = Math.round(((level - 1) / (MAX_LEVEL - 1)) * Math.max(0, list.length - WINDOW));
     pool = list.slice(start, start + WINDOW);
   }
   return toQuestion(pick(pool, rng), lang, settings);
 }
 
-// Transforme une entrée de liste en question.
 export function toQuestion(item, lang, settings) {
   if (lang === 'ja') return { ...item };
   const display = settings.uppercase ? item.toUpperCase() : item;

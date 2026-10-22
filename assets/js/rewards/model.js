@@ -55,6 +55,5 @@ export function normalizeRewards(raw) {
   };
 }
 
-// Anciennes sauvegardes: autocollants des chapitres déjà terminés d'après la progression (sans fête).
 export const stickersFromProgress = (progress) => Object.entries(CHAPTERS).flatMap(([blockId, list]) =>
   list.filter((c) => chapterState(blockId, c, progress?.[blockId]?.level ?? 1) === 'done').map((c) => c.id));

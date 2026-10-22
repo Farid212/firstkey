@@ -1,18 +1,16 @@
-// Table des chapitres des jeux (module pur, sans DOM). Chaque jeu: tranches contiguës de niveaux couvrant 1..114.
 import { CURRICULUM } from './maze/curriculum.js';
 import { DISCOVER_CHAPTERS } from './discover.js';
+import { DISCOVER2_CHAPTERS } from './discover2.js';
 
 const MAX = 114;
 const PALETTE = ['#e4572e', '#f2a007', '#2eab6f', '#1d9bd1', '#7a5cd6', '#d6439b', '#16a8a0', '#8a6d3b'];
 
-// rows: [premier niveau, nom, nom court, icône]; chaque chapitre finit où le suivant commence (le dernier à 114).
 function build(blockId, rows) {
   return rows.map(([from, name, short, icon], i) => ({
     id: `${blockId}:${i}`, name, short, icon, from, to: (rows[i + 1]?.[0] ?? MAX + 1) - 1,
   }));
 }
 
-// Labyrinthe: bornes déduites de CURRICULUM (un chapitre par notion nouvelle); seuls les noms sont écrits ici.
 const MAZE_NAMES = {
   straight: ['Tout droit', 'Tout droit', '➡️'], turnR: ['Virage à droite', 'Virage à droite', '↪️'],
   turnL: ['Virage à gauche', 'Virage à gauche', '↩️'], L: ['Les L et les Z', 'Les L et les Z', '🔀'],
@@ -26,7 +24,6 @@ const mazeRows = CURRICULUM.filter((c) => c.isNew).map((c) => {
   return [c.level, name, short, icon];
 });
 
-// Quiz: thèmes calés sur la fenêtre de 10 éléments de code.js (voir le rapport de la tâche 1).
 const QUIZ_PY = [
   [1, 'Afficher et calculer', 'Afficher', '🖨️'], [6, 'Les variables', 'Variables', '📦'], [9, 'Les textes', 'Textes', '🔤'],
   [15, 'Calculs et priorités', 'Calculs', '➗'], [22, 'Si / sinon', 'Si / sinon', '🔀'], [34, 'Les boucles', 'Boucles', '🔁'],
@@ -62,7 +59,8 @@ export const CHAPTERS = {
   maze: build('maze', mazeRows),
   python: build('python', QUIZ_PY),
   js: build('js', QUIZ_JS),
-  discover: DISCOVER_CHAPTERS, // bornes et noms dans discover.js (même forme que build)
+  discover: DISCOVER_CHAPTERS,
+  discover2: DISCOVER2_CHAPTERS,
 };
 
 export const chapterOf = (blockId, level) => {
@@ -73,7 +71,6 @@ export const chapterOf = (blockId, level) => {
 export const chapterState = (blockId, chapter, level) =>
   level > chapter.to ? 'done' : level >= chapter.from ? 'current' : 'locked';
 
-// Niveaux terminés du chapitre; `level` = niveau en cours (les niveaux avant lui sont faits).
 export const chapterProgress = (blockId, chapter, level) => ({
   done: Math.max(0, Math.min(level, chapter.to + 1) - chapter.from),
   total: chapter.to - chapter.from + 1,

@@ -15,7 +15,7 @@ const free = (m, x, y) => x >= 0 && y >= 0 && x < m.w && y < m.h && !m.walls[y][
 const sig = (m) => JSON.stringify([m.walls, m.start, m.goal]);
 const toAst = (path) => path.map((c) => ({ t: 'call', name: { f: 'forward', l: 'left', r: 'right' }[c], n: 1 }));
 
-function runLines(src, lang, maze) { // comme le terminal: une ligne après l'autre, même monde
+function runLines(src, lang, maze) {
   let world = createWorld(maze), events = [];
   for (const line of src.split('\n')) {
     const p = parse(line, lang);
@@ -122,11 +122,8 @@ test('terminal (1-72): chaque ligne de référence passe dans les deux langages 
   }
 });
 
-// Taille naïve N d'un monde: commandes du plus court chemin sans boucle mais avec forward(n) (suites de 'f' regroupées).
 const naive = (m) => compressedLength(solutionPath(m));
 
-// Règle « la boucle est demandée » (tours 41-72), S = instructions de la référence (commande = 1, boucle = 1 + corps):
-// sans boucle il faut au moins 2 × S commandes et plus de 8 (exception mesurée et documentée: tour 68, exercices 2 et 3).
 test('tours de boucle (41-72): sans boucle, au moins 2 × S commandes et plus de 8', () => {
   const size = (src) => src.split('\n').reduce((n, line) => {
     const count = (list) => list.reduce((k, st) => k + 1 + (st.body ? count(st.body) : 0), 0);
@@ -141,8 +138,6 @@ test('tours de boucle (41-72): sans boucle, au moins 2 × S commandes et plus de
   assert.deepEqual(ALL.filter(([l, e]) => loopSlack(l, e)).map(([l, e]) => `${l}.${e}`), ['68.1', '68.2']);
 });
 
-// Budget équitable (73-114): le programme naïf (une commande par ligne, forward(n) compris) du monde 0 dépasse le budget
-// dans les deux langages; aux tours 101-114 il échoue en plus dans les deux autres mondes (test du palier 7).
 test('programmes (73-114): le budget ne suffit pas au programme sans la notion', () => {
   for (const [l, e] of ALL.filter(([l]) => l >= 73)) {
     const s = spec(l, e), N = naive(s.worlds[0]);

@@ -21,11 +21,9 @@ const int = (v, min, max, def) => {
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
 };
 
-// Anciens joueurs: le nouveau bloc Programmation ne doit pas leur rester caché.
-// Une seule fois: une sauvegarde d'avant le labyrinthe n'a pas de progress.maze, toutes les suivantes en ont un.
 const migrateBlocks = (b, done) => (!done && OLD_BLOCKS.every((id) => b.includes(id)) && !b.includes('maze') ? [...b, 'maze'] : b);
-// Même règle pour Découvre le JavaScript: ajouté une fois aux sauvegardes qui avaient tous les jeux (sans progress.discover)
 const addDiscover = (b, done) => (!done && [...OLD_BLOCKS, 'maze'].every((id) => b.includes(id)) && !b.includes('discover') ? [...b, 'discover'] : b);
+const addDiscover2 = (b, done) => (!done && [...OLD_BLOCKS, 'maze', 'discover'].every((id) => b.includes(id)) && !b.includes('discover2') ? [...b, 'discover2'] : b);
 
 export function loadState(storage) {
   const d = defaultState();
@@ -44,9 +42,7 @@ export function loadState(storage) {
     correct: int(p[id]?.correct, 0, Number.MAX_SAFE_INTEGER, 0),
   }]));
   const rewards = normalizeRewards(raw.rewards);
-  // une seule fois: dès la première sauvegarde suivante, le champ existe (même vide)
   if (!Array.isArray(raw.rewards?.stickers)) rewards.stickers = stickersFromProgress(progress);
-  // anciennes sauvegardes: les autocollants déjà là ne sont pas « nouveaux »
   if (!Array.isArray(raw.rewards?.stickersSeen)) rewards.stickersSeen = [...rewards.stickers];
   return {
     score: int(raw.score, 0, Number.MAX_SAFE_INTEGER, 0),
@@ -54,7 +50,7 @@ export function loadState(storage) {
       age: int(s.age, 1, 99, d.settings.age),
       uppercase: typeof s.uppercase === 'boolean' ? s.uppercase : d.settings.uppercase,
       language: LANGS.includes(s.language) ? s.language : d.settings.language,
-      blocks: Array.isArray(s.blocks) ? addDiscover(migrateBlocks(s.blocks.filter((b) => ids.includes(b)), p.maze != null), p.discover != null) : d.settings.blocks,
+      blocks: Array.isArray(s.blocks) ? addDiscover2(addDiscover(migrateBlocks(s.blocks.filter((b) => ids.includes(b)), p.maze != null), p.discover != null), p.discover2 != null) : d.settings.blocks,
       codeLanguage: CODE_LANGS.includes(s.codeLanguage) ? s.codeLanguage : d.settings.codeLanguage,
       rewardAnimations: typeof s.rewardAnimations === 'boolean' ? s.rewardAnimations : true,
       rewardSounds: typeof s.rewardSounds === 'boolean' ? s.rewardSounds : true,
@@ -69,6 +65,5 @@ export function saveState(state, storage) {
     storage ??= localStorage;
     storage.setItem(KEY, JSON.stringify(state));
   } catch {
-    // quota ou stockage bloqué: on continue sans sauvegarde
   }
 }

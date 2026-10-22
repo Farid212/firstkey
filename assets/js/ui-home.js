@@ -14,16 +14,14 @@ const el = (tag, cls, text) => {
   return e;
 };
 
-const ICONS = { letters: '🔤', words: '📖', math: '➕', logic: '🔷', js: '🟨', python: '🐍', maze: '🧭', discover: '🔎', guess: '🔢', hangman: '🪢', cookie: '🍪', draw: '🖍️', music: '🎵', bugs: '🐛', pixel: '🟦', trainer: '🐾', vault: '🔐', caesar: '✉️', rps: '✊', transform: '⚙️' };
+const ICONS = { letters: '🔤', words: '📖', math: '➕', logic: '🔷', js: '🟨', python: '🐍', maze: '🧭', discover: '🔎', discover2: '🚀', guess: '🔢', hangman: '🪢', cookie: '🍪', draw: '🖍️', music: '🎵', bugs: '🐛', pixel: '🟦', trainer: '🐾', vault: '🔐', caesar: '✉️', rps: '✊', transform: '⚙️' };
 
-// Jeux montrés dans une catégorie: jouables cochés par le parent, plus les « bientôt » (toujours visibles)
 export const categoryGames = (state, catId) =>
   BLOCKS.filter((b) => b.category === catId && (!b.playable || state.settings.blocks.includes(b.id)));
-// Une catégorie n'apparaît que si au moins un de ses jeux JOUABLES est coché (les « bientôt » seuls ne suffisent pas)
 export const visibleCategories = (state) =>
   CATEGORIES.filter((c) => categoryGames(state, c.id).some((b) => b.playable));
 
-let homeAc; // écouteurs de l'accueil affiché (Échap, redimensionnement), coupés au prochain rendu
+let homeAc;
 
 export function renderHome(root, state, handlers, focusBlock) {
   homeAc?.abort();
@@ -44,7 +42,6 @@ export function renderHome(root, state, handlers, focusBlock) {
   mix.onclick = () => handlers.onPlay('random');
   home.append(mix);
 
-  // une section par catégorie, toutes sur la même page
   for (const c of visibleCategories(state)) {
     const games = categoryGames(state, c.id);
     const sec = el('section', `section cat-${c.id}`);
@@ -69,18 +66,15 @@ export function renderHome(root, state, handlers, focusBlock) {
   col.onclick = handlers.onOpenCollection;
   home.append(col);
   root.append(home);
-  home.querySelector(`[data-block="${focusBlock}"]`)?.focus(); // retour d'une partie: focus sur son « Continuer »
-  // Échap replie le chemin de la carte qui a le focus et rend le focus à sa vignette
+  home.querySelector(`[data-block="${focusBlock}"]`)?.focus();
   document.addEventListener('keydown', (e) => {
-    if (!home.isConnected) return ac.abort(); // accueil quitté (partie, réglages): l'écouteur s'en va
+    if (!home.isConnected) return ac.abort();
     if (e.key !== 'Escape') return;
     const thumb = document.activeElement?.closest('.block')?.querySelector('.chap[aria-expanded="true"]');
     if (thumb) { thumb.click(); thumb.focus(); }
   }, { signal: ac.signal });
 }
 
-// Chemin sinueux: rangées en serpentin (gauche → droite, puis droite → gauche), étapes en vague haut/bas.
-// Pur (testé): `count` points dans une boîte de largeur `width`, le premier en haut à gauche, le dernier au bout.
 export const PATH = { pad: 44, gap: 88, row: 112, wave: 22 };
 export function pathPoints(count, width) {
   const { pad, gap, row, wave } = PATH;
@@ -92,7 +86,6 @@ export function pathPoints(count, width) {
   });
 }
 
-// Courbe lisse passant par les points (Catmull-Rom → Bézier)
 const curve = (pts) => pts.map((p, i) => {
   if (!i) return `M${p.x} ${p.y}`;
   const a = pts[i - 2] ?? pts[i - 1], b = pts[i - 1], d = pts[i + 1] ?? p;
@@ -112,7 +105,6 @@ function gameCard(b, state, handlers, signal, openNow) {
   const level = p.level;
   const need = answersPerLevel(state.settings.age, b.id);
   const stickers = state.rewards.stickers;
-  // le niveau 114 ne « passe » jamais: il est fini quand son autocollant est gagné ou ses réponses faites
   const lastDone = level === MAX_LEVEL && (p.correct >= need || stickers.includes(chapterOf(b.id, MAX_LEVEL).id));
   const isDone = (ch) => chapterState(b.id, ch, level) === 'done' || stickers.includes(ch.id);
   const cur = chapterOf(b.id, level);
@@ -163,7 +155,6 @@ function gameCard(b, state, handlers, signal, openNow) {
     draw = buildPath(panel, b, CHAPTERS[b.id][i], i, { state, handlers, level, need, lastDone, done: isDone(CHAPTERS[b.id][i]) });
     draw();
   };
-  // chemin redessiné à la largeur réelle (rotation, fenêtre redimensionnée)
   const ro = new ResizeObserver(() => {
     if (!panel.isConnected) return ro.disconnect();
     if (open !== null) draw();
@@ -172,9 +163,7 @@ function gameCard(b, state, handlers, signal, openNow) {
   signal.addEventListener('abort', () => ro.disconnect());
 
   card.append(head, go, row, panel);
-  // chemins repliés par défaut (accueil court); celui du jeu qu'on vient de quitter est déplié
   if (openNow) show(CHAPTERS[b.id].indexOf(cur));
-  // rangée défilante (téléphone): la vignette en cours reste visible
   requestAnimationFrame(() => {
     const t = thumbs[CHAPTERS[b.id].indexOf(cur)];
     row.scrollLeft = t.offsetLeft - row.offsetLeft - (row.clientWidth - t.offsetWidth) / 2;
@@ -182,8 +171,6 @@ function gameCard(b, state, handlers, signal, openNow) {
   return card;
 }
 
-// Panneau d'un chapitre: titre, chemin (SVG + étapes en boutons), autocollant au bout, bouton « Jouer ».
-// Renvoie draw() qui (re)place le chemin à la largeur de sa boîte.
 function buildPath(panel, b, ch, index, { state, handlers, level, need, lastDone, done }) {
   const { total } = chapterProgress(b.id, ch, level);
   const n = done ? total : chapterProgress(b.id, ch, level).done;
@@ -207,9 +194,9 @@ function buildPath(panel, b, ch, index, { state, handlers, level, need, lastDone
 
   return () => {
     const width = box.clientWidth;
-    if (!width) return; // pas encore affiché: l'observateur redessinera
+    if (!width) return;
     const focused = document.activeElement?.closest?.('.path') === box ? document.activeElement.dataset.level : null;
-    const pts = pathPoints(levels.length + 1, width); // + l'emplacement de l'autocollant
+    const pts = pathPoints(levels.length + 1, width);
     const h = Math.max(...pts.map((q) => q.y)) + PATH.pad + 10;
     box.style.height = `${h}px`;
     const svg = svgEl('svg', { class: 'road', width, height: h, viewBox: `0 0 ${width} ${h}`, 'aria-hidden': 'true' });
@@ -223,7 +210,7 @@ function buildPath(panel, b, ch, index, { state, handlers, level, need, lastDone
       const btn = el('button', `step ${st}`);
       btn.dataset.level = lv;
       btn.append(el('span', 'step-n', String(lv)));
-      if (b.id === 'maze' || b.id === 'discover') { // tours de 3 exercices: un point par exercice
+      if (['maze', 'discover', 'discover2'].includes(b.id)) {
         const pips = el('span', 'pips');
         const full = st === 'done' ? need : st === 'cur' ? Math.min(p.correct, need) : 0;
         for (let j = 0; j < need; j++) pips.append(el('i', j < full ? 'on' : ''));
@@ -255,7 +242,6 @@ function buildPath(panel, b, ch, index, { state, handlers, level, need, lastDone
   };
 }
 
-// portrait de la dernière créature débloquée, posé sur l'étape en cours
 function buddy(creature) {
   const s = el('span', 'buddy');
   s.setAttribute('aria-hidden', 'true');

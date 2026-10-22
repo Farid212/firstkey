@@ -1,4 +1,3 @@
-// Générateur de questions de calcul (module pur, sans DOM).
 const BANDS = [['add', 1, 24], ['sub', 25, 44], ['mul', 45, 74], ['div', 75, 94], ['mix', 95, 114]];
 
 export function mathSpec(level) {
@@ -17,7 +16,6 @@ function shuffle(arr, rng) {
   return arr;
 }
 
-// Opérandes pour une opération; t = progression dans la bande, mixed = bande « mix » (tables 11-12, add/sub jusqu'à 1000).
 function operands(op, level, rng) {
   const [, start, end] = BANDS.find(([o]) => o === (mathSpec(level).op === 'mix' ? 'mix' : op));
   const t = (level - start) / (end - start);
@@ -34,7 +32,7 @@ function operands(op, level, rng) {
   const m = mixed ? 12 : lerp(5, 10, t);
   if (op === 'mul') return [int(1, m, rng), int(1, m, rng)];
   const b = int(1, m, rng);
-  return [b * int(1, m, rng), b]; // division exacte
+  return [b * int(1, m, rng), b];
 }
 
 const SYMBOL = { add: '+', sub: '−', mul: '×', div: '÷' };
@@ -49,7 +47,6 @@ export function makeMathQuestion(level, rng = Math.random) {
   const q = { prompt: `${a} ${SYMBOL[op]} ${b}`, answer, mode: spec.mode, accepts: [String(answer)] };
   if (spec.mode === 'typed') return q;
 
-  // Distracteurs: proches du résultat ou résultat d'une autre opération; repli sur answer+k (termine toujours).
   const near = [answer - 1, answer + 1, answer - 2, answer + 2, answer - 10, answer + 10, a + b, Math.abs(a - b), a * b];
   const set = new Set();
   const ok = (n) => Number.isInteger(n) && n >= 0 && n !== answer;

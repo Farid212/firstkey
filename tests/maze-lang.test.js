@@ -131,8 +131,6 @@ test('espaces Unicode acceptés, autre caractère non ASCII montré entier', () 
   }
 });
 
-// ---- Programmes multi-lignes (spec 6) ----
-
 const noLine = (x) => JSON.parse(JSON.stringify(x, (k, v) => (k === 'line' ? undefined : v)));
 const pok = (src, lang) => {
   const r = parseProgram(src, lang);
@@ -249,9 +247,8 @@ test('programmes: une instruction par ligne, corps des blocs sur les lignes du d
     assert.ok(r.error.message.includes('Mets le corps'), r.error.message);
   }
   assert.ok(parseProgram('for i in range(4): forward()', 'py').error.message.includes('sur les lignes en dessous, décalé'));
-  assert.equal(pok('forward();\nturn_left()', 'py').lines, 2); // un ; final est permis
+  assert.equal(pok('forward();\nturn_left()', 'py').lines, 2);
   assert.equal(pok('for (let i = 0; i < 2; i++)\n{\n  forward();\n}', 'js').lines, 4);
-  // le terminal (une ligne) garde ; et les boucles sur une ligne
   assert.ok(parse('forward(); turn_left()', 'py').ok && parse('for i in range(4): forward(); turn_left()', 'py').ok);
 });
 

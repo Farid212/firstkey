@@ -20,7 +20,6 @@ function draw() {
   return svg;
 }
 
-// « Hé ! » sifflé, deux notes
 const cry = { voices: [
   { wave: 'triangle', f0: 600, f1: 950, t: 0, d: 0.14, g: 0.2 },
   { wave: 'triangle', f0: 950, f1: 700, t: 0.17, d: 0.22, g: 0.2 },
@@ -28,10 +27,9 @@ const cry = { voices: [
 
 const DUR = 4.2;
 
-// Blague: le stickman arrive en marchant et shoote la lettre hors de l'écran.
 function act(fx, ctx) {
   return fx.run(async (g) => {
-    const S = bandScene(fx, g, { clip: false }); // la lettre part de sa place dans la question
+    const S = bandScene(fx, g, { clip: false });
     const kickX = S.W * 0.38, FS = 120;
     const p0 = Math.PI - kickX * STRIDE;
     const restX = kickX + 88 + FS * 0.3, restY = -FS * 0.42;
@@ -43,7 +41,6 @@ function act(fx, ctx) {
     S.scene.append(top);
     const pow = makePow(top), parts = particles(top);
 
-    // départ de la lettre: sa place à l'écran (ramenée dans le repère local), ou apparition sur place
     const r = ctx?.letter?.rect;
     const from = r ? { x: (r.x + r.width / 2) / S.k, y: (r.y + r.height / 2 - S.G) / S.k, s: clamp(r.height / S.k / FS, 0.3, 2) } : null;
     const drop = track([[0, 0], [0.8, 1, 'outBounce']]);
@@ -79,7 +76,6 @@ function act(fx, ctx) {
           const d = drop(t), e = ease.io3(clamp(t / 0.8, 0, 1));
           lx = from.x + (restX - from.x) * e; ly = from.y + (restY - from.y) * d; sc = from.s + (1 - from.s) * e;
         } else { lx = restX; ly = restY; sc = popIn(t); }
-        // la lettre tremble quand le pied s'arme (anticipation)
         if (t > 1.9) rot = Math.sin(t * 40) * 3 * clamp((t - 1.9) / 0.4, 0, 1);
       } else {
         const fl = 0.75;

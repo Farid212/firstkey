@@ -1,6 +1,4 @@
-// Échelle de compétences du bloc Programmation (spec 6, « Tours »): un niveau = un tour de 3 exercices.
-// Chaque bloc de tours a une étiquette « focus » (la notion travaillée) qui est aussi une étiquette de segment.
-const BLOCKS = [ // [premier niveau, dernier niveau, focus, nom du tour, nouveauté annoncée au premier niveau]
+const BLOCKS = [
   [1, 6, 'straight', 'Couloir droit', 'Avancer tout droit avec forward()'],
   [7, 12, 'turnR', 'Virage à droite', 'Tourner à droite'],
   [13, 18, 'turnL', 'Virage à gauche', 'Tourner à gauche'],

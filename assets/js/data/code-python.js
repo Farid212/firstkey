@@ -1,5 +1,3 @@
-// Programmes Python, du plus simple au plus difficile.
-// quiz: [code, sortie réelle, 3 sorties plausibles mais fausses]; lines: lignes à retaper (sans indentation).
 const q = ([code, answer, wrong]) => ({ code, answer, wrong });
 
 export const CODE_PYTHON = {

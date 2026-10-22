@@ -85,7 +85,6 @@ export function createAudio() {
           src.type = v.wave;
         }
         const filt = ctx.createBiquadFilter();
-        // noise is always filtered (default bandpass at the glide start) so it is not harsh hiss
         const ft = v.filter || (v.wave === 'noise' ? { type: 'bandpass', freq: v.f0 } : null);
         let node = src;
         if (ft) {
@@ -116,7 +115,7 @@ export function createAudio() {
         src.start(t0);
         src.stop(t1 + 0.02);
       }
-    } catch { /* audio must never break typing */ }
+    } catch { }
   }
 
   return { unlock, play, setEnabled(on) { enabled = !!on; } };

@@ -6,7 +6,6 @@ import { makeMaze } from '../assets/js/maze/levels.js';
 import { parse, parseProgram } from '../assets/js/maze/lang.js';
 import { TWINS } from './maze-twins.js';
 
-// Couloir 1x4 : (0,0)..(3,0), départ à l'est, but en (3,0); le reste est mur.
 const corridor = (len = 4, dir = 1) => ({
   w: 5, h: 5, walls: Array.from({ length: 5 }, (_, y) => Array.from({ length: 5 }, (_, x) => !(y === 0 && x < len))),
   start: { x: 0, y: 0, dir }, goal: { x: len - 1, y: 0 }, par: len - 1, tier: 1,
@@ -29,7 +28,7 @@ test('bump: état inchangé, ligne arrêtée', () => {
   const w = createWorld(corridor(2));
   const r = execute(prog('forward(99);turn_left()'), w);
   assert.deepEqual(r.events, [{ k: 'move', x: 1, y: 0, dir: 1 }, { k: 'goal', x: 1, y: 0 }]);
-  const b = execute(prog('turn_right();forward();turn_left()'), w); // face au sud: mur
+  const b = execute(prog('turn_right();forward();turn_left()'), w);
   assert.deepEqual(b.events, [{ k: 'turn', dir: 2 }, { k: 'bump', x: 0, y: 0, dir: 2 }]);
   assert.deepEqual(b.world, { ...w, dir: 2 });
 });
@@ -91,8 +90,6 @@ test('niveaux 1-114, 3 exercices: le chemin BFS atteint le but, par = longueur',
   }
 });
 
-// ---- Programmes multi-lignes (spec 6) ----
-// Pièce ouverte 7x7 sans mur intérieur, départ au centre face à l'est, but dans un coin.
 const room = () => ({
   w: 7, h: 7, walls: Array.from({ length: 7 }, () => Array(7).fill(false)),
   start: { x: 3, y: 3, dir: 1 }, goal: { x: 0, y: 6 }, par: 6, tier: 5,
@@ -120,7 +117,7 @@ test('programme: boucles imbriquées et variable de boucle', () => {
   assert.equal(turns(r), 12);
   assert.equal(r.world.dir, 1);
   const v = runP('for i in range(3):\n    forward(i)\n    turn_left()\n    turn_left()');
-  assert.deepEqual(v.events.filter((e) => e.k === 'move').map((e) => e.x), [2, 3, 4]); // 0, puis 1 vers l'ouest, puis 2 vers l'est
+  assert.deepEqual(v.events.filter((e) => e.k === 'move').map((e) => e.x), [2, 3, 4]);
   assert.equal(runP('for i in range(0):\n    forward()').events.length, 0);
 });
 
@@ -177,7 +174,6 @@ test('programme: garde-fous (instructions, actions, profondeur, valeurs, indéfi
   assert.equal(runP('n = 99 * 9 + 99').error, undefined);
   assert.deepEqual(runP('if wall():\n    n = 1\nforward(n)').error, { code: 'undefined', line: 3 });
 
-  // AST forgé à la main (récursion que l'analyseur refuserait): la profondeur arrête quand même.
   const rec = { funcs: Object.assign(Object.create(null), { f: { param: null, body: [{ t: 'callfn', name: 'f', line: 1 }] } }), body: [{ t: 'callfn', name: 'f', line: 2 }] };
   assert.equal(executeProgram(rec, createWorld(room())).error.code, 'depth');
 });
@@ -186,7 +182,7 @@ test('programme: pureté', () => {
   const w = createWorld(room());
   const copy = structuredClone(w);
   const p = pgm('n = 2\ndef f(k):\n    forward(k)\nfor i in range(2):\n    f(n)\n    turn_left()');
-  const pc = JSON.stringify(p); // structuredClone perdrait le prototype null de funcs
+  const pc = JSON.stringify(p);
   const a = executeProgram(p, w);
   assert.deepEqual(w, copy);
   assert.equal(JSON.stringify(p), pc);

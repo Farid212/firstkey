@@ -6,7 +6,7 @@ import { CODE_JS } from '../assets/js/data/code-js.js';
 import { CODE_PYTHON } from '../assets/js/data/code-python.js';
 import { windowOf } from '../assets/js/code.js';
 
-const IDS = ['letters', 'words', 'math', 'maze', 'python', 'js', 'discover'];
+const IDS = ['letters', 'words', 'math', 'maze', 'python', 'js', 'discover', 'discover2'];
 
 for (const id of IDS) {
   test(`${id}: couverture exacte 1..114, noms et champs`, () => {
@@ -58,11 +58,16 @@ test('discover: les 12 chapitres de DISCOVER_CHAPTERS', async () => {
   assert.deepEqual(CHAPTERS.discover, DISCOVER_CHAPTERS);
 });
 
+test('discover2: les 12 chapitres de DISCOVER2_CHAPTERS', async () => {
+  const { DISCOVER2_CHAPTERS } = await import('../assets/js/discover2.js');
+  assert.equal(CHAPTERS.discover2.length, 12);
+  assert.deepEqual(CHAPTERS.discover2, DISCOVER2_CHAPTERS);
+});
+
 test('calcul: bornes des opérations', () => {
   assert.deepEqual(CHAPTERS.math.map((c) => [c.from, c.to]), [[1, 24], [25, 44], [45, 74], [75, 94], [95, 114]]);
 });
 
-// Mots-clés de chaque thème, par langage (clé = nom court du chapitre).
 const THEMES = {
   python: { data: CODE_PYTHON, kw: {
     Afficher: /print/, Variables: /^\w+ = /m, Textes: /len\(|\.upper|\.lower|" \+/, Calculs: /%|\/\/|\*\*|\(2/,

@@ -1,5 +1,3 @@
-// Compare chaque touche aux saisies acceptées; une erreur ne fait jamais reculer.
-// opts.caseSensitive: « A » n'est pas « a » (Découvre le JavaScript); par défaut la casse est ignorée.
 export function createTyper(accepts, opts = {}) {
   const fold = opts.caseSensitive ? (x) => x : (x) => x.toLowerCase();
   const words = accepts.map(fold);

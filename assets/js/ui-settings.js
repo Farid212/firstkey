@@ -10,7 +10,6 @@ const el = (tag, cls, text) => {
   return e;
 };
 
-// Une ligne: libellé associé au champ (accessibilité)
 const row = (id, label, input) => {
   const l = el('label', 'field', label);
   l.htmlFor = id;
@@ -52,7 +51,6 @@ export function openSettings(root, state, handlers) {
 
   function show(cur) {
     box.replaceChildren(el('h1', '', 'Réglages'));
-    // Chaque modification produit un nouvel état (jamais de mutation)
     const change = (fn) => {
       const s = structuredClone(cur);
       fn(s);
@@ -107,7 +105,7 @@ export function openSettings(root, state, handlers) {
 
     const fs = el('fieldset');
     fs.append(el('legend', '', 'Blocs actifs'));
-    for (const b of BLOCKS.filter((x) => x.playable)) { // les jeux « bientôt » s'affichent toujours, sans case
+    for (const b of BLOCKS.filter((x) => x.playable)) {
       const c = el('input');
       c.type = 'checkbox';
       c.checked = cur.settings.blocks.includes(b.id);

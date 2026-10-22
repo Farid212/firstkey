@@ -78,6 +78,13 @@ Jeu inspiré du principe de Silent Teacher: une console montre 3 exemples résol
 - Données: `assets/js/data/discover-js.js`, généré par `npm run build:discover` (`scripts/build-discover.mjs`, vrai JavaScript évalué à la construction seulement); `assets/js/discover.js` (`discoverExercise(niveau, exercice)`, `DISCOVER_CHAPTERS`); `tests/discover.test.js` ré-évalue chaque exemple. L'application n'exécute jamais de code.
 - Écran: `assets/js/ui-discover.js` (frappe via `createTyper(..., { caseSensitive: true })`).
 
+## JavaScript, aller plus loin (sans mots)
+
+Suite de « Découvre le JavaScript », même écran et même mécanique (3 exemples, une ligne à compléter, indice muet, tours de 3 exercices), 12 chapitres: objets, `switch`, `while` et `for...of`, fonctions fléchées, portée, `forEach`/`map`, `filter`/`find`, `reduce`, JSON, DOM, événements, asynchrone. Les chapitres DOM et événements montrent une **mini-page HTML** au-dessus du code, affichée en texte brut (jamais interprétée).
+
+- Données: `assets/js/data/discover2-js.js`, généré par `npm run build:discover2` (`scripts/build-discover2.mjs`: vrai JavaScript, mini-DOM simulé, à la construction seulement); `assets/js/discover2.js` (`discover2Exercise(niveau, exercice)`, `DISCOVER2_CHAPTERS`); `tests/discover2.test.js`.
+- Écran: `assets/js/ui-discover.js`, partagé avec « Découvre » (la famille vient de `target.blockId`).
+
 ## Show your support
 
 Give a ⭐️ if this project helped you!

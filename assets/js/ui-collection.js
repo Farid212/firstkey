@@ -17,17 +17,15 @@ const el = (tag, cls, text) => {
 export const hasNew = (r) => r.unlocked > r.seen || r.badges.earned.some((id) => !r.badges.seen.includes(id))
   || (r.stickers ?? []).some((id) => !(r.stickersSeen ?? []).includes(id));
 
-// Compteurs de la collection: créatures, badges et autocollants.
 export function collectionCounts(r) {
   const k = (have, total) => ({ have, total });
   const creatures = k(r.unlocked, CREATURES.length);
   const badges = k(r.badges.earned.length, BADGES.length);
-  const shown = BLOCKS.filter((x) => x.playable && CHAPTERS[x.id]).flatMap((x) => CHAPTERS[x.id].map((c) => c.id)); // ceux de la page
+  const shown = BLOCKS.filter((x) => x.playable && CHAPTERS[x.id]).flatMap((x) => CHAPTERS[x.id].map((c) => c.id));
   const stickers = k(shown.filter((id) => (r.stickers ?? []).includes(id)).length, shown.length);
   return { creatures, badges, stickers, have: creatures.have + badges.have + stickers.have, total: creatures.total + badges.total + stickers.total };
 }
 
-// Cartes d'une famille, avec leur état (calculé sur l'état AVANT markSeen).
 export function creatureCards(rewards, kind) {
   return CREATURES.map((c, i) => ({ c, unlocked: i < rewards.unlocked, isNew: i >= rewards.seen && i < rewards.unlocked }))
     .filter((x) => x.c.kind === kind);
@@ -56,7 +54,7 @@ export function renderCollection(root, state, handlers) {
       const card = el(unlocked ? 'button' : 'div', 'card' + (unlocked ? '' : ' locked'));
       const pic = el('div', 'pic');
       const art = getArt(c.id).draw();
-      if (!unlocked) art.querySelector(':scope > circle')?.remove(); // sans le disque de fond, on voit la forme
+      if (!unlocked) art.querySelector(':scope > circle')?.remove();
       pic.append(art);
       card.append(pic, el('span', 'name', unlocked ? (c.names[lang] ?? c.names.fr) : '???'));
       if (unlocked) {

@@ -6,7 +6,6 @@ import { CREATURE_COUNT, START_UNLOCKED, LEVELS_PER_UNLOCK } from './model.js';
 const pad = (n) => String(n).padStart(2, '0');
 export const todayString = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-// Jours entiers entre deux YYYY-MM-DD, via UTC: insensible aux mois et à l'heure d'été.
 const dayNum = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d) / 86400000; };
 
 export function applyCorrect(rewards, { blockId, kind, today }) {
@@ -49,8 +48,6 @@ export function awardBadges(rewards, ids) {
   return r;
 }
 
-// Chapitre dont `finishedLevel` est le dernier niveau. Le dernier chapitre (to = 114) n'est jamais
-// renvoyé en pratique: le niveau 114 ne monte pas (MAX_LEVEL), donc aucun firstkey:levelup avec level 114.
 export const chapterToAward = (blockId, finishedLevel) => CHAPTERS[blockId]?.find((c) => c.to === finishedLevel)?.id ?? null;
 
 export function awardSticker(rewards, id) {

@@ -28,7 +28,7 @@ test('track', () => {
   assert.equal(f(0), 10);
   assert.equal(f(2), 20);
   assert.equal(f(5), 30);
-  assert.equal(track([[0, 0], [1, 1]])(0.5), 0.5); // io3 symetrique
+  assert.equal(track([[0, 0], [1, 1]])(0.5), 0.5);
 });
 
 const v = (o = {}) => ({ wave: 'sine', f0: 440, f1: 440, t: 0, d: 0.2, g: 0.1, ...o });
