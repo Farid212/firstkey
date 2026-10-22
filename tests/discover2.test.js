@@ -6,7 +6,7 @@ import { discover2Exercise, DISCOVER2_CHAPTERS, RULES_BY_CHAPTER2 } from '../ass
 import { RULES_BY_CHAPTER } from '../assets/js/discover.js';
 import { EXERCISES } from '../assets/js/data/discover2-js.js';
 import { EXERCISES as DISCOVER1 } from '../assets/js/data/discover-js.js';
-import { buildDiscover2, run2 } from '../scripts/build-discover2.mjs';
+import { buildDiscover2, run2, fewSymbols } from '../scripts/build-discover2.mjs';
 
 const ALL = Array.from({ length: 114 }, (_, i) => i + 1).flatMap((l) => [0, 1, 2].map((e) => [l, e, discover2Exercise(l, e)]));
 const chapterIndex = (level) => DISCOVER2_CHAPTERS.findIndex((c) => level >= c.from && level <= c.to);
@@ -36,10 +36,13 @@ test('chaque sortie est celle du vrai JavaScript (même évaluateur, même mini-
   }
 });
 
-test('asynchrone: 5 exécutions, toujours le même ordre', async () => {
+test('asynchrone: 20 exécutions sous charge, toujours le même ordre', async () => {
   assert.equal(ASYNC.length, 27);
-  for (let k = 0; k < 5; k++) {
-    const outs = await Promise.all(ASYNC.flatMap(([, , x]) => lines(x).map((v) => run2(v.code))));
+  const busy = (ms) => { const t = Date.now(); while (Date.now() - t < ms) { /* la machine rame */ } };
+  for (let k = 0; k < 20; k++) {
+    const hog = setInterval(() => busy(15), 1); // boucle d'événements bloquée par moments: les délais 10 et 20 échoient ensemble
+    const outs = await Promise.all(ASYNC.flatMap(([, , x]) => lines(x).map(async (v, j) => { busy((j * k) % 5); return run2(v.code); })));
+    clearInterval(hog);
     assert.deepEqual(outs, ASYNC.flatMap(([, , x]) => lines(x).map((v) => v.out)), `passage ${k + 1}`);
   }
 });
@@ -48,6 +51,26 @@ test('réponses: 1 à 14 caractères ASCII imprimables, une ligne', () => {
   for (const [l, e, x] of ALL) {
     for (const { out } of lines(x)) assert.match(out, /^[\x21-\x7e]([\x20-\x7e]{0,12}[\x21-\x7e])?$/, `${l}.${e}: «${out}»`);
   }
+});
+
+test('réponses faciles à taper: au plus 4 accolades, crochets ou guillemets; jamais compter les caractères d\'un JSON', () => {
+  assert.ok(fewSymbols('{"n":5}') && !fewSymbols('{"x":1,"y":2}'));
+  for (const [l, e, x] of ALL) {
+    for (const { code, out } of lines(x)) {
+      assert.ok(fewSymbols(out), `${l}.${e}: «${out}»`);
+      assert.doesNotMatch(code, /JSON\.stringify\(.*\)\.length/, `${l}.${e}`);
+    }
+  }
+});
+
+test('switch: sans break, la question enchaîne plusieurs case (pas un mot à choisir au hasard)', () => {
+  const nb = ALL.filter(([, , x]) => x.rule === 'swNoBreak');
+  assert.equal(nb.length, 3);
+  for (const [l, e, x] of nb) {
+    assert.ok(x.question.out.includes(' '), `${l}.${e}: une seule sortie`);
+    assert.equal(x.examples[0].code.split('break').length, 3, `${l}.${e}: 1er exemple avec tous les break`);
+  }
+  assert.notEqual(discover2Exercise(11, 0).rule, discover2Exercise(12, 0).rule);
 });
 
 test('3 exemples de la même règle, 4 codes et 4 sorties distincts (réponse jamais montrée)', () => {

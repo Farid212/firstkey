@@ -86,8 +86,8 @@ const C1 = [
 ];
 
 // ---- 2. switch (la valeur choisit sa ligne; les mots changent à chaque ligne: il faut lire le bon case) ----
-function sw(head, subject, cases, def, pad = '') {
-  const body = cases.map(([l, w], k) => `${pad}  case ${l}: ${say(q(w))}${k < cases.length - 1 || def ? '; break' : ' }'}`);
+function sw(head, subject, cases, def, pad = '', noBreak = -1) {
+  const body = cases.map(([l, w], k) => `${pad}  case ${l}: ${say(q(w))}${k === noBreak ? '' : k < cases.length - 1 || def ? '; break' : ''}${k === cases.length - 1 && !def ? ' }' : ''}`);
   if (def) body.push(`${pad}  default: ${say(q(def))} }`);
   return [head, `${pad}switch (${subject}) {`, ...body].filter(Boolean).join('\n');
 }
@@ -95,11 +95,15 @@ const hit = (r, i, n) => (i < 3 ? r.perm[i] % n : int(0, n - 1, r));
 const swOk = { ok: (codes) => new Set(codes.slice(0, 3).map((c) => c.split('\n')[0])).size === 3 }; // 3 valeurs différentes dans les exemples
 const C2 = [
   F('swNum', 'case', (r, e, i) => { const w = words(3, r, 5); return sw(`let n = ${hit(r, i, 3) + 1}`, 'n', [1, 2, 3].map((l, k) => [l, w[k]])); }, swOk),
-  F('swNum', 'case', (r, e, i) => {
-    const labels = ints(3, 1, 9, r), w = words(3, r, 5);
-    if (e < 2) labels.sort((a, b) => a - b);
-    return sw(`let n = ${labels[hit(r, i, 3)]}`, 'n', labels.map((l, k) => [l, w[k]]));
-  }, swOk),
+  // Sans break, on continue dans le case suivant. 1re ligne: tous les break (comme avant); la question tombe toujours
+  // sur un case sans break (réponse de 2 ou 3 mots: on ne la devine pas en choisissant un des mots).
+  F('swNoBreak', 'break', (r, e, i) => {
+    const labels = e === 0 ? [1, 2, 3] : ints(3, 1, 9, r), w = words(3, r, 5);
+    if (e === 1) labels.sort((a, b) => a - b);
+    const nb = i === 0 ? -1 : int(0, 1, r); // le case sans break (jamais le dernier)
+    const k = i === 0 ? int(0, 2, r) : i === 2 ? 1 - nb : nb; // 3e exemple: l'autre case du haut a son break et s'arrête
+    return sw(`let n = ${labels[k]}`, 'n', labels.map((l, j) => [l, w[j]]), undefined, '', nb);
+  }),
   // default: la valeur ne correspond à aucun case (case 1 des exemples).
   F('swDefault', 'default', (r, e, i) => {
     const labels = ints(2, 1, 9, r).sort((a, b) => a - b), w = words(3, r, 5);
@@ -359,7 +363,7 @@ const C8 = [
   F('reduce', '.reduce', (r, e) => `${arr(ints(int(2, 4, r), 1, 9 + 10 * (e === 2), r))}.reduce((s, n) => s + n, 0)`),
   // La valeur de départ (après la virgule) compte: 0, puis 10...
   F('reduceStart', 's + n, ', (r, e, i) => `${arr(ints(int(2, 3, r), 1, 9, r))}.reduce((s, n) => s + n, ${i === 0 ? 0 : i === 1 ? 10 : int(1, 20, r)})`),
-  F('reduceProd', 'p * n', (r, e) => `${arr(ints(int(2, 3, r), 1, 4 + e, r))}.reduce((p, n) => p * n, ${e === 2 ? int(2, 3, r) : 1})`),
+  F('reduceProd', 'p * n', (r, e) => `${arr(ints(int(2, 3, r), 1, 4 + (e > 0), r))}.reduce((p, n) => p * n, ${e === 2 ? int(2, 3, r) : 1})`),
   F('reduceStr', ['t + m', 'm + t'], byEx((r) => `${arr(pick(COMP2, r).map(q))}.reduce((t, m) => t + m, "")`,
     (r) => `${arr(pick(COMP3, r).map(q))}.reduce((t, m) => t + m, "")`, (r) => `${arr([...pick(COMP2, r)].reverse().map(q))}.reduce((t, m) => m + t, "")`)),
   F('reduceLen', 'c + m.length', (r, e) => `${arr(words(2 + (e > 0), r, 5).map(q))}.reduce((c, m) => c + m.length, ${e === 2 ? int(1, 9, r) : 0})`),
@@ -377,8 +381,11 @@ const C8 = [
 const C9 = [
   F('jsonArr', 'JSON.stringify', (r, e) => `JSON.stringify(${arr(ints(int(2, 4, r), 1, 9 + 10 * e, r))})`),
   F('jsonStr', 'JSON.stringify', byEx((r, e, i) => `JSON.stringify(${i === 0 ? int(2, 99, r) : q(word(r, 5))})`,
-    (r) => `JSON.stringify(${arr(words(2, r, 4).map(q))})`, (r, e, i) => `JSON.stringify(${arr(i % 2 ? [int(1, 9, r), q(pick(SHORT, r))] : [q(pick(SHORT, r)), int(1, 9, r)])})`)),
-  F('jsonObj', 'JSON.stringify({', (r, e) => `JSON.stringify(${e === 0 ? `{ ${pick(['a', 'n', 'x'], r)}: ${int(1, 99, r)} }` : e === 1 ? `{ x: ${int(1, 9, r)}, y: ${int(1, 9, r)} }` : `{ nom: ${q(pick(NAMES, r))} }`})`),
+    (r, e, i) => `JSON.stringify(${arr(i % 2 ? [int(1, 9, r), q(pick(SHORT, r))] : [q(pick(SHORT, r)), int(1, 9, r)])})`,
+    (r, e, i) => `JSON.stringify(${q(word(r, 5))}${i === 0 ? '' : '.toUpperCase()'})`)),
+  // Une seule clé (pas de réponse pleine d'accolades et de guillemets à taper); puis la valeur est calculée.
+  F('jsonObj', 'JSON.stringify({', (r, e) => `JSON.stringify(${e === 0 ? `{ ${pick(['a', 'n', 'x'], r)}: ${int(1, 99, r)} }`
+    : e === 1 ? `{ ${pick(['age', 'vies', 'pts'], r)}: ${int(1, 20, r)} }` : `{ n: ${int(1, 9, r)} ${pick(['+', '*'], r)} ${int(2, 9, r)} }`})`),
   F('jsonParse', 'JSON.parse', (r, e, i) => { const t = ints(3, 1, 9, r);
     return `JSON.parse(${q(arr(t))})${e === 1 && i === 1 ? '.length' : `[${e === 2 ? int(0, 2, r) : i < 3 ? r.perm[i] : int(0, 2, r)}]`}${e === 2 ? ` * ${int(2, 3, r)}` : ''}`; }),
   F('jsonParseObj', 'JSON.parse', (r, e) => {
@@ -388,17 +395,27 @@ const C9 = [
   // Contraste: "12" + 3 colle les textes, JSON.parse("12") + 3 calcule.
   F('jsonParseNum', 'JSON.parse', (r, e, i) => { const a = int(2, 30, r), b = int(1, 9, r);
     return i === 0 || (e === 2 && i === 2) ? `${q(a)} + ${b}` : `JSON.parse(${q(a)}) ${e === 1 ? '*' : '+'} ${b}`; }),
-  F('jsonLength', ').length', (r, e) => `JSON.stringify(${e === 1 ? q(word(r, 6)) : arr(e === 0 ? ints(int(1, 3, r), 1, 20, r) : words(2, r, 6).map(q))}).length`),
   F('jsonRound', 'JSON.parse', (r, e) => {
     const v = int(2, 9, r);
     if (e === 2) return `let t = JSON.parse(${q(arr(ints(3, 1, 9, r)))})\nt[0] + t[2]`;
     return `let o = JSON.parse('{"n": ${v}}')\no.n ${e === 0 ? '* 2' : `+ ${int(2, 9, r)}`}`;
   }),
-  F('jsonNested', 'JSON.stringify', (r, e) => (e === 0 ? `JSON.stringify({ t: ${arr(ints(2, 1, 9, r))} })`
-    : e === 1 ? `JSON.stringify([{ a: ${int(1, 9, r)} }])` : `JSON.stringify([${arr(ints(2, 1, 9, r))}])`)),
-  F('jsonModify', ['JSON.stringify(o)', 'JSON.stringify(t)'], (r, e) => {
-    if (e === 2) return `let t = JSON.parse(${q(arr(ints(2, 1, 9, r)))})\nt.push(${int(1, 9, r)})\nJSON.stringify(t)`;
-    return `let o = JSON.parse('{"a": ${int(1, 9, r)}}')\no.${e === 0 ? 'a' : 'b'} = ${int(1, 9, r)}\nJSON.stringify(o)`;
+  // Le texte reçu devient un vrai tableau: on lui applique map, filter, reduce (chapitres 6 à 8).
+  F('jsonParseArr', ['.map(', '.filter(', '.reduce('], byEx((r) => `JSON.parse(${q(arr(ints(3, 1, 9, r)))}).map((n) => n * 2).join(" ")`,
+    (r) => `JSON.parse(${q(arr(ints(4, 1, 9, r)))}).filter((n) => n > ${int(3, 6, r)}).join(" ")`,
+    (r) => `JSON.parse(${q(arr(ints(int(3, 4, r), 1, 9, r)))}).reduce((s, n) => s + n, 0)`)),
+  // Données emboîtées (comme une vraie réponse de serveur): on lit dedans avec . et [] (chapitre 1).
+  F('jsonNested', ['.t[', '].n', 'o.ami.', 'JSON.parse'], (r, e, i) => {
+    const [a, b, c] = ints(3, 1, 9, r);
+    if (e === 0) return `let o = JSON.parse('{"t": [${a}, ${b}, ${c}]}')\no.t[${i < 3 ? r.perm[i] : int(0, 2, r)}]`;
+    if (e === 1) return `let t = JSON.parse('[{"n": ${a}}, {"n": ${b}}]')\nt[${i < 3 ? r.perm[i] % 2 : int(0, 1, r)}].n`;
+    const [n1, n2] = shuffle(NAMES, r);
+    return `let o = JSON.parse('{"nom": "${n1}", "ami": {"nom": "${n2}", "age": ${a}}}')\no.${i < 3 ? ['nom', 'ami.nom', 'ami.age'][r.perm[i]] : pick(['ami.nom', 'ami.age'], r)}`;
+  }),
+  // Lire, changer, renvoyer: parse puis stringify.
+  F('jsonModify', ['JSON.stringify(o)', 'JSON.stringify(t)'], (r, e, i) => {
+    if (e === 2) { const [a, b] = ints(2, 1, 9, r); return `let t = JSON.parse("[${a}, ${b}]")\nt.push(${i === 0 ? int(1, 9, r) : 't[0] + t[1]'})\nJSON.stringify(t)`; }
+    return `let o = JSON.parse('{"n": ${int(1, 9, r)}}')\no.n ${e === 0 ? '=' : pick(['+=', '*='], r)} ${int(2, 9, r)}\nJSON.stringify(o)`;
   }),
 ];
 
@@ -481,7 +498,7 @@ const pageButton = (r) => `<button>${pick(['OK', 'Clic', 'Go', 'Jouer'], r)}</bu
 const pageButtonText = (r, txt) => { r.pg = txt ?? pick(['Salut', 'Bonjour', 'Coucou'], r); return `${pageButton(r)}\n<p>${r.pg}</p>`; };
 const C11 = [
   F('evLog', '.click()', (r, e, i) => `${BTN}\nb.addEventListener("click", () => console.log(${q(pick(SOUNDS, r))}))\n${clicks(e === 0 ? 1 + r.perm4[i] % 3 : int(1, 3, r))}`, { page: pageButton }),
-  F('evCount', '.click()', (r, e, i) => `let n = ${e === 0 ? 0 : int(1, 9, r)}\n${BTN}\nb.addEventListener("click", () => { n++ })\n${clicks(1 + r.perm4[i])}\nconsole.log(n)`, { page: pageButton }),
+  F('evCount', '.click()', (r, e, i) => `let n = ${e === 0 ? 0 : int(1, 9, r)}\n${BTN}\nb.addEventListener("click", () => n++)\n${clicks(1 + r.perm4[i])}\nconsole.log(n)`, { page: pageButton }),
   F('evStep', ['n += ', 'n *= '], (r, e) => `let n = ${e === 1 ? 1 : int(0, 5, r)}\n${BTN}\nb.addEventListener("click", () => { n ${e === 1 ? '*= 2' : `+= ${int(2, 5, r)}`} })\n${clicks(int(1, 3 + (e === 1), r))}\nconsole.log(n)`, { page: pageButton }),
   // Le listener change la page; sans clic, le texte reste celui de la page.
   F('evText', '.click()', (r, e, i) => {
@@ -502,14 +519,20 @@ const C11 = [
     const [x, y] = shuffle(SOUNDS, r);
     return `${BTN}\nb.addEventListener("click", () => console.log(${q(x)}))\nb.addEventListener("click", () => console.log(${q(y)}))\n${clicks(e === 0 ? 1 : int(1, 2, r))}`;
   }, { page: pageButton }),
-  F('evObj', 'jeu.', (r, e) => {
-    const k = e === 1 ? 'vies' : 'score', s = e === 1 ? int(3, 9, r) : 0, op = e === 1 ? '--' : ` += ${int(2, 10, r)}`;
-    return `let jeu = { ${k}: ${s} }\n${BTN}\nb.addEventListener("click", () => { jeu.${k}${op} })\n${clicks(int(1, 3, r))}\nconsole.log(jeu.${k})`;
-  }, { page: pageButton }),
-  F('evPush', '.push(', (r, e) => {
-    const body = e === 0 ? 't.push(t.length)' : e === 1 ? `t.push(${q(pick(['x', 'o', '*'], r))})` : 't.push(t.length * 2)';
-    return `let t = []\n${BTN}\nb.addEventListener("click", () => ${body})\n${clicks(int(1, 4, r))}\nconsole.log(t.join(${q(e === 1 ? '' : ' ')}))`;
-  }, { page: pageButton }),
+  // Deux boutons, deux listeners: chaque clic lance celui de son bouton.
+  F('evTwoBtn', ['plus.click()', 'moins.click()'], (r, e) => {
+    const [up, down] = e === 0 ? ['n++', 'n--'] : e === 1 ? [`n += ${int(2, 5, r)}`, 'n--'] : [`n += ${int(2, 5, r)}`, `n -= ${int(2, 3, r)}`];
+    const seq = shuffle(['plus', 'moins', ...Array.from({ length: int(e > 0, 1 + (e > 0), r) }, () => pick(['plus', 'moins'], r))], r); // les deux boutons servent
+    return `let n = ${int(5, 9, r)}\nconst plus = document.querySelector("#plus")\nconst moins = document.querySelector("#moins")
+plus.addEventListener("click", () => { ${up} })\nmoins.addEventListener("click", () => { ${down} })\n${seq.map((b) => `${b}.click()`).join('; ')}\nn`;
+  }, { page: () => '<button id="plus">+</button>\n<button id="moins">-</button>' }),
+  // L'ordre des clics se lit dans la page: chaque bouton ajoute sa lettre.
+  F('evXo', ['x.click()', 'o.click()'], (r, e) => {
+    const n = e === 0 ? int(2, 3, r) : int(3, 4, r), seq = Array.from({ length: n }, () => pick(['x', 'o'], r));
+    const o = e === 2 ? 'p.textContent = "o" + p.textContent' : 'p.textContent += "o"'; // e = 2: o écrit devant
+    return `const p = document.querySelector("p")\nconst x = document.querySelector("#x")\nconst o = document.querySelector("#o")
+x.addEventListener("click", () => { p.textContent += "x" })\no.addEventListener("click", () => { ${o} })\n${seq.map((b) => `${b}.click()`).join('; ')}\np.textContent`;
+  }, { page: () => '<button id="x">x</button>\n<button id="o">o</button>\n<p>-</p>' }),
   // Un vrai compteur: le listener écrit le score dans la page, on relit la page.
   F('evShow', 'p.textContent = ', (r, e) => {
     const step = int(2, 9, r), text = e === 0 ? 'n' : e === 1 ? '"score " + n' : 'n + " pts"';
@@ -591,8 +614,11 @@ export function makeDocument(html) {
 }
 
 // Exécute comme une console (sans console.log, la dernière ligne est affichée), avec la page si elle existe.
-// Minuteurs: délais 0, 10 ou 20, jamais deux fois le même, posés seulement par le code principal: l'ordre ne dépend pas de la vitesse de la machine.
+// Minuteurs: délais 0, 10 ou 20, jamais deux fois le même, posés seulement par le code principal. Les promesses et await sont
+// les vraies (microtâches de Node); les minuteurs passent ensuite du plus petit délai au plus grand, un par tâche, comme dans
+// un navigateur. Les vrais setTimeout ne servaient pas: sous charge, 10 et 20 ms échus ensemble sortaient parfois à l'envers.
 class NotSimple extends Error {}
+const nextTask = () => new Promise((res) => setImmediate(res)); // toutes les microtâches en attente passent avant
 export async function run2(code, page = '') {
   const out = [], ls = code.split('\n');
   if (!code.includes('console.log')) ls[ls.length - 1] = `console.log(${ls.at(-1)})`;
@@ -600,27 +626,25 @@ export async function run2(code, page = '') {
     if (!['number', 'string', 'boolean'].includes(typeof v) || (typeof v === 'number' && !Number.isInteger(v))) throw new NotSimple(`sortie non simple: ${code}`);
     return String(v);
   };
-  let pending = 0, main = true, error = null, done;
-  const finished = new Promise((res) => { done = res; });
-  const settle = () => setImmediate(() => { if (pending === 0) done(); });
-  const delays = new Set();
+  let main = true;
+  const timers = [];
   const sandbox = {
     console: { log: (...a) => out.push(a.map(fmt).join(' ')) },
     setTimeout: (f, d) => {
-      if (!main || ![0, 10, 20].includes(d) || delays.has(d)) throw new Error(`minuteur interdit (${d}): ${code}`);
-      delays.add(d);
-      pending++;
-      setTimeout(() => { try { f(); } catch (err) { error = err; } pending--; settle(); }, d);
+      if (!main || ![0, 10, 20].includes(d) || timers.some((t) => t.d === d)) throw new Error(`minuteur interdit (${d}): ${code}`);
+      timers.push({ f, d });
     },
   };
   if (page) sandbox.document = makeDocument(page);
   vm.runInNewContext(ls.join('\n'), sandbox, { timeout: 100 });
   main = false;
-  settle();
-  await finished;
-  if (error) throw error;
+  await nextTask();
+  for (const { f } of timers.sort((a, b) => a.d - b.d)) { f(); await nextTask(); }
   return out.join(' ');
 }
+
+// Réponse facile à taper (AZERTY: { [ ] } sous AltGr): au plus 4 accolades, crochets ou guillemets.
+export const fewSymbols = (o) => (o.match(/[{}[\]"']/g) ?? []).length <= 4;
 
 async function makeExercise(fam, level, ex, used) {
   for (let attempt = 0; attempt < 3000; attempt++) {
@@ -633,7 +657,7 @@ async function makeExercise(fam, level, ex, used) {
     if (new Set(codes).size < 4 || used.has(key)) continue;
     let outs;
     try { outs = await Promise.all(codes.map((c) => run2(c, page))); } catch (err) { if (err instanceof NotSimple || fam.mayFail) continue; throw err; }
-    if (!outs.every(printable) || new Set(outs).size < 4) continue;
+    if (!outs.every((o) => printable(o) && fewSymbols(o)) || new Set(outs).size < 4) continue;
     if (fam.ok && !fam.ok(codes, outs)) continue;
     // indice: le premier morceau présent dans la question ET dans un exemple
     const hint = [fam.hint].flat().find((h) => codes[3].includes(h) && codes.slice(0, 3).some((c) => c.includes(h)));

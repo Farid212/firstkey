@@ -21,16 +21,16 @@ export const DISCOVER2_CHAPTERS = ROWS.map(([from, name, short, icon], i) => ({
 // (son code peut aussi réutiliser tout « Découvre le JavaScript »).
 export const RULES_BY_CHAPTER2 = [
   ['objDot', 'objExpr', 'objStr', 'objSet', 'objAdd', 'objUpdate', 'objBracket', 'objNested', 'objArr'],
-  ['swNum', 'swDefault', 'swStr', 'swLen', 'swCalc', 'swObj', 'swLoop'],
+  ['swNum', 'swNoBreak', 'swDefault', 'swStr', 'swLen', 'swCalc', 'swObj', 'swLoop'],
   ['whileLog', 'whileStep', 'whileUntil', 'whileCount', 'forOf', 'forOfExpr', 'forOfStr', 'forOfSum', 'forOfCount', 'forOfObj'],
   ['arrow', 'arrow2', 'arrowStr', 'defParam', 'defStr', 'arrowCompose', 'arrowBlock', 'arrowLoop'],
   ['scopeBlock', 'scopePair', 'scopeFn', 'scopeFnPair', 'scopeCounter', 'scopeParam', 'constErr', 'tryThrow', 'tryFn', 'constObj'],
   ['forEach', 'forEachSum', 'map', 'mapStr', 'mapIndex', 'mapFn', 'mapObj', 'mapMap', 'forEachPush'],
   ['filter', 'filterOps', 'filterLength', 'filterStr', 'find', 'indexOf', 'includesPair', 'strIndexOf', 'findObj', 'filterIncludes'],
   ['reduce', 'reduceStart', 'reduceProd', 'reduceStr', 'reduceLen', 'chainFM', 'chainMR', 'chainFR', 'chainObj'],
-  ['jsonArr', 'jsonStr', 'jsonObj', 'jsonParse', 'jsonParseObj', 'jsonParseNum', 'jsonLength', 'jsonRound', 'jsonNested', 'jsonModify'],
+  ['jsonArr', 'jsonStr', 'jsonObj', 'jsonParse', 'jsonParseObj', 'jsonParseNum', 'jsonParseArr', 'jsonRound', 'jsonNested', 'jsonModify'],
   ['domGet', 'domQueryId', 'domQueryClass', 'domQueryTag', 'domSet', 'domClassPair', 'domClassEdit', 'domChildren', 'domChildrenLoop'],
-  ['evLog', 'evCount', 'evStep', 'evText', 'evOrder', 'evIf', 'evTwo', 'evObj', 'evPush', 'evShow'],
+  ['evLog', 'evCount', 'evStep', 'evText', 'evOrder', 'evIf', 'evTwo', 'evTwoBtn', 'evXo', 'evShow'],
   ['asyncTimeout', 'asyncTimeout3', 'asyncDelays', 'asyncThen', 'asyncThenTimeout', 'asyncAwait', 'asyncMix', 'asyncAwaitMix', 'asyncAll'],
 ];
 

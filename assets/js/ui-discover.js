@@ -115,7 +115,12 @@ export function startDiscover(root, state, target, handlers) {
     const pageLines = item.page ? item.page.split('\n') : [];
     const w = Math.max(wCode, ...pageLines.map((l) => 0.8 * l.length + 2)); // la mini-page est en .8em
     const lines = all.reduce((n, e) => n + e.code.split('\n').length, 0) + 0.8 * pageLines.length + (item.page ? 1 : 0);
-    con.style.fontSize = `max(13px, min(46px, calc((90vw - 64px) / ${(0.61 * w).toFixed(1)}), calc((100vh - 170px) / ${(1.45 * lines + 2.4).toFixed(1)})))`;
+    // hauteur: les 62 % du haut comme les autres jeux (la bande basse reste aux animations); tout l'écran seulement
+    // si le texte y deviendrait trop petit (les fêtes passent alors brièvement par-dessus le bas de la console).
+    // shortcut: décidé au chargement de l'exercice, pas au redimensionnement
+    const k = 1.45 * lines + 2.4, tall = (0.62 * innerHeight - 150) / k < 16;
+    screen.classList.toggle('dc-tall', tall);
+    con.style.fontSize = `max(13px, min(46px, calc((90vw - 64px) / ${(0.61 * w).toFixed(1)}), calc((${tall ? '100vh - 170px' : '62vh - 150px'}) / ${k.toFixed(1)})))`;
     const c = CREATURES[s.rewards.unlocked - 1] ?? CREATURES[0]; // relu: un tour a pu débloquer une créature
     buddy.replaceChildren(getArt(c.id).draw());
     paint();
