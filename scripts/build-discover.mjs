@@ -7,31 +7,31 @@ import { pathToFileURL } from 'node:url';
 import vm from 'node:vm';
 import { mulberry32, int, pick, shuffle } from '../assets/js/maze/gen.js';
 
-const q = (t) => `"${t}"`;
-const WORDS = ['chat', 'chien', 'lune', 'sol', 'mer', 'lapin', 'pomme', 'bateau', 'robot', 'arbre', 'fleur', 'pain',
+export const q = (t) => `"${t}"`;
+export const WORDS = ['chat', 'chien', 'lune', 'sol', 'mer', 'lapin', 'pomme', 'bateau', 'robot', 'arbre', 'fleur', 'pain',
   'lait', 'velo', 'train', 'nuage', 'loup', 'ours', 'tigre', 'poule', 'vache', 'livre', 'stylo', 'table', 'porte', 'jouet'];
-const SHORT = WORDS.filter((w) => w.length <= 4);
-const LONG = ['girafe', 'tortue', 'banane', 'abricot', 'chocolat', 'papillon', 'elephant', 'crocodile', 'dinosaure', 'kangourou', 'citrouille'];
+export const SHORT = WORDS.filter((w) => w.length <= 4);
+export const LONG = ['girafe', 'tortue', 'banane', 'abricot', 'chocolat', 'papillon', 'elephant', 'crocodile', 'dinosaure', 'kangourou', 'citrouille'];
 const SYL = [['la', 'pin'], ['ba', 'teau'], ['ro', 'bot'], ['so', 'leil'], ['nu', 'age'], ['ti', 'gre'], ['pou', 'le'],
   ['va', 'che'], ['li', 'vre'], ['sty', 'lo'], ['ta', 'ble'], ['por', 'te'], ['bal', 'lon'], ['ca', 'fe'], ['mou', 'ton'],
   ['ci', 'tron'], ['to', 'mate'], ['pi', 'rate'], ['dra', 'gon'], ['mai', 'son'], ['jar', 'din'], ['ga', 'teau']];
-const NAMES = ['Tom', 'Lea', 'Zoe', 'Max', 'Noa', 'Ali', 'Sam', 'Lou', 'Eva', 'Leo', 'Mia', 'Ines'];
-const SOUNDS = ['ha', 'oh', 'bip', 'la', 'do', 'hop', 'zou'];
+export const NAMES = ['Tom', 'Lea', 'Zoe', 'Max', 'Noa', 'Ali', 'Sam', 'Lou', 'Eva', 'Leo', 'Mia', 'Ines'];
+export const SOUNDS = ['ha', 'oh', 'bip', 'la', 'do', 'hop', 'zou'];
 const LETTERS = ['a', 'b', 'n', 'x', 'y', 'k'];
 const VARS = ['age', 'prix', 'score', 'total', 'nb'];
 // Vrais mots composés (pas de « veloours » inventé): plus faciles à lire et à taper.
-const COMP2 = [['chou', 'fleur'], ['tourne', 'sol'], ['para', 'pluie'], ['cerf', 'volant'], ['sous', 'marin'], ['garde', 'robe'],
+export const COMP2 = [['chou', 'fleur'], ['tourne', 'sol'], ['para', 'pluie'], ['cerf', 'volant'], ['sous', 'marin'], ['garde', 'robe'],
   ['mille', 'pattes'], ['rouge', 'gorge'], ['pique', 'nique'], ['casse', 'tete'], ['grand', 'pere'], ['porte', 'cle'], ['tire', 'bouchon']];
-const COMP3 = [['arc', 'en', 'ciel'], ['pomme', 'de', 'terre'], ['pot', 'au', 'feu'], ['sac', 'a', 'dos'], ['tete', 'a', 'tete'], ['moulin', 'a', 'vent']];
+export const COMP3 = [['arc', 'en', 'ciel'], ['pomme', 'de', 'terre'], ['pot', 'au', 'feu'], ['sac', 'a', 'dos'], ['tete', 'a', 'tete'], ['moulin', 'a', 'vent']];
 const VAR_HINT = [...VARS, ...LETTERS]; // indice = la variable de la question (les noms longs d'abord: « age » avant « a »)
 
-const ints = (n, lo, hi, r) => shuffle(Array.from({ length: hi - lo + 1 }, (_, k) => lo + k), r).slice(0, n);
-const word = (r, max = 6) => pick(WORDS.filter((w) => w.length <= max), r);
-const words = (n, r, max = 6) => shuffle(WORDS.filter((w) => w.length <= max), r).slice(0, n);
-const arr = (t) => `[${t.join(', ')}]`;
+export const ints = (n, lo, hi, r) => shuffle(Array.from({ length: hi - lo + 1 }, (_, k) => lo + k), r).slice(0, n);
+export const word = (r, max = 6) => pick(WORDS.filter((w) => w.length <= max), r);
+export const words = (n, r, max = 6) => shuffle(WORDS.filter((w) => w.length <= max), r).slice(0, n);
+export const arr = (t) => `[${t.join(', ')}]`;
 const caseMix = (w, r) => [...w].map((c) => (r() < 0.5 ? c.toUpperCase() : c)).join('');
-const F = (rule, hint, gen, o = {}) => ({ rule, hint, gen, ...o });
-const byEx = (...gens) => (r, e, i) => gens[Math.min(e, gens.length - 1)](r, e, i);
+export const F = (rule, hint, gen, o = {}) => ({ rule, hint, gen, ...o });
+export const byEx = (...gens) => (r, e, i) => gens[Math.min(e, gens.length - 1)](r, e, i);
 
 // ---- 1. Plus et moins ----
 const C1 = [
@@ -373,7 +373,7 @@ function fit(code) {
   return lines.join('\n');
 }
 
-const printable = (o) => /^[\x21-\x7e]([\x20-\x7e]{0,12}[\x21-\x7e])?$/.test(o);
+export const printable = (o) => /^[\x21-\x7e]([\x20-\x7e]{0,12}[\x21-\x7e])?$/.test(o);
 function makeExercise(fam, level, ex, used) {
   for (let attempt = 0; attempt < 2000; attempt++) {
     const r = mulberry32(level * 7919 + ex * 104729 + attempt * 15485863 + 2026);
