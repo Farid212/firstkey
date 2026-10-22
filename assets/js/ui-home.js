@@ -14,7 +14,7 @@ const el = (tag, cls, text) => {
   return e;
 };
 
-const ICONS = { letters: '🔤', words: '📖', math: '➕', logic: '🔷', js: '🟨', python: '🐍', maze: '🧭', discover: '🔎', guess: '🔢', hangman: '🪢', cookie: '🍪', draw: '🖍️', music: '🎵', bugs: '🐛', pixel: '🟦', trainer: '🐾', vault: '🔐', caesar: '✉️', rps: '✊', transform: '⚙️' };
+const ICONS = { letters: '🔤', words: '📖', math: '➕', logic: '🔷', js: '🟨', python: '🐍', maze: '🧭', discover: '🔎', discover2: '🚀', guess: '🔢', hangman: '🪢', cookie: '🍪', draw: '🖍️', music: '🎵', bugs: '🐛', pixel: '🟦', trainer: '🐾', vault: '🔐', caesar: '✉️', rps: '✊', transform: '⚙️' };
 
 // Jeux montrés dans une catégorie: jouables cochés par le parent, plus les « bientôt » (toujours visibles)
 export const categoryGames = (state, catId) =>
@@ -223,7 +223,7 @@ function buildPath(panel, b, ch, index, { state, handlers, level, need, lastDone
       const btn = el('button', `step ${st}`);
       btn.dataset.level = lv;
       btn.append(el('span', 'step-n', String(lv)));
-      if (b.id === 'maze' || b.id === 'discover') { // tours de 3 exercices: un point par exercice
+      if (['maze', 'discover', 'discover2'].includes(b.id)) { // tours de 3 exercices: un point par exercice
         const pips = el('span', 'pips');
         const full = st === 'done' ? need : st === 'cur' ? Math.min(p.correct, need) : 0;
         for (let j = 0; j < need; j++) pips.append(el('i', j < full ? 'on' : ''));

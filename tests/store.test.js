@@ -145,3 +145,22 @@ test('backfill: autocollants des anciennes sauvegardes déjà vus', () => {
   assert.deepEqual(st.rewards.stickersSeen, ['letters:0']);
   assert.deepEqual(loadState(fake(JSON.stringify({ rewards: { stickers: ['math:0'], stickersSeen: [] } }))).rewards.stickersSeen, []);
 });
+
+test('migration de discover2 une seule fois: ajouté si tout était coché, décoché reste décoché', () => {
+  const ALL = ['letters', 'words', 'math', 'js', 'python', 'maze', 'discover'];
+  assert.ok(loadState(fake(JSON.stringify({ settings: { blocks: ALL } }))).settings.blocks.includes('discover2'));
+  // sauvegarde d'avant Découvre: les deux arrivent
+  const six = loadState(fake(JSON.stringify({ settings: { blocks: ALL.slice(0, 6) } }))).settings.blocks;
+  assert.ok(six.includes('discover') && six.includes('discover2'));
+  // discover décoché exprès (progress.discover existe): discover2 n'arrive pas
+  const off = { settings: { blocks: ALL.slice(0, 6) }, progress: { maze: { level: 1, correct: 0 }, discover: { level: 3, correct: 0 } } };
+  assert.ok(!loadState(fake(JSON.stringify(off))).settings.blocks.includes('discover2'));
+  assert.equal(loadState(fake(JSON.stringify({ settings: { blocks: [...ALL, 'discover2'] } }))).settings.blocks.filter((b) => b === 'discover2').length, 1);
+  const s = fake(JSON.stringify({ settings: { blocks: ALL }, progress: { maze: { level: 4, correct: 1 }, discover: { level: 2, correct: 0 } } }));
+  const st = loadState(s);
+  assert.deepEqual(st.progress.discover2, { level: 1, correct: 0 });
+  st.settings.blocks = st.settings.blocks.filter((b) => b !== 'discover2');
+  saveState(st, s);
+  assert.ok(!loadState(s).settings.blocks.includes('discover2'));
+  assert.ok(defaultState().settings.blocks.includes('discover2'));
+});

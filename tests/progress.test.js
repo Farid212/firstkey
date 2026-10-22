@@ -19,6 +19,8 @@ test('answersPerLevel', () => {
   assert.equal(answersPerLevel(8, 'letters'), 25);
   assert.equal(answersPerLevel(8, 'discover'), 3); // un tour = 3 exercices
   assert.equal(answersPerLevel(12, 'discover'), 3);
+  assert.equal(answersPerLevel(9, 'discover2'), 3);
+  assert.equal(answersPerLevel(2, 'discover2'), 3);
 });
 
 test('25 bonnes réponses à 8 ans -> niveau 2', () => {

@@ -19,18 +19,19 @@ test('métadonnées: catégorie valide, groupe seulement dans Programmer, ids un
     assert.ok(b.category === 'code' ? [null, 'py', 'js'].includes(b.group) : b.group === null, b.id);
   }
   assert.deepEqual(BLOCKS.filter((b) => !b.playable).map((b) => b.id).sort(), [...SOON].sort());
-  assert.deepEqual(BLOCKS.filter((b) => b.playable).map((b) => b.id).sort(), [...OLD, 'discover'].sort()); // ids existants gardés
+  assert.deepEqual(BLOCKS.filter((b) => b.playable).map((b) => b.id).sort(), [...OLD, 'discover', 'discover2'].sort()); // ids existants gardés
   assert.equal(BLOCKS.find((b) => b.id === 'maze').mix, false);
   assert.deepEqual(BLOCKS.find((b) => b.id === 'discover'), { id: 'discover', minAge: 8, label: 'Découvre le JavaScript', playable: true, mix: false, category: 'code', group: 'js' });
-  assert.deepEqual(BLOCKS.filter((b) => b.group === 'js').map((b) => b.id), ['discover', 'js', 'cookie', 'rps', 'transform']);
+  assert.deepEqual(BLOCKS.find((b) => b.id === 'discover2'), { id: 'discover2', minAge: 9, label: 'JavaScript, aller plus loin', playable: true, mix: false, category: 'code', group: 'js' });
+  assert.deepEqual(BLOCKS.filter((b) => b.group === 'js').map((b) => b.id), ['discover', 'discover2', 'js', 'cookie', 'rps', 'transform']);
 });
 
 test('ancienne sauvegarde sans les nouveaux ids: niveaux gardés, nouveaux au niveau 1', () => {
   const progress = Object.fromEntries(OLD.map((id, i) => [id, { level: 10 + i, correct: 2 }]));
   const st = loadState(fake({ score: 5, settings: { blocks: OLD }, progress }));
   for (const [i, id] of OLD.entries()) assert.deepEqual(st.progress[id], { level: 10 + i, correct: 2 });
-  for (const id of [...SOON, 'discover']) assert.deepEqual(st.progress[id], { level: 1, correct: 0 });
-  assert.deepEqual([...st.settings.blocks].sort(), [...OLD, 'discover'].sort()); // tout était coché: le nouveau jeu aussi
+  for (const id of [...SOON, 'discover', 'discover2']) assert.deepEqual(st.progress[id], { level: 1, correct: 0 });
+  assert.deepEqual([...st.settings.blocks].sort(), [...OLD, 'discover', 'discover2'].sort()); // tout était coché: le nouveau jeu aussi
 });
 
 test('migration maze: les ids « bientôt » ne cassent pas la détection des sauvegardes d\'avant le labyrinthe', () => {
@@ -48,18 +49,20 @@ test('« tout mélangé » et explorateur ignorent les jeux « bientôt »', () 
   assert.equal(pickBlock(s), null);
   s.settings.blocks = [...SOON, 'math'];
   for (let i = 0; i < 20; i++) assert.equal(pickBlock(s, () => i / 20), 'math');
-  s.settings.blocks = [...SOON, 'math', 'discover'];
+  s.settings.blocks = [...SOON, 'math', 'discover', 'discover2'];
   for (let i = 0; i < 20; i++) assert.equal(pickBlock(s, () => i / 20), 'math'); // mix: false
   s.rewards.stats.blocksTried = ['math'];
   assert.ok(!BADGES.find((b) => b.id === 'explorer').earned(s)); // discover est jouable: il compte
   s.rewards.stats.blocksTried = ['math', 'discover'];
+  assert.ok(!BADGES.find((b) => b.id === 'explorer').earned(s)); // discover2 aussi
+  s.rewards.stats.blocksTried = ['math', 'discover', 'discover2'];
   assert.ok(BADGES.find((b) => b.id === 'explorer').earned(s));
 });
 
 test('catégories visibles: au moins un jeu jouable coché; « bientôt » toujours listés', () => {
   const s = defaultState();
   assert.deepEqual(visibleCategories(s).map((c) => c.id), ['read', 'logic', 'code']);
-  assert.deepEqual(categoryGames(s, 'code').map((b) => b.id), ['maze', 'draw', 'music', 'bugs', 'pixel', 'trainer', 'python', 'guess', 'hangman', 'vault', 'caesar', 'discover', 'js', 'cookie', 'rps', 'transform']);
+  assert.deepEqual(categoryGames(s, 'code').map((b) => b.id), ['maze', 'draw', 'music', 'bugs', 'pixel', 'trainer', 'python', 'guess', 'hangman', 'vault', 'caesar', 'discover', 'discover2', 'js', 'cookie', 'rps', 'transform']);
   s.settings.blocks = ['letters', ...SOON]; // logic et code: seuls des « bientôt » -> cachées
   assert.deepEqual(visibleCategories(s).map((c) => c.id), ['read']);
   s.settings.blocks = ['js'];

@@ -43,8 +43,8 @@ function collection() {
 function game(target) {
   gear.hidden = true; // pas de réglages pendant une partie (écouteurs clavier actifs)
   const onExit = () => home(target.blockId);
-  // « tout mélangé » ne tire jamais le labyrinthe ni Découvre le JavaScript (mix: false)
-  const start = { maze: startMaze, discover: startDiscover }[target.blockId] ?? startGame;
+  // « tout mélangé » ne tire jamais le labyrinthe ni les jeux Découvre (mix: false)
+  const start = { maze: startMaze, discover: startDiscover, discover2: startDiscover }[target.blockId] ?? startGame;
   start(root, state, target, { onChange, getState: () => state, onExit });
 }
 

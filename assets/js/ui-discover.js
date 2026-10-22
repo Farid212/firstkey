@@ -1,8 +1,9 @@
-// Écran « Découvre le JavaScript » (spec 9): une console sans mots. 3 exemples résolus, puis une ligne à compléter;
+// Écran « Découvre le JavaScript » (spec 9) et « JavaScript, aller plus loin » (spec 10, même écran + mini-page): une console sans mots. 3 exemples résolus, puis une ligne à compléter;
 // l'enfant devine la règle et tape la sortie. Un niveau = un tour de 3 exercices (comme le labyrinthe).
 import { recordCorrect, answersPerLevel } from './progress.js';
 import { MAX_LEVEL } from './blocks.js';
 import { discoverExercise } from './discover.js';
+import { discover2Exercise } from './discover2.js';
 import { createTyper } from './typer.js';
 import { getArt } from './rewards/art/index.js';
 import { CREATURES } from './rewards/creatures.js';
@@ -22,7 +23,7 @@ const el = (tag, cls, text) => {
 };
 
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-const ID = 'discover';
+const EXERCISES = { discover: discoverExercise, discover2: discover2Exercise };
 const OPS = /===|!==|>=|<=|\+=|-=|\*=|\/=|\+\+|[-+*/<>]/g; // indice sans hintCode: les opérateurs
 const escape = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -40,6 +41,8 @@ function codeEl(code, hint) {
 }
 
 export function startDiscover(root, state, target, handlers) {
+  const ID = target.blockId;
+  const exercise = EXERCISES[ID];
   root.replaceChildren();
   const bar = el('div', 'bar');
   const back = el('button', 'back round', '←');
@@ -90,26 +93,29 @@ export function startDiscover(root, state, target, handlers) {
     level = fixed ?? s.progress[ID].level;
     local %= 3;
     ex = counted() ? Math.min(2, s.progress[ID].correct) : local;
-    item = discoverExercise(level, ex);
+    item = exercise(level, ex);
     typer = createTyper([item.question.out], { caseSensitive: true });
     misses = 0;
-    con.classList.remove('hint', 'win');
+    con.classList.remove('dc-hint', 'win');
     const list = item.examples.map((e) => row(e.code, e.out, 'dc-ex')[0]);
     let o;
     [qrow, o] = row(item.question.code, '', 'dc-q');
     o.setAttribute('aria-hidden', 'true');
     slots = [...item.question.out].map((c) => o.appendChild(el('span', c === ' ' ? 'dc-slot sp' : 'dc-slot')));
     qrow.append(buddy);
-    rows.replaceChildren(...list);
+    // mini-page HTML: du texte brut (textContent), jamais interprétée
+    rows.replaceChildren(...(item.page ? [el('pre', 'dc-page', item.page)] : []), ...list);
     con.replaceChildren(rows, qrow);
     // taille: la ligne la plus longue tient dans la largeur, toutes les lignes dans la hauteur; sinon pre-wrap (téléphone)
     const all = [...item.examples, item.question];
-    const w = Math.max(...all.flatMap((e) => {
+    const wCode = Math.max(...all.flatMap((e) => {
       const ls = e.code.split('\n');
       return [...ls.slice(0, -1).map((l) => l.length), ls.at(-1).length + 3 + e.out.length];
     }));
-    const lines = all.reduce((n, e) => n + e.code.split('\n').length, 0);
-    con.style.fontSize = `max(13px, min(46px, calc((90vw - 64px) / ${(0.61 * w).toFixed(1)}), calc((62vh - 150px) / ${(1.45 * lines + 2.4).toFixed(1)})))`;
+    const pageLines = item.page ? item.page.split('\n') : [];
+    const w = Math.max(wCode, ...pageLines.map((l) => 0.8 * l.length + 2)); // la mini-page est en .8em
+    const lines = all.reduce((n, e) => n + e.code.split('\n').length, 0) + 0.8 * pageLines.length + (item.page ? 1 : 0);
+    con.style.fontSize = `max(13px, min(46px, calc((90vw - 64px) / ${(0.61 * w).toFixed(1)}), calc((100vh - 170px) / ${(1.45 * lines + 2.4).toFixed(1)})))`;
     const c = CREATURES[s.rewards.unlocked - 1] ?? CREATURES[0]; // relu: un tour a pu débloquer une créature
     buddy.replaceChildren(getArt(c.id).draw());
     paint();
@@ -136,7 +142,7 @@ export function startDiscover(root, state, target, handlers) {
     s = handlers.getState(); // la série remise à zéro par le directeur ne doit pas être écrasée
     play('wrongAnswer');
     restart(qrow, 'shake');
-    if (++misses >= 2) con.classList.add('hint');
+    if (++misses >= 2) con.classList.add('dc-hint');
   }
 
   function correct() {
@@ -155,7 +161,7 @@ export function startDiscover(root, state, target, handlers) {
   }
 
   function win() {
-    con.classList.remove('hint');
+    con.classList.remove('dc-hint');
     con.classList.add('win');
     restart(buddy, 'hop');
     play('correctAnswer');

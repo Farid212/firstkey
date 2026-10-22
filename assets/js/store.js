@@ -26,6 +26,8 @@ const int = (v, min, max, def) => {
 const migrateBlocks = (b, done) => (!done && OLD_BLOCKS.every((id) => b.includes(id)) && !b.includes('maze') ? [...b, 'maze'] : b);
 // Même règle pour Découvre le JavaScript: ajouté une fois aux sauvegardes qui avaient tous les jeux (sans progress.discover)
 const addDiscover = (b, done) => (!done && [...OLD_BLOCKS, 'maze'].every((id) => b.includes(id)) && !b.includes('discover') ? [...b, 'discover'] : b);
+// Et pour JavaScript, aller plus loin (sans progress.discover2)
+const addDiscover2 = (b, done) => (!done && [...OLD_BLOCKS, 'maze', 'discover'].every((id) => b.includes(id)) && !b.includes('discover2') ? [...b, 'discover2'] : b);
 
 export function loadState(storage) {
   const d = defaultState();
@@ -54,7 +56,7 @@ export function loadState(storage) {
       age: int(s.age, 1, 99, d.settings.age),
       uppercase: typeof s.uppercase === 'boolean' ? s.uppercase : d.settings.uppercase,
       language: LANGS.includes(s.language) ? s.language : d.settings.language,
-      blocks: Array.isArray(s.blocks) ? addDiscover(migrateBlocks(s.blocks.filter((b) => ids.includes(b)), p.maze != null), p.discover != null) : d.settings.blocks,
+      blocks: Array.isArray(s.blocks) ? addDiscover2(addDiscover(migrateBlocks(s.blocks.filter((b) => ids.includes(b)), p.maze != null), p.discover != null), p.discover2 != null) : d.settings.blocks,
       codeLanguage: CODE_LANGS.includes(s.codeLanguage) ? s.codeLanguage : d.settings.codeLanguage,
       rewardAnimations: typeof s.rewardAnimations === 'boolean' ? s.rewardAnimations : true,
       rewardSounds: typeof s.rewardSounds === 'boolean' ? s.rewardSounds : true,
