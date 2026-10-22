@@ -1,4 +1,3 @@
-// Animaux B: cochon, canard, mouton, lion. Vus de face, pieds en (0, 0), ~200 unités de haut.
 import { track, clamp, lerp, ease } from '../anim.js';
 import { svgEl } from '../fx.js';
 import { INK, ell, path, group, rot, tube, eyes, blinkAt, popper, actor, portrait, play, dust } from './kit.js';
@@ -17,7 +16,6 @@ export const blush = (parent, pts, c = '#ff8fa3') => pts.forEach(([x, y]) => par
 export const spot = () => 0.3 + Math.random() * 0.4;
 export const setT = (el, x, y, sx = 1, sy = sx) => el.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sx.toFixed(3)} ${sy.toFixed(3)})`);
 
-// ---------- Cochon ----------
 function buildPig(g) {
   const PK = '#ffa5bf', DK = '#ff7fa3';
   const roll = group(g);
@@ -40,7 +38,6 @@ function buildPig(g) {
   return { roll, tail, head, earL, earR, look, snout, mud, smile };
 }
 
-// « Groin groin »: grave, bruité, deux grognements puis un petit couinement
 const pigCry = { voices: [
   s('sawtooth', 150, 95, 0, 0.22, 0.12, { filter: { type: 'lowpass', freq: 600 } }),
   s('noise', 500, 250, 0, 0.2, 0.1, { filter: { type: 'lowpass', freq: 700 } }),
@@ -64,7 +61,6 @@ function pigAct(fx) {
     const hop = (u) => 4 * 70 * u * (1 - u);
     return (t, once) => {
       const p = pop(t), x = S.W * xf, w = wig(t);
-      // petit saut dans la flaque (2.3 -> 2.8), puis roulade sur le dos de 2.9 à 3.5
       const hu = clamp((t - 2.3) / 0.5, 0, 1), sp = spin(t);
       const up = hop(hu) + 30 * Math.sin(sp * Math.PI);
       A.place(x, { ...p, y: p.y - up }, 0.05 * Math.sin(sp * Math.PI * 2));
@@ -85,7 +81,6 @@ function pigAct(fx) {
   });
 }
 
-// ---------- Canard ----------
 function buildDuck(g) {
   const YE = '#ffe14d', OR = '#ff9d2e';
   const body = group(g);
@@ -109,7 +104,6 @@ function buildDuck(g) {
   return { sway: body, head, jaw, mouth, look, wingL, wingR, footL, footR };
 }
 
-// « Coin coin »: carré nasillard, trois fois
 const duckCry = { voices: [
   s('square', 560, 380, 0, 0.14, 0.1, { filter: { type: 'bandpass', freq: 1200 } }),
   s('square', 560, 380, 0.22, 0.14, 0.1, { filter: { type: 'bandpass', freq: 1200 } }),
@@ -149,7 +143,6 @@ function duckAct(fx) {
   });
 }
 
-// ---------- Mouton ----------
 function buildSheep(g) {
   const WL = '#fffaf0', FC = '#5d4e6d';
   const legs = [[-30, -8], [30, -8]].map(([x, y]) => ell(x, y, 15, 12, FC));
@@ -173,7 +166,6 @@ function buildSheep(g) {
   return { fluff, wool, head, earL, earR, look, mouth };
 }
 
-// « Bêê »: dent de scie avec vibrato rapide
 const sheepCry = { voices: [
   s('sawtooth', 380, 340, 0, 0.9, 0.14, { filter: { type: 'bandpass', freq: 900 }, vib: { rate: 22, depth: 30 } }),
   s('sawtooth', 190, 170, 0, 0.9, 0.08, { filter: { type: 'lowpass', freq: 800 }, vib: { rate: 22, depth: 15 } }),
@@ -202,7 +194,6 @@ function sheepAct(fx) {
       const crouch = Math.max(0, 1 - Math.abs(t - 1.95) / 0.2) * 0.15;
       const sp = turn(t);
       A.place(x, { ...p, y: p.y - jump, sx: p.sx * (sp > 0 && sp < 1 ? Math.max(0.15, Math.abs(Math.cos(sp * Math.PI * 2))) : 1) }, crouch);
-      // la laine rebondit à chaque saut, gonfle un peu en volant
       const bounce = 1 + 0.06 * Math.sin(t * 12) * (u1 > 0 && u1 < 1 || u2 > 0 && u2 < 1 ? 1 : 0.3) + 0.08 * pulse(t);
       A.fluff.setAttribute('transform', `translate(0 -66) scale(${bounce.toFixed(3)} ${(2 - bounce).toFixed(3)}) translate(0 66)`);
       rot(A.head, wob(t, 2, 2) + 8 * open(t) * Math.sin(t * 22), 0, -90);
@@ -221,7 +212,6 @@ function sheepAct(fx) {
   });
 }
 
-// ---------- Lion ----------
 function buildLion(g) {
   const GD = '#ffbf4d', MN = '#c8641e', MN2 = '#a04a14';
   const tail = group(group(g, { transform: 'translate(52 -44)' }));
@@ -246,7 +236,6 @@ function buildLion(g) {
   return { tail, chest, mane, head, look, mouth, cheeks };
 }
 
-// Rugissement grave bruité qui descend, puis un petit couinement ridicule
 const lionCry = { voices: [
   s('sawtooth', 230, 70, 0, 0.8, 0.13, { filter: { type: 'lowpass', freq: 900 }, vib: { rate: 24, depth: 12 } }),
   s('sawtooth', 120, 50, 0, 0.8, 0.1, { filter: { type: 'lowpass', freq: 500 } }),
@@ -269,7 +258,6 @@ function lionAct(fx) {
     return (t, once) => {
       const p = pop(t), x = S.W * xf, b = breath(t), r = big(t), sh = shake(t), fl = flop(t), pu = purrT(t);
       A.place(x, p, 0.05 * b - 0.04 * r + wob(t, 50, 0.012) * pu);
-      // crinière: gonfle en inspirant, hérissée en rugissant, retombe, toute flasque
       const m = 1 + 0.06 * b + 0.14 * r - 0.14 * fl + wob(t, 40, 0.025) * sh;
       A.mane.setAttribute('transform', `translate(0 -132) scale(${m.toFixed(3)}) rotate(${wob(t, 45, 3 * sh).toFixed(2)}) translate(0 132)`);
       rot(A.head, wob(t, 30, 5 * sh) - 6 * fl + wob(t, 2, 1.5), 0, -90);

@@ -1,6 +1,4 @@
-// Segments étiquetés, assemblage dans la grille et solveur (module pur, sans DOM, sans Math.random).
-
-export const DIRS = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }]; // nord, est, sud, ouest
+export const DIRS = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }];
 export const MAX_SIZE = 11;
 
 export const sizeOf = (level) => Math.max(5, Math.min(MAX_SIZE, Math.round(5 + (6 * (level - 1)) / 113)));
@@ -21,10 +19,6 @@ export const shuffle = (arr, rng) => {
   return a;
 };
 
-// ---- Segments ----
-// Une ligne de segment est une liste de commandes (nombre = avancer de n cases, 'r'/'l' = virage)
-// ou une boucle { loop: k, body: [...] }. final: le segment ne peut être que le dernier (le but est dedans);
-// cut: nombre de pas de la trace à retirer à la fin (le but est atteint avant la fin de la boucle).
 const opp = (t) => (t === 'r' ? 'l' : 'r');
 const turn = (rng) => pick(['r', 'l'], rng);
 
@@ -36,11 +30,11 @@ export const SEGMENTS = {
   Z: (r) => { const t = turn(r); return { lines: [[int(1, 3, r), t, int(1, 3, r), opp(t), int(1, 3, r)]] }; },
   long: (r) => ({ lines: [[int(4, 6, r)]] }),
   U: (r) => { const t = turn(r); return { lines: [[int(1, 3, r), t, int(2, 3, r), t, int(1, 3, r)]] }; },
-  detour: (r) => { // contourne un mur: monte, passe, redescend
+  detour: (r) => {
     const t = turn(r), h = int(1, 2, r);
     return { lines: [[t, h, opp(t), int(2, 3, r), opp(t), h, t]] };
   },
-  square: (r, last) => { // 4 côtés avec le but juste après le dernier coin, ou 3 côtés ouverts (virage d'abord)
+  square: (r, last) => {
     const a = int(3, 4, r), t = turn(r);
     return last && r() < 0.7
       ? { lines: [{ loop: 4, body: [a, t] }], cut: a - 1, final: true }
@@ -51,8 +45,6 @@ export const SEGMENTS = {
     return r() < 0.5 ? { lines: [{ loop: 2, body: [a, t, b, t] }], cut: b - 1, final: true }
       : { lines: [{ loop: 2, body: [b, t, a, t] }], cut: a - 1, final: true };
   },
-  // Carrés décorés (tours de boucle 41-52): un carré dont chaque côté a un détour (castle) ou un décrochement en Z (pinwheel),
-  // tourné vers l'extérieur; dernier: 4 côtés, but sur le dernier côté; sinon 3 côtés ouverts.
   castle: (r, last) => {
     const t = turn(r), o = opp(t), x = int(1, 2, r), h = 1, w = 2, y = int(1, 2, r);
     const side = [o, h, t, w, t, h, o, y];
@@ -65,7 +57,7 @@ export const SEGMENTS = {
       : { lines: [{ loop: 3, body: [t, a, o, b, t, c] }] };
   },
   stairs: (r) => { const t = turn(r); return { lines: [{ loop: int(3, 5, r), body: [int(1, 2, r), t, int(1, 2, r), opp(t)] }] }; },
-  spiral: (r, last) => { // dernier: vers l'intérieur (a, a, a, a-2, a-2…); sinon vers l'extérieur (s, s, s+2, s+2)
+  spiral: (r, last) => {
     const t = turn(r);
     if (!last) {
       const s = int(2, 3, r);
@@ -79,9 +71,8 @@ export const SEGMENTS = {
     }
     return { lines: groups.map(([s, k], i) => (k > 1 ? { loop: k, body: [s, t] } : i === groups.length - 1 ? [s] : [s, t])), final: true };
   },
-  zigzag: (r, last) => { // serpent (allers-retours) ou créneaux (monte, avance, descend, avance)
+  zigzag: (r, last) => {
     const t = turn(r), a = int(2, last ? 5 : 3, r), h = int(1, last ? 3 : 2, r);
-    // dernier: 3 motifs (11 cases de long), le but avant le dernier pas de 2
     const k = last && r() < 0.6 ? 3 : 2, cut = k === 3 ? 2 : 0;
     return r() < 0.5 ? { lines: [{ loop: k, body: [a + 1, t, 2, t, a + 1, opp(t), 2, opp(t)] }], cut, final: k === 3 }
       : { lines: [{ loop: k, body: [t, h, opp(t), 2, opp(t), h, t, k === 3 ? 2 : a] }], cut, final: k === 3 };
@@ -89,8 +80,6 @@ export const SEGMENTS = {
 };
 export const FINAL_ONLY = ['rect'];
 
-// ---- Assemblage ----
-// Case (x, y) creusable depuis (fx, fy): dans la grille, fermée, sans autre voisine ouverte (les murs restent épais).
 function can(open, n, x, y, fx, fy) {
   if (x < 0 || y < 0 || x >= n || y >= n || open[y][x]) return false;
   return DIRS.every((d) => {
@@ -99,7 +88,6 @@ function can(open, n, x, y, fx, fy) {
   });
 }
 
-// Cases d'une suite de pas unitaires ('f', 'r', 'l') depuis (0, 0) dans la direction dir.
 export function walkCells(moves, dir) {
   let x = 0, y = 0;
   const cells = [{ x, y }];
@@ -111,8 +99,6 @@ export function walkCells(moves, dir) {
   return cells;
 }
 
-// Creuse le chemin `cells` (coordonnées relatives) à une place tirée au hasard dans une grille n×n,
-// n = max(minN, encombrement); null si le chemin ne tient pas ou se touche lui-même.
 export function carve(cells, dir, minN, rng, tags) {
   if (cells.length < 2) return null;
   const xs = cells.map((c) => c.x), ys = cells.map((c) => c.y);
@@ -136,7 +122,6 @@ export function carve(cells, dir, minN, rng, tags) {
   return maze.par >= 1 ? maze : null;
 }
 
-// Commandes minimales ('f' avancer, 'l' gauche, 'r' droite) par BFS sur (x, y, dir); null si impossible.
 export function solutionPath(maze) {
   const { w, h, walls, start, goal } = maze;
   const key = (x, y, d) => (y * w + x) * 4 + d;
@@ -164,5 +149,4 @@ export function solutionPath(maze) {
 
 export const solve = (maze) => solutionPath(maze)?.length ?? -1;
 
-// Nombre de commandes d'un chemin sans boucle mais avec forward(n): suites de 'f' regroupées + virages.
 export const compressedLength = (path) => path.filter((c, i) => c !== 'f' || path[i - 1] !== 'f').length;

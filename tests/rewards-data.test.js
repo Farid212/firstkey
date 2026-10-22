@@ -64,7 +64,6 @@ test('badges: levels and explorer', () => {
   assert.equal(ex(['letters', 'words'], ['letters', 'words']), true);
   assert.equal(ex([], []), false);
   assert.equal(ex(['letters', 'inconnu'], ['letters']), true);
-  // un enfant de 4 ans n'a pas à essayer JavaScript; à 8 ans oui
   const exAge = (age, tried) => { const s = mk({ blocksTried: tried }); s.settings = { age, blocks: ['letters', 'js'] }; return b('explorer').earned(s); };
   assert.equal(exAge(4, ['letters']), true);
   assert.equal(exAge(8, ['letters']), false);

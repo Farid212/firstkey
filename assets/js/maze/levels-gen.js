@@ -1,8 +1,3 @@
-// Générateur des exercices du bloc Programmation: un niveau = un tour de 3 exercices (spec 6, « Tours »). Module pur.
-// Utilisé seulement par scripts/build-levels.mjs (qui écrit levels-data.js) et par les tests; le jeu lit levels.js.
-// Niveaux 1-72 (terminal): labyrinthe assemblé de segments étiquetés, référence en lignes du terminal.
-// Niveaux 73-100 (programme): famille de programme + segments; le labyrinthe est la trace de la référence.
-// Niveaux 101-114 (programme, 3 mondes): couloirs de longueurs inconnues, référence générale (while / if / else).
 import { CURRICULUM } from './curriculum.js';
 import { SEGMENTS, FINAL_ONLY, carve, walkCells, solutionPath, compressedLength, sizeOf, mulberry32, int, pick, shuffle } from './gen.js';
 import { parse, parseProgram } from './lang.js';
@@ -13,11 +8,9 @@ const MAX_ATTEMPTS = 3000;
 const PREFIXABLE = ['straight', 'turnR', 'turnL', 'L', 'Z', 'long', 'U', 'detour', 'square', 'stairs'];
 const opp = (t) => (t === 'r' ? 'l' : 'r');
 
-// ---- Rendu Python / JavaScript ----
 const TURN = { py: { r: 'turn_right()', l: 'turn_left()' }, js: { r: 'turnRight()', l: 'turnLeft()' } };
 const fwd = (n) => `forward(${n === 1 ? '' : n})`;
 
-// Une ligne du terminal (segments): avant le tour 25, forward(n) n'est pas encore appris.
 function replLine(line, lang, long) {
   const cmds = (list) => list.flatMap((c) => (typeof c !== 'number' ? [TURN[lang][c]] : long ? [fwd(c)] : Array(c).fill('forward()')));
   if (Array.isArray(line)) return cmds(line).join('; ');
@@ -25,8 +18,6 @@ function replLine(line, lang, long) {
   return lang === 'py' ? `for i in range(${line.loop}): ${body}` : `for (let i = 0; i < ${line.loop}; i++) { ${body} }`;
 }
 
-// Arbre de programme: ['f', e] ['r'] ['l'] ['for', v, n, body] ['set', nom, op, e] ['def', nom, param, body]
-// ['call', nom, arg] ['while', cond, body] ['if', cond, body, sinon]; cond: 'wall', '!wall', '!goal'.
 function render(stmts, lang, depth = 0, out = []) {
   const py = lang === 'py', pad = ' '.repeat(depth * (py ? 4 : 2)), end = py ? '' : ';';
   const cond = (c) => (c[0] === '!' ? (py ? 'not ' : '!') : '') + `${c.replace('!', '')}()`;
@@ -61,7 +52,6 @@ const segTree = (lines) => lines.flatMap((line) => {
   return Array.isArray(line) ? cmds(line) : [['for', 'k', line.loop, cmds(line.body)]];
 });
 
-// ---- Traces dans un monde sans murs ----
 const OPEN = 41;
 const openWorld = (dir) => createWorld({
   w: OPEN, h: OPEN, walls: Array.from({ length: OPEN }, () => Array(OPEN).fill(false)),
@@ -69,7 +59,6 @@ const openWorld = (dir) => createWorld({
 });
 const cellsOf = (events) => [{ x: 0, y: 0 }, ...events.filter((e) => e.k === 'move').map((e) => ({ x: e.x - 20, y: e.y - 20 }))];
 
-// Exécute des lignes du terminal l'une après l'autre (comme ui-maze.js); { world, events, error }.
 export function runRepl(src, lang, world) {
   let events = [];
   for (const line of src.split('\n')) {
@@ -88,7 +77,6 @@ export function runProgram(src, lang, world) {
   return p.ok ? executeProgram(p.program, world) : { world, events: [], error: p.error };
 }
 
-// ---- Règles du tour ----
 const row = (level) => CURRICULUM[level - 1];
 export const othersOf = (level) => {
   const f = row(level).focus, p = level > 1 ? row(level - 1).focus : null;
@@ -108,19 +96,13 @@ export function tourOk(level, ex, tags) {
 function needTags(level, ex, rng) {
   const need = [row(level).focus];
   const p = level > 1 ? row(level - 1).focus : null;
-  // Même bloc (focus d'avant = focus): un segment déjà appris de plus, pour que l'exercice grandisse quand même.
   if (ex >= 1 && p) need.push(p !== need[0] ? p : pick(row(level).skills.filter((t) => PREFIXABLE.includes(t)), rng));
   if (ex === 2) need.push(...shuffle(othersOf(level).filter((t) => PREFIXABLE.includes(t)), rng).slice(0, 2));
   return need;
 }
 
-// ---- Niveaux 1-72: terminal ----
-// Tours de boucle (41-72): uniquement des boucles d'au moins 3 tours (une boucle de 2 tours ne fait pas gagner de place),
-// pour que sans boucle il faille au moins 2 fois plus de commandes. Les autres notions du 3e exercice se lisent
-// dans la forme du chemin (virages des deux côtés, Z, U, longues branches), comme aux tours 101-114.
 const LOOP_FROM = { square: 41, castle: 41, pinwheel: 41, rect: 47, stairs: 53, spiral: 63, zigzag: 68 };
 const LOOP_TAG = { castle: ['square', 'detour'], pinwheel: ['square'] };
-// N (commandes sans boucle, forward(n) compris) et S (commande = 1, boucle = 1 + corps) de lignes de segments.
 function sizesOf(lines, cut) {
   const cmds = lines.flatMap((l) => (Array.isArray(l) ? l : Array(l.loop).fill(l.body).flat())).flatMap((c) => (typeof c === 'number' ? Array(c).fill('f') : [c]));
   for (let k = cut; k > 0;) if (cmds.pop() === 'f') k--;
@@ -133,20 +115,18 @@ function loopPieces(level, ex, rng) {
   const avail = Object.keys(LOOP_FROM).filter((k) => LOOP_FROM[k] <= level);
   const kinds = [focus === 'square' && ex >= 1 && prev === 'detour' ? 'castle' : focus];
   if (ex >= 1 && prev !== focus && prev !== 'detour') kinds.push(prev);
-  const extra = avail.filter((k) => !['rect', 'zigzag', 'spiral'].includes(k)); // au plus une pièce qui finit sur le but
+  const extra = avail.filter((k) => !['rect', 'zigzag', 'spiral'].includes(k));
   if (ex >= 1 && prev === focus && rng() < 0.5) kinds.push(pick(extra, rng));
   if (ex === 2 && rng() < 0.5) kinds.push(pick(extra, rng));
   const helper = () => (level >= 53 ? 'steps' : pick(['castle', 'pinwheel', 'square'], rng));
   for (let tries = 0; ; tries++) {
-    // rectangle, zigzag et spirale peuvent finir sur le but (rectangle toujours); une spirale qui n'est pas la dernière
-    // s'enroule autour de son départ: en premier
     const ends = ['rect', 'zigzag', 'spiral'].filter((k) => kinds.includes(k));
     const last = ends.includes('rect') ? 'rect' : ends.length ? pick(ends, rng) : null;
     const rest = shuffle(kinds.filter((k, i) => i !== kinds.indexOf(last)), rng).sort((a, b) => (b === 'spiral') - (a === 'spiral'));
     const order = last ? [...rest, last] : rest;
     const pieces = order.map((k, i) => {
       if (k !== 'steps') return { kind: k, tags: LOOP_TAG[k] ?? [k], ...SEGMENTS[k](rng, i === order.length - 1) };
-      const t = pick(['r', 'l'], rng); // petit escalier serré: beaucoup de commandes sans boucle sur peu de place
+      const t = pick(['r', 'l'], rng);
       return { kind: k, tags: ['stairs'], lines: [{ loop: int(4, 5, rng), body: [1, t, 1, opp(t)] }] };
     });
     const { N, S } = sizesOf(pieces.flatMap((p) => p.lines), pieces.at(-1).cut ?? 0);
@@ -155,7 +135,7 @@ function loopPieces(level, ex, rng) {
   }
 }
 
-function pathShape(maze) { // virages et longueurs des couloirs du chemin le plus court
+function pathShape(maze) {
   const turns = [], lens = [0];
   for (const c of solutionPath(maze)) if (c === 'f') lens[lens.length - 1]++; else { turns.push(c); lens.push(0); }
   return shapeTags(turns, lens);
@@ -167,7 +147,6 @@ function buildRepl(level, ex, rng) {
   else if (level >= 41) pieces = loopPieces(level, ex, rng);
   else {
     const need = shuffle(needTags(level, ex, rng), rng).sort((a, b) => FINAL_ONLY.includes(a) - FINAL_ONLY.includes(b));
-    // Une spirale qui n'est pas la dernière s'ouvre vers l'extérieur et s'enroule autour de son départ: elle passe en premier.
     if (need.includes('spiral') && need.at(-1) !== 'spiral') need.unshift(...need.splice(need.indexOf('spiral'), 1));
     else if (ex === 0 && rng() < 0.5) need.unshift('straight');
     pieces = need.map((tag, i) => ({ tag, ...SEGMENTS[tag](rng, i === need.length - 1) }));
@@ -187,30 +166,23 @@ function buildRepl(level, ex, rng) {
   return { mode: 'repl', tags, worlds: [maze], budget: null, reference: ref };
 }
 
-// Nombre d'instructions des lignes du terminal (commande = 1, boucle = 1 + son corps).
 export const replSize = (src, lang) => src.split('\n').reduce((n, line) => {
   const count = (list) => list.reduce((k, s) => k + 1 + (s.body ? count(s.body) : 0), 0);
   return n + count(parse(line, lang).prog);
 }, 0);
 
-// Taille naïve N d'un monde: commandes du plus court chemin sans boucle mais avec forward(n) (une par ligne en mode programme).
 export const naiveSize = (maze) => compressedLength(solutionPath(maze));
-// Aux tours de boucle, la boucle est demandée: sans boucle il faut au moins 2 × S commandes, et plus de 8.
-// Exception mesurée: au tour 68, exercices 2 et 3, zigzag (3 motifs = toute la largeur de la grille) et spirale
-// (une boucle de 2 tours par longueur de côté) ne tiennent pas ensemble dans 11×11 à 2 × S: on demande 2 × S − 3.
 export const loopSlack = (level, ex) => (level === 68 && ex >= 1 ? 3 : 0);
 export function loopDemanded(spec, level, ex) {
   const N = naiveSize(spec.worlds[0]), S = replSize(spec.reference.py, 'py');
   return N >= 2 * S - loopSlack(level, ex) && N > 8;
 }
 
-// Le budget ne doit pas suffire au programme naïf (une commande par ligne, forward(n) compris), dans les deux langages.
 export const budgetFair = (maze, budget) => naiveSize(maze) > Math.max(budget.py, budget.js);
 
-// ---- Niveaux 73-100: familles de programmes ----
 const sizes = (lo, hi, n, r) => Array.from({ length: n }, () => int(lo, hi, r));
 const turnOf = (r) => pick(['r', 'l'], r);
-const nonArith = (r, vals) => { // valeurs d'appel dont les trois premières ne forment pas une suite régulière; null sinon
+const nonArith = (r, vals) => {
   for (let k = 0; k < 20; k++) {
     const v = shuffle(vals, r);
     if (v.length < 3 || v[1] - v[0] !== v[2] - v[1]) return v;
@@ -221,18 +193,18 @@ const bump = (t, h, w) => [[t], ['f', h], [opp(t)], ['f', w], [opp(t)], ['f', h]
 
 const FAMILIES = {
   nested: [
-    (r) => { const t = turnOf(r); // serpent
+    (r) => { const t = turnOf(r);
       return { tags: ['nested', 'loop', 'zigzag'], defs: [], main: [['for', 'i', 2, [['for', 'j', 2, [['f', 2], [t]]], ['for', 'j', 2, [['f', 2], [opp(t)]]]]]] }; },
-    (r) => { const t = turnOf(r); // escalier à paliers
+    (r) => { const t = turnOf(r);
       const [k, m, b, c] = pick([[2, 2, 1, 1], [2, 2, 1, 2], [2, 2, 1, 3], [2, 3, 1, 1], [3, 2, 1, 1], [2, 2, 2, 1]], r);
       return { tags: ['nested', 'loop', 'stairs'], defs: [], main: [['for', 'i', k, [['for', 'j', m, [['f', b], [t], ['f', b], [opp(t)]]], ['f', c]]]] }; },
   ],
   vars: [
-    (r) => { const t = turnOf(r), d = int(1, 2, r), k = int(5, 6, r), s = int(1, 3, r); // spirale qui s'ouvre
+    (r) => { const t = turnOf(r), d = int(1, 2, r), k = int(5, 6, r), s = int(1, 3, r);
       return s + (k - 1) * d > 9 ? null : { tags: ['vars', 'loop', 'spiral'], outward: true, defs: [], main: [['set', 'n', '=', s], ['for', 'i', k, [['f', 'n'], [t], ['set', 'n', '+=', d]]]] }; },
-    (r) => { const t = turnOf(r), k = 3, s = int(2, 3, r); // spirale à côtés doublés
+    (r) => { const t = turnOf(r), k = 3, s = int(2, 3, r);
       return s + 2 * k > 10 ? null : { tags: ['vars', 'nested', 'loop', 'spiral'], outward: true, defs: [], main: [['set', 'n', '=', s], ['for', 'i', k, [['for', 'j', 2, [['f', 'n'], [t]]], ['set', 'n', '+=', 2]]]] }; },
-    (r) => { const t = turnOf(r), k = int(3, 4, r), s = int(1, 2, r); // escalier qui grandit
+    (r) => { const t = turnOf(r), k = int(3, 4, r), s = int(1, 2, r);
       return { tags: ['vars', 'loop', 'stairs'], defs: [], main: [['set', 'n', '=', s], ['for', 'i', k, [['f', 'n'], [t], ['f', 'n'], [opp(t)], ['set', 'n', '+=', 1]]]] }; },
   ],
   fn: [
@@ -240,9 +212,9 @@ const FAMILIES = {
       if (!legs) return null;
       const main = legs.flatMap((a, i) => (i < c ? [['f', a], ['call', 'bosse']] : [['f', a]]));
       return { tags: ['fn', 'detour'], defs: [['def', 'bosse', null, bump(t, int(1, 2, r), int(2, 3, r))]], main }; },
-    (r) => { const t = turnOf(r), c = int(3, 4, r); // un forward entre deux zig fusionnerait avec le leur: rien que des appels
+    (r) => { const t = turnOf(r), c = int(3, 4, r);
       return { tags: ['fn', 'Z'], defs: [['def', 'zig', null, [['f', int(1, 3, r)], [t], ['f', int(1, 2, r)], [opp(t)]]]], main: Array(c).fill(['call', 'zig']) }; },
-    (r) => { const t = turnOf(r); // escalier dont la marche grandit: 4 tours de boucle pour que le budget compte
+    (r) => { const t = turnOf(r);
       return { tags: ['fn', 'vars', 'loop', 'stairs'], defs: [['def', 'marche', null, [[t], ['f', int(1, 2, r)], [opp(t)]]]],
         main: [['set', 'n', '=', 1], ['for', 'i', 4, [['f', 'n'], ['call', 'marche'], ['set', 'n', '+=', 1]]]] }; },
   ],
@@ -253,20 +225,19 @@ const FAMILIES = {
     (r) => { const t = turnOf(r), hs = nonArith(r, pick([[1, 2], [1, 3], [2, 1, 3]], r));
       return { tags: ['param', 'fn', 'detour'], defs: [['def', 'bosse', 'h', [[t], ['f', 'h'], [opp(t)], ['f', 2], [opp(t)], ['f', 'h'], [t]]]],
         main: hs.flatMap((h) => [['f', int(1, 2, r)], ['call', 'bosse', h]]) }; },
-    (r) => { const t = turnOf(r), a = int(5, 8, r), sides = [a, a, a, a - 2, a - 2, a - 4, a - 4]; // 7 côtés: le budget compte
+    (r) => { const t = turnOf(r), a = int(5, 8, r), sides = [a, a, a, a - 2, a - 2, a - 4, a - 4];
       return { tags: ['param', 'fn', 'spiral'], defs: [['def', 'cote', 'n', [['f', 'n'], [t]]]], main: sides.map((s) => ['call', 'cote', s]) }; },
   ],
 };
 
 function buildProgram(level, ex, rng) {
-  // 3e exercice: 0 à 2 segments pour les autres notions (le reste se lit dans la forme du chemin), pour garder de la place
   const all = needTags(level, ex, rng), need = ex === 2 ? all.slice(0, 2 + int(0, 2, rng)) : all;
   const special = need.filter((t) => !PREFIXABLE.includes(t));
   const fams = FAMILIES[row(level).focus].map((f) => f(rng)).filter((f) => f && special.every((t) => f.tags.includes(t)));
   if (!fams.length) return null;
   const fam = pick(fams, rng);
   const pieces = shuffle(need.filter((t) => PREFIXABLE.includes(t) && !fam.tags.includes(t)), rng).map((tag) => ({ tag, ...SEGMENTS[tag](rng, false) }));
-  const seg = pieces.flatMap((p) => segTree(p.lines)); // une spirale qui s'ouvre s'enroule autour de son départ: segments après
+  const seg = pieces.flatMap((p) => segTree(p.lines));
   const tree = [...fam.defs, ...(fam.outward ? [...fam.main, ...seg] : [...seg, ...fam.main])];
   const ref = { py: render(tree, 'py').join('\n'), js: render(tree, 'js').join('\n') };
   let tags = [...new Set([...fam.tags, ...pieces.map((p) => p.tag), ...(pieces.some((p) => p.lines.some((l) => !Array.isArray(l))) ? ['loop'] : [])])];
@@ -285,7 +256,6 @@ function buildProgram(level, ex, rng) {
   return { mode: 'program', tags, worlds: [maze], budget, reference: ref };
 }
 
-// ---- Niveaux 101-114: trois mondes, une référence générale ----
 function shapeTags(turns, lens) {
   const out = [];
   if (turns.includes('r')) out.push('turnR');
@@ -296,19 +266,16 @@ function shapeTags(turns, lens) {
   return out;
 }
 
-// Couloirs d'un seul côté sans se toucher: une spirale qui s'ouvre (chaque côté dépasse de 2 ou 3 le côté parallèle d'avant).
 const spiralLens = (n, rng) => { const l = []; for (let i = 0; i < n; i++) l.push(i < 2 ? int(1, 3, rng) : l[i - 2] + int(2, 3, rng)); return l; };
 const corridor = (turns, lens) => lens.flatMap((l, i) => [...Array(l).fill('f'), ...(i < turns.length ? [turns[i]] : [])]);
 
-// Le programme naïf d'un monde (forward(n) et virages, une commande par ligne) doit dépasser le budget:
-// assez de couloirs (T virages, 2T + 1 commandes) pour que la boucle, la fonction ou le while fassent gagner des lignes.
 function buildGeneral(level, ex, rng) {
   const focus = row(level).focus, need = needTags(level, ex, rng);
   let legsOf, tree, concept;
-  if (focus === 'while') { // mêmes virages (toujours du même côté), longueurs inconnues: une boucle de couloirs
+  if (focus === 'while') {
     const x = turnOf(rng), leg = ['while', '!wall', [['f', 1]]];
     const param = need.includes('param');
-    const T = 4 + ex; // avec la fonction à paramètre (exercices 2 et 3 du tour 101), 5 ou 6 virages: le budget compte
+    const T = 4 + ex;
     legsOf = () => [Array(T).fill(x), rng() < 0.5 ? spiralLens(T + 1, rng) : sizes(1, 5, T + 1, rng)];
     if (param) {
       concept = ['while', 'param', 'fn', 'loop'];
@@ -317,7 +284,7 @@ function buildGeneral(level, ex, rng) {
       concept = ['while', 'loop'];
       tree = [['for', 'i', T + 1, [leg, [x]]]];
     }
-  } else if (focus === 'ifelse') { // virages toujours du même côté, nombre et longueurs inconnus
+  } else if (focus === 'ifelse') {
     const x = turnOf(rng);
     legsOf = () => { const m = int(4, 5 + (ex === 2 ? 1 : 0), rng); return [Array(m).fill(x), rng() < 0.5 ? spiralLens(m + 1, rng) : sizes(1, 4, m + 1, rng)]; };
     concept = ['ifelse', 'while'];
@@ -326,7 +293,7 @@ function buildGeneral(level, ex, rng) {
       [['if', '!wall', [['f', 1]], [[x]]]],
       [['if', 'wall', [[x]]], ['f', 1]],
     ], rng)]];
-  } else { // virages des deux côtés: suivre le couloir
+  } else {
     legsOf = () => { const m = int(6, 7, rng); return [Array.from({ length: m }, () => turnOf(rng)), sizes(1, 3 + (ex === 2 ? 1 : 0), m + 1, rng)]; };
     concept = ['general', 'ifelse', 'while'];
     const x = turnOf(rng), turnAround = [['if', 'wall', [[opp(x)], [opp(x)]]]];
@@ -339,7 +306,7 @@ function buildGeneral(level, ex, rng) {
   const worlds = [];
   for (let w = 0; w < 3; w++) {
     let maze = null;
-    for (let k = 0; k < 40 && !maze; k++) { // beaucoup de couloirs: on retire les longueurs jusqu'à ce que le chemin tienne
+    for (let k = 0; k < 40 && !maze; k++) {
       const [turns, lens] = legsOf(), dir = int(0, 3, rng);
       maze = carve(walkCells(corridor(turns, lens), dir), dir, sizeOf(level), rng, [...concept, ...shapeTags(turns, lens)]);
     }
@@ -348,7 +315,6 @@ function buildGeneral(level, ex, rng) {
   }
   const sigs = new Set(worlds.map(sig));
   if (sigs.size < 3) return null;
-  // Un programme écrit pour le monde 0 (ses commandes une à une) doit échouer dans les deux autres.
   const fixed = solutionPath(worlds[0]).map((c) => ({ t: 'call', name: { f: 'forward', l: 'left', r: 'right' }[c], n: 1 }));
   if (worlds.slice(1).some((w) => execute(fixed, createWorld(w)).world.done)) return null;
   const budget = {};
@@ -361,17 +327,14 @@ function buildGeneral(level, ex, rng) {
   return { mode: 'program', tags, worlds, budget, reference: ref };
 }
 
-// ---- Génération dans l'ordre ----
 const sig = (m) => JSON.stringify([m.walls, m.start, m.goal]);
 export const difficulty = (spec) => spec.worlds.reduce((s, w) => s + w.par, 0);
-// Les exercices sont générés une fois, dans l'ordre (1, 0), (1, 1)… : chacun évite les labyrinthes déjà pris,
-// donc le résultat ne dépend pas de l'ordre des appels.
 const specs = [];
 const taken = new Set();
 
-const POOL = 16; // candidats valides comparés pour régler la difficulté
-const caps = new Map(); // niveau -> difficulté du plus dur des exercices 3 possibles
-function poolOf(level, ex, prev, size = POOL) { // jusqu'à POOL candidats valides, triés du plus facile au plus dur
+const POOL = 16;
+const caps = new Map();
+function poolOf(level, ex, prev, size = POOL) {
   const build = level <= 72 ? buildRepl : level <= 100 ? buildProgram : buildGeneral;
   const pool = [];
   for (let attempt = 0; attempt < Math.max(MAX_ATTEMPTS, 40 * size) && pool.length < size; attempt++) {
@@ -387,9 +350,6 @@ function poolOf(level, ex, prev, size = POOL) { // jusqu'à POOL candidats valid
   return pool.sort((a, b) => difficulty(a) - difficulty(b));
 }
 
-// Dans un bloc de tours de même notion, la difficulté monte: le premier tour prend un candidat facile,
-// le dernier un des plus durs, et un tour n'est jamais plus facile que le précédent quand c'est possible.
-// Les exercices 1 et 2 ne dépassent pas le plus dur des exercices 3 possibles, pour que le tour reste croissant.
 function generate(level, ex) {
   const prev = specs.slice(specs.length - ex);
   const focus = row(level).focus;
@@ -398,27 +358,24 @@ function generate(level, ex) {
   const last = first + len - 1;
   const below = level > first ? specs[(level - 2) * 3 + ex] : null;
   const start = level === last && level > first ? specs[(first - 1) * 3 + ex] : null;
-  // jamais plus facile que le tour d'avant; le dernier tour du bloc est plus dur que le premier
   const fits = (p) => (!below || difficulty(p) >= difficulty(below)) && (!start || difficulty(p) > difficulty(start));
   const capped = (size) => {
     const pool = poolOf(level, ex, prev, size);
     if (!pool.length || ex === 2) return pool;
-    if (!caps.has(level)) { // un cran sous le plus dur: le 3e exercice garde au moins un candidat plus dur
+    if (!caps.has(level)) {
       const ds = [...new Set(poolOf(level, 2, null, 6 * POOL).map(difficulty))];
       caps.set(level, ds.at(-2) ?? ds.at(-1) ?? difficulty(pool[0]));
     }
     const ok = pool.filter((p) => difficulty(p) <= caps.get(level));
-    if (!ok.some(fits)) return pool; // monter d'abord
+    if (!ok.some(fits)) return pool;
     return ok;
   };
   let pool = capped(POOL);
-  for (const size of [6 * POOL, 30 * POOL]) { // chercher plus loin
+  for (const size of [6 * POOL, 30 * POOL]) {
     if (pool.some(fits)) break;
     pool = capped(size);
   }
-  if (!pool.length) throw new Error(`exercice introuvable: niveau ${level}, exercice ${ex}`); // inatteignable: vérifié par les tests
-  // Premier tour du bloc: facile; ensuite un petit cran au-dessus du tour d'avant (les tirages varient d'un tour
-  // à l'autre: un grand saut bloquerait les suivants); le dernier tour: le plus facile qui dépasse le premier.
+  if (!pool.length) throw new Error(`exercice introuvable: niveau ${level}, exercice ${ex}`);
   const up = pool.filter(fits);
   const from = up.length ? up : pool;
   const q = !below ? (len > 1 ? ex / (len * 3 - 1) : ex / 2) : level === last ? 0 : 1 / (last - level + 2);
@@ -427,7 +384,6 @@ function generate(level, ex) {
   return { level, exercise: ex, ...c, hint: HINTS[focus] };
 }
 
-// Exercice (niveau, numéro) généré; les tours précédents sont générés d'abord (dans l'ordre), une seule fois.
 export function generateSpec(level, exercise = 0) {
   const l = Math.min(CURRICULUM.length, Math.max(1, Math.floor(level) || 1));
   const e = Math.min(2, Math.max(0, Math.floor(exercise) || 0));

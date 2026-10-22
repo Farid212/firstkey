@@ -1,5 +1,3 @@
-// Généré par scripts/build-levels.mjs: ne pas modifier à la main (relance node scripts/build-levels.mjs).
-// Format: voir encodeSpec dans levels-format.js. Index: (niveau - 1) * 3 + exercice.
 export const LEVELS = [
 [0,"straight",0,0,"forward()","forward()",[["#####/#####/#####/#.###/#.###",1,3,2,1,4,1,"straight"]]],
 [0,"straight",0,0,"forward(); forward()","forward(); forward()",[["#.###/#.###/#.###/#####/#####",1,0,2,1,2,2,"straight"]]],

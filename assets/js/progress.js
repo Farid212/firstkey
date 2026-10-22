@@ -16,7 +16,6 @@ export function recordCorrect(state, blockId, playedLevel) {
       leveledUp = true;
     }
   } else if (playedLevel === p.level && p.correct < need) {
-    // dernier niveau: le niveau ne monte plus, mais le terminer compte une seule fois (finale, dernier autocollant)
     p.correct += 1;
     leveledUp = p.correct >= need;
   }

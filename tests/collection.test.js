@@ -24,7 +24,7 @@ test('collectionCounts', () => {
   const d = collectionCounts({ ...r(2, 2), stickers: [] });
   assert.deepEqual([d.creatures, d.badges.have, d.stickers.have, d.have], [{ have: 2, total: 24 }, 0, 0, 2]);
   assert.equal(d.badges.total, 17);
-  assert.equal(d.stickers.total, 79); // + 12 chapitres de discover2
+  assert.equal(d.stickers.total, 79);
   assert.equal(d.total, 120);
   const x = collectionCounts({ ...r(3, 3, ['a', 'b']), stickers: ['letters:0', 'math:0', 'maze:1'] });
   assert.equal(x.have, 3 + 2 + 3);

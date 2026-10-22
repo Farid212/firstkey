@@ -1,16 +1,13 @@
-// Personnages A: robot, fantôme, dinosaure. Vus de face, pieds en (0, 0), ~210 unités de haut.
-// Chacun fait une blague avec la lettre qui vient d'être validée (ctx.letter), redessinée ici en SVG.
 import { track, clamp, ease } from '../anim.js';
 import { svgEl } from '../fx.js';
 import { INK, OUT, ell, path, group, rot, tube, eyes, blinkAt, popper, actor, portrait, play, dust } from './kit.js';
 import { s, wob, mouthO, blush, spot } from './animals-b.js';
 
 const FS = 110;
-export const sideOf = (xf) => (xf < 0.5 ? 1 : -1); // côté de la lettre: vers le centre de l'écran
+export const sideOf = (xf) => (xf < 0.5 ? 1 : -1);
 
-// La lettre: texte SVG qui part de sa place dans la question (ctx.letter.rect), ou apparaît sur place en aperçu.
 export function letterKit(fx, S, ctx) {
-  S.scene.parentNode.removeAttribute('clip-path'); // la lettre vient de plus haut que la bande
+  S.scene.parentNode.removeAttribute('clip-path');
   const el = svgEl('text', { 'font-size': FS, 'font-weight': 800, fill: '#2b2d54', stroke: '#fff', 'stroke-width': 6, 'paint-order': 'stroke', 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-family': 'system-ui,sans-serif' });
   el.textContent = ctx?.letter?.display ?? 'A';
   S.scene.append(el);
@@ -27,7 +24,6 @@ export function letterKit(fx, S, ctx) {
     const { w, h } = fx.size(), bh = h * 0.38, k = Math.min(bh / 300, w / 700);
     return { x: (r.x + r.width / 2) / k, y: (r.y + r.height / 2 - (h - bh * 0.07)) / k, s: clamp(r.height / k / FS, 0.3, 2) };
   };
-  // t en secondes depuis le début; renvoie la position/échelle de la lettre en route vers (sx, sy)
   const arrive = (t, sx, sy) => {
     const f = from();
     if (!f) return { x: sx, y: sy, s: ease.outBack(clamp((t - 0.3) / 0.5, 0, 1)) };
@@ -37,7 +33,6 @@ export function letterKit(fx, S, ctx) {
   return { el, put, arrive, text: (t) => { el.textContent = t; } };
 }
 
-// ---------- Robot ----------
 function buildRobot(g) {
   const BL = '#7fb2f0', BD = '#5a8fd6', SIL = '#e6edf8', YEL = '#ffd23f';
   g.append(ell(-26, -9, 22, 10, BD), ell(26, -9, 22, 10, BD),
@@ -90,7 +85,6 @@ function robotAct(fx, ctx) {
     return (t, once) => {
       const p = pop(t), cx = S.W * xf, spX = cx + side * 125, spY = -95, pl = pulse(t), lk = lookk(t);
       A.place(cx, p, 0.05 * pl);
-      // la lettre
       once('swap', t, 2.1, () => L.text('BIP'));
       const ar = L.arrive(t, spX, spY);
       const base = t >= 2.1 ? 0.62 * bip(t) : 1;
@@ -98,12 +92,10 @@ function robotAct(fx, ctx) {
       const u = clamp((t - 3.2) / 0.9, 0, 1);
       if (t >= 3.2) { x = spX + side * S.W * u; y = spY - 420 * u + 300 * u * u; r = side * 1000 * u; k = 0.62 * (1 - 0.3 * u); if (u >= 1) op = 0; }
       L.put(x, y, r, k, k, op);
-      // faisceau du scanner
       const ly = spY + (scan(t) - 0.5) * 130, hy = -168 + p.y;
       beam.setAttribute('opacity', beamOp(t).toFixed(3));
       line.setAttribute('x', spX - 80); line.setAttribute('width', 160); line.setAttribute('y', ly - 2.5);
       cone.setAttribute('points', `${cx + side * 20},${hy} ${spX - 80},${ly} ${spX + 80},${ly}`);
-      // pose
       rot(A.head, side * 8 * lk + wob(t, 2, 1.5), 0, -130);
       rot(A.ant, wob(t, 6, 6) + wob(t, 24, 12) * pl, 0, 0);
       rot(side > 0 ? A.armR : A.armL, -side * (arm(t) + 8 + wob(t, 3, 3)), 0, 0);
@@ -117,7 +109,6 @@ function robotAct(fx, ctx) {
   });
 }
 
-// ---------- Fantôme ----------
 function buildGhost(g) {
   const W = '#f4f6ff', SH = '#d4dcff';
   const fl = group(g);
@@ -135,7 +126,6 @@ function buildGhost(g) {
   return { fl, look, mouth, armL: mkArm(-1), armR: mkArm(1) };
 }
 
-// « Ouuh »: sinus doux avec vibrato lent
 const ghostCry = { voices: [
   s('sine', 420, 300, 0, 1.2, 0.2, { vib: { rate: 4, depth: 22 } }),
   s('sine', 640, 450, 0.05, 1.1, 0.08, { vib: { rate: 4, depth: 30 } }),
@@ -162,13 +152,11 @@ function ghostAct(fx, ctx) {
       A.place(cx, { ...p, y: p.y - 26 * jump(t) }, 0.04 * bu);
       A.fl.setAttribute('transform', `translate(0 ${(-8 + wob(t, 3, 5)).toFixed(1)}) rotate(${(wob(t, 2, 3) + side * 5 * lk).toFixed(2)} 0 -60)`);
       A.body.setAttribute('opacity', (1 - 0.85 * hide(t)).toFixed(3));
-      // bras levés qui frétillent pendant l'incantation, grands ouverts au « bouh »
       const up = 60 * sp + 70 * bu;
       rot(A.armL, up + wob(t, 14, 10) * sp + wob(t, 3, 3), 0, 0);
       rot(A.armR, -(up + wob(t, 14, 10) * sp + wob(t, 3, 3)), 0, 0);
       A.mouth(Math.max(0.5 * sp, bu * (t < 3.9 ? 1 : 0.3)));
       A.look(side * 0.8 * lk, -0.3 * sp, Math.max(0, bu > 0.5 ? 0 : blinkAt(t, [0.8, 2.9, 4.4])));
-      // la lettre: tremble, s'efface en tournant, revient en « BOUH! »
       once('boo', t, 3.0, () => { L.text('BOUH!'); L.el.setAttribute('fill', '#7b5cff'); });
       const ar = L.arrive(t, spX, spY), vn = vanish(t);
       if (t < 3.0) {
@@ -187,7 +175,6 @@ function ghostAct(fx, ctx) {
   });
 }
 
-// ---------- Dinosaure ----------
 function buildDino(g) {
   const G = '#6fcf6b', GD = '#46a84a', GL = '#9be58f', BEL = '#fff2b0', SP = '#ff9f43';
   const tail = group(group(g, { transform: 'translate(48 -44)' }));
@@ -211,7 +198,6 @@ function buildDino(g) {
   return { head, tail, armL, armR, bump, look, mouth };
 }
 
-// Rugissement grave et rigolo, pas méchant
 const roar = { voices: [
   s('sawtooth', 150, 90, 0, 1.0, 0.18, { filter: { type: 'lowpass', freq: 500 }, vib: { rate: 9, depth: 12 } }),
   s('sawtooth', 225, 130, 0, 0.9, 0.1, { filter: { type: 'lowpass', freq: 600 } }),
@@ -241,11 +227,9 @@ function dinoAct(fx, ctx) {
       rot(A.armL, wob(t, 9, 14) * roaring + wob(t, 3, 3), 0, 0);
       rot(A.armR, wob(t, 9, 14) * roaring + wob(t, 3, 3), 0, 0);
       A.look(side * 0.8 * lk, 0, t > 2.2 && t < 2.9 ? 0.7 : Math.max(0.4 * roaring, blinkAt(t, [0.8, 3.0, 4.6])));
-      // bosse de la lettre qui descend dans le ventre
       const inside = t > 2.25 && t < 3.0;
       A.bump.setAttribute('visibility', inside ? 'visible' : 'hidden');
       if (inside) A.bump.setAttribute('transform', `translate(0 ${(bumpY(t) + p.y).toFixed(1)}) scale(${(0.6 + 0.4 * clamp((t - 2.25) / 0.2, 0, 1)).toFixed(2)})`);
-      // la lettre: attend, entre dans la bouche en rétrécissant, ressort en tournant et rebondit
       const ar = L.arrive(t, spX, spY);
       if (t < 1.7) L.put(ar.x, ar.y, 0, ar.s);
       else if (t < 2.2) {

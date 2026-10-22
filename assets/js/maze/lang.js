@@ -1,5 +1,3 @@
-// Analyseur des commandes du labyrinthe, Python et JavaScript (module pur, sans DOM, jamais d'eval).
-// Jetons + descente récursive écrits à la main; parse() ne lève jamais d'exception.
 const MAX_LEN = 300;
 const NAMES = {
   py: { forward: 'forward', left: 'turn_left', right: 'turn_right' },
@@ -9,7 +7,7 @@ const KEYWORDS = ['for', 'if', 'while'];
 
 export const commandNames = (lang) => ({ ...NAMES[lang === 'js' ? 'js' : 'py'] });
 
-function dist(a, b) { // distance d'édition (Levenshtein), mots courts seulement
+function dist(a, b) {
   let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
   for (let i = 1; i <= a.length; i++) {
     const cur = [i];
@@ -35,15 +33,14 @@ const fail = (code, message, hint) => { throw new Fail(code, message, hint); };
 const isDigit = (c) => c >= '0' && c <= '9';
 const isIdStart = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_';
 
-// Espaces, y compris l'espace insécable (Option+Espace sur Mac) et les autres espaces Unicode.
 const SPACE = /[ \t\n\r\u00a0\u2000-\u200a\u202f\u3000]/;
 
-function tokenize(src) { // un seul passage linéaire
+function tokenize(src) {
   const out = [];
   for (let i = 0; i < src.length;) {
     const c = src[i];
     if (SPACE.test(c)) { i++; continue; }
-    if (c > '\x7f') { // par point de code: un emoji reste entier
+    if (c > '\x7f') {
       const ch = String.fromCodePoint(src.codePointAt(i));
       const seen = /[\p{L}\p{N}\p{P}\p{S}]/u.test(ch) ? ch : `U+${ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}`;
       fail('syntax', `Je ne comprends pas ce caractère : « ${seen} »`);
@@ -70,7 +67,7 @@ function run(src, lang) {
   const syntax = (msg) => fail('syntax', msg);
   const show = () => (peek() ? `« ${peek().v.slice(0, 20)} »` : 'la fin de la ligne');
 
-  const number = (what) => { // un entier de 1 à 99
+  const number = (what) => {
     const t = peek();
     if (!t || t.k !== 'num') fail('bad_number', `${what} attend un nombre entier de 1 à 99.`);
     p++;
@@ -85,12 +82,12 @@ function run(src, lang) {
     fail('unknown_command', `Je ne connais pas "${word.slice(0, 20)}".`, s ? `Tu voulais écrire ${s}() ?` : undefined);
   };
 
-  const parens = (name) => { // ( ) après un nom
+  const parens = (name) => {
     if (!eat('(')) fail('missing_paren', `Il manque une parenthèse ( ) après ${name}`, `Écris ${name}()`);
     need(')', 'missing_paren', `Il manque la parenthèse fermante ) après ${name}`);
   };
 
-  const cond = () => { // [not | !] wall() | goal()
+  const cond = () => {
     let neg = false;
     if (js ? eat('!') : eat('not')) neg = true;
     const t = peek();
@@ -212,16 +209,14 @@ export function parse(src, lang) {
   }
 }
 
-// ---- Programmes multi-lignes (spec 6): variables, expressions, fonctions, conditions ----
 const MAX_LINES = 40;
 const MAX_DEPTH = 3;
 const MAX_SRC = 20000;
 const COMMANDS = [...Object.values(NAMES.py), ...Object.values(NAMES.js)];
-// Mots du langage + noms d'Object.prototype (constructor, __proto__, toString…): jamais des noms de variable ou de fonction.
 const RESERVED = new Set([...COMMANDS, ...'wall goal range def function let const var for while if else elif not and or in return true false True False None null undefined this new class print'.split(' '),
   ...Object.getOwnPropertyNames(Object.prototype)]);
 const OPS = ['===', '==', '!=', '<=', '>=', '+=', '-=', '*=', '++', '--', '&&', '||'];
-const CROSS = { // indices quand on écrit dans l'autre langage
+const CROSS = {
   py: {
     function: 'En Python, une fonction commence par def : def carre():',
     let: 'En Python, écris simplement n = 2',
@@ -239,7 +234,7 @@ const CROSS = { // indices quand on écrit dans l'autre langage
 
 const cross = (lang, v) => (Object.hasOwn(CROSS[lang], v) ? CROSS[lang][v] : undefined);
 
-function lineTokens(text) { // jetons d'une ligne, symboles collés regroupés (==, +=, ++…)
+function lineTokens(text) {
   const raw = tokenize(text);
   const out = [];
   for (let i = 0; i < raw.length; i++) {
@@ -277,7 +272,7 @@ export function parseProgram(src, lang) {
     for (const { text, n } of lines) {
       lexLine = n;
       if (text.length > MAX_LEN) fail('too_long', `Cette ligne est trop longue (${MAX_LEN} caractères au plus).`);
-      if (!js) { // blocs Python: jetons <in> / <de> selon le décalage
+      if (!js) {
         let k = 0;
         while (text[k] === ' ') k++;
         if (text[k] === '\t') fail('tab', 'Pour décaler une ligne, utilise la barre d\'espace plutôt que la touche Tab.', 'Mets 4 espaces au début de la ligne.');
@@ -299,7 +294,7 @@ export function parseProgram(src, lang) {
     lexLine = 0;
 
     const FN = js ? 'function' : 'def';
-    const declared = new Set(); // toutes les fonctions du programme, pour reconnaître la récursion
+    const declared = new Set();
     toks.forEach((t, i) => { if (t.v === FN && t.k === 'id' && toks[i + 1] && toks[i + 1].k === 'id') declared.add(toks[i + 1].v); });
     const funcs = Object.create(null);
     const main = { vars: new Set(), fn: null };
@@ -376,7 +371,6 @@ export function parseProgram(src, lang) {
 
     const missing = (line) => failAt(line, 'block_missing', 'Il manque le bloc à répéter ou à faire.',
       js ? 'Écris-le entre accolades { }' : 'Décale les lignes du bloc de 4 espaces sous cette ligne.');
-    // Mode programme: une instruction par ligne, le corps d'un bloc toujours sur les lignes du dessous (budget de lignes équitable).
     const inline = (line, what) => failAt(line, 'inline_block', `Mets le corps ${what} sur les lignes en dessous, ${js ? 'entre { et }' : 'décalé'}.`,
       js ? 'Termine la ligne par {, écris une instruction par ligne, puis } seule sur la dernière.' : 'Va à la ligne après le :, puis décale de 4 espaces.');
     function block(sc, depth, line, what) {
@@ -547,7 +541,7 @@ export function parseProgram(src, lang) {
         if (depth === 0 && !sc.fn && is(FN) && toks[p + 1].v !== '=') { funcDef(); continue; }
         out.push(stmt(sc, depth));
         const prev = toks[p - 1].v;
-        eat(';'); // un ; en fin de ligne est permis
+        eat(';');
         if (!peek() || is('<nl>') || prev === '<de>') continue;
         if (is('}')) fail('one_per_line', 'Mets l\'accolade } seule sur sa ligne, sous le bloc.');
         fail('one_per_line', `Écris une seule instruction par ligne (va à la ligne avant ${show()}).`);

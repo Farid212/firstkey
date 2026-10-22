@@ -65,7 +65,7 @@ test('stickersFromProgress: chapitres terminés seulement', () => {
   assert.deepEqual(stickersFromProgress({ letters: { level: 30 } }), ['letters:0']);
   assert.deepEqual(stickersFromProgress({ letters: { level: 17 }, math: { level: 24 } }), ['letters:0']);
   assert.deepEqual(stickersFromProgress({}), []);
-  assert.ok(!stickersFromProgress({ letters: { level: 114 } }).includes('letters:6')); // 114 jamais « terminé »
+  assert.ok(!stickersFromProgress({ letters: { level: 114 } }).includes('letters:6'));
 });
 test('stickersSeen: unique, sous-ensemble de stickers', () => {
   assert.deepEqual(normalizeRewards({}).stickersSeen, []);

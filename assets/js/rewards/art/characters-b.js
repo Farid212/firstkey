@@ -1,5 +1,3 @@
-// Personnages B: magicien, extraterrestre, pirate. Vus de face, pieds en (0, 0), ~230 unités de haut.
-// Chacun fait une blague avec la lettre qui vient d'être validée (ctx.letter), redessinée ici en SVG.
 import { track, clamp, lerp, ease } from '../anim.js';
 import { svgEl } from '../fx.js';
 import { INK, OUT, ell, path, group, rot, tube, eyes, blinkAt, popper, actor, portrait, play, dust } from './kit.js';
@@ -13,7 +11,6 @@ const star = (cx, cy, r, fill, extra = {}) => {
 };
 const smile = (parent, x, y, w, c = INK) => parent.append(svgEl('path', { d: `M ${x - w} ${y} Q ${x} ${y + w * 0.7} ${x + w} ${y}`, fill: 'none', stroke: c, 'stroke-width': 4, 'stroke-linecap': 'round' }));
 
-// ---------- Magicien ----------
 function buildWizard(g) {
   const PU = '#7b5cff', PD = '#5a3fd1', SK = '#ffd9b8', YEL = '#ffd23f';
   g.append(ell(-20, -9, 19, 10, PD), ell(20, -9, 19, 10, PD),
@@ -90,11 +87,9 @@ function wizardAct(fx, ctx) {
       rot(A.hat, wob(t, 4, 4) + wob(t, 20, 8) * ca - side * 10 * bow(t), 0, 0);
       A.mouth(mo);
       A.look(side * 0.9 * lk, -0.2 * ca, blinkAt(t, [0.8, 2.6, 4.7]));
-      // la lettre tremble sous la baguette, puis disparaît
       const ar = L.arrive(t, spX, spY);
       if (t < 2.0) L.put(ar.x + wob(t, 55, 4) * shake(t), ar.y - 8 * Math.sin(t * 3) + wob(t, 41, 3) * shake(t), wob(t, 30, 8) * shake(t), ar.s * (1 + 0.1 * shake(t)));
       else L.put(0, 0, 0, 0, 0, 0);
-      // le lapin: tombe, rebondit, frétille, puis s'agite avant le deuxième tour
       const ri = rabIn(t), rs = t < 3.9 ? ri * (1 - 0.08 * Math.sin(Math.max(0, t - 3.4) * 45)) : 0;
       const land = t > 2.7 && t < 3.0 ? 0.12 : 0, hopSq = t > 3.1 && t < 3.3 ? -0.1 : 0;
       rab.setAttribute('visibility', rs > 0.02 ? 'visible' : 'hidden');
@@ -112,7 +107,6 @@ function wizardAct(fx, ctx) {
   });
 }
 
-// ---------- Extraterrestre ----------
 function buildAlien(g) {
   const G = '#7be07b', GD = '#4fc25a', SU = '#6b8cff', YEL = '#ffd23f';
   g.append(ell(-18, -9, 17, 10, GD), ell(18, -9, 17, 10, GD), ell(0, -58, 38, 50, SU),
@@ -168,7 +162,7 @@ function alienAct(fx, ctx) {
     const SA = buildSaucer(sau);
     const L = letterKit(fx, S, ctx);
     const lookk = track([[0.7, 0], [1.0, 1, 'out2'], [1.9, 0.0], [2.0, 1], [3.5, 0, 'io3']]);
-    const up = track([[0.9, 0], [1.4, 1, 'io3'], [3.7, 1], [4.0, 0, 'io3']]); // regard vers la soucoupe
+    const up = track([[0.9, 0], [1.4, 1, 'io3'], [3.7, 1], [4.0, 0, 'io3']]);
     const cheer = track([[1.9, 0], [2.2, 1, 'outBack'], [3.4, 1], [3.7, 0, 'io3']]);
     const wave = track([[3.9, 0], [4.1, 1, 'out2'], [4.8, 1], [5.0, 0, 'io3']]);
     const sauV = track([[1.0, 0], [1.8, 1, 'io3'], [3.8, 1], [4.6, 0, 'in2']]);
@@ -184,13 +178,11 @@ function alienAct(fx, ctx) {
       sau.setAttribute('visibility', v > 0.001 || t < 1 ? (v > 0.001 ? 'visible' : 'hidden') : 'visible');
       sau.setAttribute('transform', `translate(${sx.toFixed(1)} ${sy.toFixed(1)}) rotate(${clamp(dx * 0.4 + wob(t, 3, 3), -14, 14).toFixed(2)}) scale(${(1 + gq).toFixed(3)} ${(1 - gq).toFixed(3)})`);
       SA.lights.forEach((c, i) => c.setAttribute('fill', ['#ff5470', '#ffd23f', '#4cd98a'][(Math.floor(t * 1.5) + i) % 3]));
-      // faisceau doux (opacité lente, jamais de clignotement)
       const bo = beamOp(t), pu = 0.85 + 0.15 * Math.sin(t * 4);
       beam.setAttribute('opacity', (bo * pu).toFixed(3));
       cone.setAttribute('points', `${sx - 26},${sy + 10} ${sx + 26},${sy + 10} ${sx + 80},0 ${sx - 80},0`);
       core.setAttribute('points', `${sx - 12},${sy + 10} ${sx + 12},${sy + 10} ${sx + 38},0 ${sx - 38},0`);
       cone.setAttribute('opacity', '0.3'); core.setAttribute('opacity', '0.28');
-      // l'extraterrestre
       A.place(cx, p, 0.05 * ck);
       rot(A.head, side * 6 * lk - side * 8 * up_ * 0 + wob(t, 2, 1.5), 0, -120);
       rot(A.antL, wob(t, 6, 8) + 14 * ck * Math.sin(t * 18), 0, 0);
@@ -200,7 +192,6 @@ function alienAct(fx, ctx) {
       rot(A.armL, 8 + armUp + wob(t, 3, 3) + (side > 0 ? 0 : 1) * wv * (40 + wob(t, 16, 22)), 0, 0);
       A.mouth(Math.max(0.7 * cryA(t), 0.5 * ck));
       A.look(side * 0.8 * lk * (1 - up_) + 0.1 * up_ * 0, -0.9 * up_ + 0.3 * ck, blinkAt(t, [0.8, 4.4]));
-      // la lettre: attend, est aspirée en tournant, rétrécit dans la soucoupe
       const ar = L.arrive(t, spX, -92), ls = lift(t);
       if (t < 3.25) {
         const k = ar.s * (1 - 0.8 * ls);
@@ -217,7 +208,6 @@ function alienAct(fx, ctx) {
   });
 }
 
-// ---------- Pirate ----------
 function buildPirate(g) {
   const SK = '#ffcf9f', RD = '#ff5c5c', NV = '#3b4a8a', BR = '#7a4a28', GOLD = '#ffd23f';
   const id = `pir-${Math.random().toString(36).slice(2)}`;
@@ -301,7 +291,6 @@ function pirateAct(fx, ctx) {
       rot(A.hat, wob(t, 4, 2) - side * 14 * wink(t), 0, -170);
       A.mouth(0.8 * lg);
       A.look(side * 0.7 * lk, 0, Math.max(blinkAt(t, [0.8, 2.9]), wink(t)));
-      // le coffre
       const ci = chIn(t), la = lidA(t), q = sq(t), shk = shake(t);
       chest.setAttribute('visibility', ci > 0.01 ? 'visible' : 'hidden');
       setT(chest, chx + wob(t, 46, 3) * shk, 0, ci * (1 + q), ci * (1 - q));
@@ -310,7 +299,6 @@ function pirateAct(fx, ctx) {
       C.dome.setAttribute('visibility', open ? 'hidden' : 'visible');
       C.plate.setAttribute('visibility', open ? 'visible' : 'hidden');
       C.sc.setAttribute('transform', `scale(1 ${h.toFixed(3)})`);
-      // la lettre: tenue à la main, lancée dans le coffre en arc
       const hp = (ang) => [cx + side * (46 + 44 * Math.sin((ang * Math.PI) / 180)) * 1.0 + 0, p.y - 98 + 44 * Math.cos((ang * Math.PI) / 180)];
       const [hx, hy] = hp(Math.max(a, 20));
       if (t < 2.5) {

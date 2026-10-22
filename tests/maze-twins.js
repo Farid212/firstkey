@@ -1,4 +1,3 @@
-// Programmes jumeaux Python / JavaScript (même sens), partagés par les tests.
 export const TWINS = [
   ['n = 2\nfor i in range(2):\n    for j in range(n):\n        forward()\n    turn_left()',
     'let n = 2;\nfor (let i = 0; i < 2; i++) {\n  for (let j = 0; j < n; j++) {\n    forward();\n  }\n  turnLeft();\n}'],

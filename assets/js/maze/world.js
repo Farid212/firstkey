@@ -1,8 +1,6 @@
-// Exécution pure des commandes dans le labyrinthe (sans DOM). Ne modifie jamais ses entrées.
 import { DIRS } from './gen.js';
 
 const MAX_ACTIONS = 300;
-// Garde-fous des programmes multi-lignes (spec 6).
 const PROGRAM_ACTIONS = 500;
 const MAX_STEPS = 5000;
 const MAX_CALLS = 4;
@@ -12,7 +10,7 @@ class Stop { constructor(error) { this.error = error; } }
 
 export const createWorld = (maze) => ({ maze, x: maze.start.x, y: maze.start.y, dir: maze.start.dir, done: false });
 
-function robot(world, maxActions) { // héros + journal d'événements; bump et goal lèvent Stop
+function robot(world, maxActions) {
   const w = { ...world };
   const { maze } = w;
   const events = [];
@@ -58,13 +56,12 @@ export function execute(prog, world) {
       if (s.t === 'call') r.command(s.name, s.n);
       else if (s.t === 'loop') for (let i = 0; i < s.n; i++) run(s.body);
       else if (s.t === 'if') { if (r.sense(s.cond, s.neg)) run(s.body); }
-      else while (r.sense(s.cond, s.neg)) run(s.body); // la boucle s'arrête par le plafond d'actions
+      else while (r.sense(s.cond, s.neg)) run(s.body);
     }
   };
   return r.finish(() => run(prog));
 }
 
-// Programme de parseProgram: { funcs, body }. Variables dans des Map (jamais d'objet à prototype).
 export function executeProgram(program, world) {
   const r = robot(world, PROGRAM_ACTIONS);
   let steps = 0;

@@ -1,10 +1,6 @@
-// « JavaScript, aller plus loin » (spec 10): même mécanique que « Découvre le JavaScript » (3 exemples résolus + 1 ligne à compléter).
-// Module pur, sans DOM; n'exécute jamais de code: les sorties sont précalculées dans data/discover2-js.js
-// par scripts/build-discover2.mjs (vrai JavaScript, mini-DOM simulé, vrais minuteurs) et re-vérifiées par tests/discover2.test.js.
 import { EXERCISES } from './data/discover2-js.js';
 
 const MAX = 114;
-// [premier niveau, nom, nom court, icône]; chaque chapitre finit où le suivant commence.
 const ROWS = [
   [1, 'Les objets', 'Objets', '🗂️'], [11, 'switch', 'switch', '🎛️'],
   [20, 'while et for...of', 'while et for...of', '🔁'], [30, 'Fonctions fléchées et valeurs par défaut', 'Fléchées', '🏹'],
@@ -17,8 +13,6 @@ export const DISCOVER2_CHAPTERS = ROWS.map(([from, name, short, icon], i) => ({
   id: `discover2:${i}`, name, short, icon, from, to: (ROWS[i + 1]?.[0] ?? MAX + 1) - 1,
 }));
 
-// Règles introduites par chaque chapitre; un exercice n'utilise qu'une règle de son chapitre ou d'avant
-// (son code peut aussi réutiliser tout « Découvre le JavaScript »).
 export const RULES_BY_CHAPTER2 = [
   ['objDot', 'objExpr', 'objStr', 'objSet', 'objAdd', 'objUpdate', 'objBracket', 'objNested', 'objArr'],
   ['swNum', 'swNoBreak', 'swDefault', 'swStr', 'swLen', 'swCalc', 'swObj', 'swLoop'],
@@ -34,8 +28,6 @@ export const RULES_BY_CHAPTER2 = [
   ['asyncTimeout', 'asyncTimeout3', 'asyncDelays', 'asyncThen', 'asyncThenTimeout', 'asyncAwait', 'asyncMix', 'asyncAwaitMix', 'asyncAll'],
 ];
 
-// Ligne de données: [règle, indice, page, code1, sortie1, code2, sortie2, code3, sortie3, question, réponse].
-// page: mini-page HTML commune aux 4 lignes (texte à afficher tel quel, jamais interprété), "" sinon.
 export function discover2Exercise(level, exercise = 0) {
   const l = Math.min(MAX, Math.max(1, Math.floor(level) || 1));
   const e = Math.min(2, Math.max(0, Math.floor(exercise) || 0));

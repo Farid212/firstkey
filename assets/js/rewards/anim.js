@@ -18,7 +18,6 @@ export const ease = {
   outBounce,
 };
 
-// keys: [time, value, easeName?]; the arrival key's curve is used between keys.
 export function track(keys) {
   return (t) => {
     if (t <= keys[0][0]) return keys[0][1];

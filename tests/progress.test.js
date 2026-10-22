@@ -14,10 +14,10 @@ test('answersPerLevel', () => {
   assert.equal(answersPerLevel(2), 5);
   assert.equal(answersPerLevel(5), 10);
   assert.equal(answersPerLevel(8), 25);
-  assert.equal(answersPerLevel(8, 'maze'), 3); // un tour = 3 exercices
+  assert.equal(answersPerLevel(8, 'maze'), 3);
   assert.equal(answersPerLevel(2, 'maze'), 3);
   assert.equal(answersPerLevel(8, 'letters'), 25);
-  assert.equal(answersPerLevel(8, 'discover'), 3); // un tour = 3 exercices
+  assert.equal(answersPerLevel(8, 'discover'), 3);
   assert.equal(answersPerLevel(12, 'discover'), 3);
   assert.equal(answersPerLevel(9, 'discover2'), 3);
   assert.equal(answersPerLevel(2, 'discover2'), 3);
@@ -53,11 +53,11 @@ test('dernier niveau: pas de dépassement, mais le terminer compte une seule foi
   s.progress.letters = { level: MAX_LEVEL, correct: 24 };
   const r = recordCorrect(s, 'letters', MAX_LEVEL);
   assert.deepEqual(r.state.progress.letters, { level: MAX_LEVEL, correct: 25 });
-  assert.equal(r.leveledUp, true); // finale: déclenche le dernier autocollant
+  assert.equal(r.leveledUp, true);
   assert.equal(r.state.score, s.score + MAX_LEVEL);
   const r2 = recordCorrect(r.state, 'letters', MAX_LEVEL);
   assert.deepEqual(r2.state.progress.letters, { level: MAX_LEVEL, correct: 25 });
-  assert.equal(r2.leveledUp, false); // pas de seconde finale
+  assert.equal(r2.leveledUp, false);
   assert.equal(r2.state.score, r.state.score + MAX_LEVEL);
 });
 
@@ -89,7 +89,6 @@ test('pickBlock', () => {
   assert.equal(pickBlock(s), null);
   s.settings.blocks = ['letters', 'inconnu'];
   for (let i = 0; i < 20; i++) assert.equal(pickBlock(s), 'letters');
-  // âge minimal
   s.settings.blocks = ['letters', 'words', 'math', 'js', 'python'];
   s.settings.age = 4;
   const seen4 = new Set(Array.from({ length: 50 }, (_, i) => pickBlock(s, () => i / 50)));

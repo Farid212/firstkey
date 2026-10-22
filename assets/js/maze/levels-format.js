@@ -1,4 +1,3 @@
-// Indices de notion et forme compacte des exercices précalculés (levels-data.js). Module pur, sans calcul lourd.
 import { CURRICULUM } from './curriculum.js';
 
 export const HINTS = {
@@ -24,9 +23,6 @@ export const HINTS = {
   general: 'Un seul programme doit marcher dans les trois mondes.',
 };
 
-// Forme compacte d'un exercice: [mode, étiquettes, budget py, budget js, référence py, référence js, mondes];
-// un monde: [murs (lignes de '#' et '.', séparées par '/'), départ x, y, direction, étoile x, y, par, étiquettes].
-// Étiquettes séparées par des espaces; budget 0 = pas de budget (terminal). Grilles carrées (w = h).
 export function encodeSpec(s) {
   const world = (m) => [m.walls.map((r) => r.map((w) => (w ? '#' : '.')).join('')).join('/'),
     m.start.x, m.start.y, m.start.dir, m.goal.x, m.goal.y, m.par, m.tags.join(' ')];

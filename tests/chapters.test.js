@@ -68,7 +68,6 @@ test('calcul: bornes des opérations', () => {
   assert.deepEqual(CHAPTERS.math.map((c) => [c.from, c.to]), [[1, 24], [25, 44], [45, 74], [75, 94], [95, 114]]);
 });
 
-// Mots-clés de chaque thème, par langage (clé = nom court du chapitre).
 const THEMES = {
   python: { data: CODE_PYTHON, kw: {
     Afficher: /print/, Variables: /^\w+ = /m, Textes: /len\(|\.upper|\.lower|" \+/, Calculs: /%|\/\/|\*\*|\(2/,

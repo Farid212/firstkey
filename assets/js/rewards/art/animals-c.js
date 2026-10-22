@@ -1,4 +1,3 @@
-// Animaux C: éléphant, singe, pingouin, poule. Vus de face, pieds en (0, 0), ~200 unités de haut.
 import { track, clamp, lerp } from '../anim.js';
 import { svgEl } from '../fx.js';
 import { INK, ell, path, group, rot, tube, eyes, blinkAt, popper, actor, portrait, play, dust } from './kit.js';
@@ -6,7 +5,6 @@ import { s, wob, mouthO, blush, spot, setT } from './animals-b.js';
 
 const SNOW = ['#ffffff', '#dff6ff', '#bfe9ff'];
 
-// ---------- Éléphant ----------
 function buildElephant(g) {
   const GR = '#9fb4d6', GD = '#7f97c0';
   const tail = group(group(g, { transform: 'translate(62 -66)' }));
@@ -19,7 +17,6 @@ function buildElephant(g) {
   head.append(ell(0, -134, 50, 46, GR));
   const look = eyes(head, [[-21, -146], [21, -146]], 12);
   blush(head, [[-38, -124], [38, -124]], '#ff8fb0');
-  // trompe: deux tracés (cerne + couleur) et un bout arrondi, mis à jour à chaque image
   const trunk = group(head), tip = ell(0, 0, 11, 9, GD);
   const outline = svgEl('path', { fill: 'none', stroke: INK, 'stroke-width': 31, 'stroke-linecap': 'round' });
   const fill = svgEl('path', { fill: 'none', stroke: GR, 'stroke-width': 22, 'stroke-linecap': 'round' });
@@ -35,7 +32,6 @@ function buildElephant(g) {
   return { head, earL, earR, look, setTrunk, tail };
 }
 
-// Trompette: un souffle de sinus qui monte, puis un carré nasillard qui grimpe en vibrant
 const trumpet = { voices: [
   s('sine', 260, 640, 0, 0.18, 0.14),
   s('square', 620, 1050, 0.16, 0.65, 0.1, { filter: { type: 'bandpass', freq: 1300 }, vib: { rate: 18, depth: 24 } }),
@@ -55,7 +51,6 @@ function elephantAct(fx) {
     return (t, once) => {
       const p = pop(t), x = S.W * xf, k = up(t), b = blast(t), fl = flapT(t);
       A.place(x, p, 0.06 * b + wob(t, 34, 0.012) * b);
-      // oreilles: écartées et frémissantes pendant la trompette, battent en éventail ensuite
       const ear = 22 * b + 20 * fl * Math.sin(t * 13) + wob(t, 3, 3);
       rot(A.earL, -ear, 0, 0); rot(A.earR, ear, 0, 0);
       const tipPos = A.setTrunk(k, 0.35 * (k - 1) * -1 * (k > 0.8 ? 0 : 1) + 0.12 * b, wob(t, 25, 3 * b) + wob(t, 11, 4 * fl) + wob(t, 2, 2));
@@ -66,7 +61,6 @@ function elephantAct(fx) {
       once('cry', t, 1.3, () => fx.audio.play(trumpet));
       once('ring', t, 1.35, () => S.parts.shoot(8, x + tipPos.x, tipPos.y - 10, 200, { a0: -Math.PI / 2, spread: Math.PI * 1.1, g: 0, rect: false, cols: ['#fff3a0', '#ffffff'] }));
       once('spray', t, 2.6, () => fx.audio.play(sprayS));
-      // fontaine et bulles tant que la trompe est dressée
       if (t > 2.6 && t < 3.6 && Math.floor(t * 40) !== Math.floor((t - 0.025) * 40)) {
         S.parts.shoot(5, x + tipPos.x, tipPos.y - 10, 330, { a0: -Math.PI / 2 + 0.3, spread: 0.6, g: 520, rect: false, cols: ['#2fa8ff', '#6cc8ff', '#a8e2ff'] });
       }
@@ -76,7 +70,6 @@ function elephantAct(fx) {
   });
 }
 
-// ---------- Singe ----------
 function buildMonkey(g) {
   const BR = '#a8683a', DK = '#7e4a26', TAN = '#f6d3a4';
   const tail = group(group(g, { transform: 'translate(-50 -48)' }));
@@ -105,7 +98,6 @@ function buildMonkey(g) {
   return { head, armL, armR, banana, fruit, tail, look, mouth };
 }
 
-// « Ouh ouh ah ah »: alternance de tons graves puis aigus
 const monkeyCry = { voices: [
   s('sine', 330, 380, 0, 0.18, 0.14), s('sine', 330, 380, 0.24, 0.18, 0.14),
   s('triangle', 720, 560, 0.52, 0.16, 0.12), s('triangle', 760, 560, 0.72, 0.16, 0.12),
@@ -124,7 +116,6 @@ function monkeyAct(fx) {
     const chew = (t) => (t > 3.1 && t < 4.1 ? Math.max(0, Math.sin((t - 3.1) * 18)) : 0);
     return (t, once) => {
       const p = pop(t), x = S.W * xf, sc = scratch(t), fd = feed(t), ch = chew(t);
-      // saute de joie pendant le cri
       const hop = t > 1.0 && t < 1.9 ? Math.abs(Math.sin((t - 1.0) * 7)) * 18 : 0;
       A.place(x, { ...p, y: p.y - hop }, 0.03 * Math.abs(wob(t, 4, 1)) + 0.05 * ch);
       rot(A.armR, 176 * sc + wob(t, 20, 12) * sc + wob(t, 3, 3), 0, 0);
@@ -147,7 +138,6 @@ function monkeyAct(fx) {
   });
 }
 
-// ---------- Pingouin ----------
 function buildPenguin(g) {
   const BK = '#3a4a7a', OR = '#ffa31f';
   const footL = group(g, { transform: 'translate(-24 0)' }), footR = group(g, { transform: 'translate(24 0)' });
@@ -163,13 +153,11 @@ function buildPenguin(g) {
   const beakLow = group(tilt, { transform: 'translate(0 0)' });
   beakLow.append(path('M -9 -118 L 9 -118 L 0 -108 Z', '#ff8a1f', { 'stroke-width': 3.5 }));
   tilt.append(path('M -11 -128 Q 0 -138 11 -128 L 0 -116 Z', OR, { 'stroke-width': 4 }));
-  // écharpe rouge: couleur et drôlerie
   const scarf = group(tilt);
   scarf.append(path('M -34 -108 Q 0 -96 34 -108 L 36 -98 Q 0 -84 -36 -98 Z', '#ff5c6c'), path('M 18 -96 L 34 -64 L 20 -62 L 8 -90 Z', '#ff5c6c'));
   return { tilt, flipL, flipR, footL, footR, look, beakLow, scarf };
 }
 
-// « Pa! » aigu et court, puis un petit « pa » encore plus aigu
 const penguinCry = { voices: [
   s('square', 950, 780, 0, 0.1, 0.12, { filter: { type: 'bandpass', freq: 1400 } }),
   s('square', 1100, 880, 0.2, 0.09, 0.1, { filter: { type: 'bandpass', freq: 1500 } }),
@@ -212,7 +200,6 @@ function penguinAct(fx) {
   });
 }
 
-// ---------- Poule ----------
 function buildHen(g) {
   const OB = '#e8924a', OD = '#c9702e', CR = '#ff4d5e', YL = '#ffc93a';
   const legs = group(g);
@@ -234,7 +221,6 @@ function buildHen(g) {
   return { sway, head, comb, wingL, wingR, tail, look };
 }
 
-// « Cot cot cot codète »: carrés courts et répétés, de plus en plus aigus
 const henCry = { voices: [0, 1, 2].map((i) => s('square', 520 + i * 60, 380 + i * 60, i * 0.24, 0.12, 0.1, { filter: { type: 'bandpass', freq: 1100 } }))
   .concat([s('square', 700, 900, 0.78, 0.22, 0.1, { filter: { type: 'bandpass', freq: 1300 }, vib: { rate: 16, depth: 30 } })]) };
 const pip = { voices: [s('sine', 1400, 2000, 0, 0.1, 0.16), s('sine', 1600, 2300, 0.14, 0.09, 0.14)] };
@@ -283,7 +269,6 @@ function henAct(fx) {
       rot(A.tail, wob(t, 4, 6) - 14 * st);
       A.comb.setAttribute('transform', `rotate(${(wob(t, 9, 3) * (pk + st)).toFixed(1)} 0 -160)`);
       A.look(side * 0.5 * st, 0.5 * pk - 0.3 * st, Math.max(0.8 * fl, 0.9 * st, blinkAt(t, [0.8, 2.3, 4.0])));
-      // œuf: tombe, tremble, puis éclôt
       const eggOn = t >= 2.85 && t < 4.5, eg = t < 3.7 ? 1 : 0;
       const wig = t > 3.15 && t < 3.7 ? Math.sin((t - 3.15) * 40) * 14 * (1 - (t - 3.15) / 0.6) : 0;
       eggG.setAttribute('visibility', eggOn || (t >= 3.7 && t < 4.5) ? 'visible' : 'hidden');

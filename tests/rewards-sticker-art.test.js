@@ -4,7 +4,6 @@ import { readFileSync } from 'node:fs';
 import { ease } from '../assets/js/rewards/anim.js';
 import { STICKER_IDS } from '../assets/js/rewards/model.js';
 
-// DOM minimal: assez pour construire le SVG sous Node
 const node = (tag) => ({ tag, attrs: {}, kids: [], textContent: '', setAttribute(k, v) { this.attrs[k] = String(v); }, append(...k) { this.kids.push(...k); }, remove() {} });
 const all = (n) => [n, ...n.kids.flatMap(all)];
 

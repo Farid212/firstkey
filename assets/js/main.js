@@ -21,11 +21,10 @@ const onChange = (s) => {
 const audio = createAudio();
 const fx = createFx(document.body, audio);
 const director = startDirector({ getState: () => state, onChange, audio, fx });
-// le navigateur n'autorise le son qu'après un geste
 for (const t of ['keydown', 'pointerdown']) document.addEventListener(t, audio.unlock, { once: true });
 
 function home(focusBlock) {
-  director.clear(); // quitter la partie: plus aucune animation en cours ou en file
+  director.clear();
   gear.hidden = false;
   renderHome(root, state, {
     onPlay: (blockId) => game({ blockId }),
@@ -41,9 +40,8 @@ function collection() {
 }
 
 function game(target) {
-  gear.hidden = true; // pas de réglages pendant une partie (écouteurs clavier actifs)
+  gear.hidden = true;
   const onExit = () => home(target.blockId);
-  // « tout mélangé » ne tire jamais le labyrinthe ni les jeux Découvre (mix: false)
   const start = { maze: startMaze, discover: startDiscover, discover2: startDiscover }[target.blockId] ?? startGame;
   start(root, state, target, { onChange, getState: () => state, onExit });
 }

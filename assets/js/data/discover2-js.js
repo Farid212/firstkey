@@ -1,5 +1,3 @@
-// Généré par scripts/build-discover2.mjs: ne pas modifier à la main (npm run build:discover2).
-// Ligne: [règle, indice, page, code1, sortie1, code2, sortie2, code3, sortie3, question, réponse]. Index: (niveau - 1) * 3 + exercice.
 export const EXERCISES = [
 ["objDot",".age","","let chat = { nom: \"Lea\", age: 3 }\nchat.nom","Lea","let chat = { nom: \"Tom\", age: 13 }\nchat.nom","Tom","let chat = { nom: \"Eva\", age: 10 }\nchat.age","10","let chat = { nom: \"Lou\", age: 15 }\nchat.age","15"],
 ["objDot",".nom","","let poney = { nom: \"Ali\", age: 11 }\nponey.nom","Ali","let poney = { nom: \"Lea\", age: 11 }\nponey.nom","Lea","let poney = { nom: \"Lou\", age: 5 }\nponey.age","5","let chien = { nom: \"Eva\", age: 1 }\nchien.nom","Eva"],

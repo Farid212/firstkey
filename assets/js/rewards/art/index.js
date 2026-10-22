@@ -9,7 +9,6 @@ import { ART as CHARS_A } from './characters-a.js';
 import { ART as CHARS_B } from './characters-b.js';
 import { ART as CHARS_C } from './characters-c.js';
 
-// Rempli par les tâches d'art (8 à 14).
 export const ART = { ...STICKMAN, ...ANIMALS_A, ...ANIMALS_B, ...ANIMALS_C, ...CHARS_A, ...CHARS_B, ...CHARS_C };
 
 function fallback(id) {

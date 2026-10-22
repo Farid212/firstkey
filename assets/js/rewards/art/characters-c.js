@@ -1,5 +1,3 @@
-// Personnages C: clown, ninja, sirène, cuisinier, astronaute. Vus de face, pieds en (0, 0), ~220 unités de haut.
-// Chacun fait une blague avec la lettre qui vient d'être validée (ctx.letter), redessinée ici en SVG.
 import { track, clamp, lerp, ease } from '../anim.js';
 import { svgEl } from '../fx.js';
 import { INK, ell, path, group, rot, tube, eyes, blinkAt, popper, actor, portrait, play, dust } from './kit.js';
@@ -8,14 +6,12 @@ import { letterKit, sideOf } from './characters-a.js';
 
 const TAU = Math.PI * 2;
 const setV = (el, v) => el.setAttribute('visibility', v ? 'visible' : 'hidden');
-// Main d'un bras (côté m = ±1, angle th en degrés vers l'extérieur) pour un corps posé en (cx, y).
 const hand = (cx, y, m, th, L = 44) => [cx + m * (38 + L * Math.sin((th * Math.PI) / 180)), y - 90 + L * Math.cos((th * Math.PI) / 180)];
 const armRot = (arm, m, th) => rot(arm, -m * th, 0, 0);
-const topOf = (fx, S) => -(fx.size().h * 0.95) / (fx.size().w / S.W); // haut de l'écran, en repère de scène
+const topOf = (fx, S) => -(fx.size().h * 0.95) / (fx.size().w / S.W);
 const smile = (parent, x, y, w, c = INK) => parent.append(svgEl('path', { d: `M ${x - w} ${y} Q ${x} ${y + w * 0.7} ${x + w} ${y}`, fill: 'none', stroke: c, 'stroke-width': 4, 'stroke-linecap': 'round' }));
 const circ = (cx, cy, r, fill, extra = {}) => svgEl('circle', { cx, cy, r, fill, stroke: INK, 'stroke-width': 4, ...extra });
 
-// Corps rond commun: o = { body, skin, sleeve, shoe, shoeW, legs, headFill, back, mid, pre, face, post, noMouth, noBlush, blushC }
 function person(g, o) {
   const skin = o.skin ?? '#ffd9b8', sleeve = o.sleeve ?? o.body;
   o.back?.(g);
@@ -41,7 +37,6 @@ function person(g, o) {
   return { head, armL, armR, look, mouth };
 }
 
-// ---------- Clown ----------
 const star = (cx, cy, r, fill) => {
   let d = '';
   for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 5, q = i % 2 ? r * 0.45 : r; d += `${i ? 'L' : 'M'} ${(cx + Math.cos(a) * q).toFixed(1)} ${(cy + Math.sin(a) * q).toFixed(1)} `; }
@@ -95,7 +90,6 @@ function clownAct(fx, ctx) {
       rot(A.head, side * 5 * lk + wob(t, 3, 3) * j + wob(t, 2, 1.5), 0, -125);
       A.mouth(Math.max(0.6 * j, lg));
       A.look(side * 0.3 * lk, -0.7 * j, blinkAt(t, [0.8, 3.1, 4.8]));
-      // la lettre: arrive à la main, jongle, gonfle puis éclate
       const bx = cx + side * 55, by = -250;
       if (t < 1.4) { const ar = L.arrive(t, cx + side * 85, -105); L.put(ar.x, ar.y, wob(t, 6, 4), ar.s * 0.55); }
       else if (t < 3.1) { const [x, y, r] = jpos(t, cx); L.put(x, y, r, 0.55); }
@@ -123,7 +117,6 @@ function clownAct(fx, ctx) {
   });
 }
 
-// ---------- Ninja ----------
 function buildNinja(g) {
   const r = person(g, {
     body: '#2f3350', shoe: '#c0344f', skin: '#ffd9b8', headFill: '#2f3350', noMouth: true, noBlush: true, eyeR: 10,
@@ -133,10 +126,8 @@ function buildNinja(g) {
       h.append(svgEl('path', { d: 'M -38 -168 Q 0 -178 38 -168 L 36 -178 Q 0 -190 -36 -178 Z', fill: '#ff4d6d', stroke: INK, 'stroke-width': 4, 'stroke-linejoin': 'round' }));
     },
   });
-  // les deux pans du bandeau, qui flottent derrière la tête
   const tails = group(r.head, { transform: 'translate(36 -176)' });
   tails.append(path('M 0 0 Q 22 -4 38 8 L 28 12 Q 18 6 0 8 Z', '#ff4d6d', { 'stroke-width': 3 }), path('M 0 4 Q 20 8 34 26 L 26 28 Q 14 18 0 10 Z', '#e63a5a', { 'stroke-width': 3 }));
-  // sabre (caché au repos): lame fine tenue par la main du bras droit
   const blade = group(r.armR, { visibility: 'hidden' });
   tube(blade, 'M 0 44 L 0 116', '#e8edf5', 5);
   blade.append(svgEl('rect', { x: -9, y: 40, width: 18, height: 6, rx: 3, fill: '#ffd23f', stroke: INK, 'stroke-width': 3 }));
@@ -157,7 +148,6 @@ function ninjaAct(fx, ctx) {
     const A = actor(S.scene, buildNinja);
     const L = letterKit(fx, S, ctx);
     const K = 1.2, ANG = 28, id = Math.random().toString(36).slice(2);
-    // deux moitiés de la lettre, chacune rognée par un demi-plan (repère incliné)
     const halves = [-1, 1].map((m) => {
       const cp = svgEl('clipPath', { id: `half-${id}${m}` });
       cp.append(svgEl('rect', { x: m < 0 ? -150 : 0, y: -150, width: 150, height: 300 }));
@@ -216,7 +206,6 @@ function ninjaAct(fx, ctx) {
   });
 }
 
-// ---------- Sirène ----------
 function buildMermaid(g) {
   const tail = group(g);
   const r = person(g, {
@@ -266,7 +255,6 @@ function mermaidAct(fx, ctx) {
       rot(A.head, side * 6 * lk + wob(t, 2, 2), 0, -125);
       A.mouth(0.7 * bl);
       A.look(side * 0.8 * lk, -0.4 * rs - 0.2 * bl, blinkAt(t, [0.8, 2.3, 4.8]));
-      // la bulle: gonfle autour de la lettre, monte en se balançant, éclate
       const bx0 = cx + side * 160, wob2 = wob(t, 2.3, 22) * rs, st = wob(t, 5, 0.05) * rs;
       const bx = bx0 + wob2, by = lerp(-150, topOf(fx, S) * 0.72, rs) + wob(t, 3, 5) * (1 - rs);
       const alive = t < 4.15, k = gr * 0.95;
@@ -289,7 +277,6 @@ function mermaidAct(fx, ctx) {
   });
 }
 
-// ---------- Cuisinier ----------
 function buildChef(g) {
   return person(g, {
     body: '#ffffff', shoe: '#8a5a35', skin: '#ffd9b8',
@@ -317,7 +304,6 @@ function chefAct(fx, ctx) {
     const K = 0.8;
     const lookk = track([[0.8, 0], [1.1, 1, 'out2'], [4.4, 1], [4.8, 0, 'io3']]);
     const armT = track([[0.8, 10], [1.2, 78, 'outBack'], [4.9, 78], [5.2, 10, 'io3']]);
-    // inclinaison de la poêle: élan vers le bas puis coup sec vers le haut, deux fois
     const tilt = track([[1.2, 0], [1.9, -24, 'io3'], [2.05, 22, 'out2'], [2.5, 0, 'outBack'], [3.0, 0], [3.1, -30, 'io3'], [3.2, 26, 'out2'], [3.8, 0, 'outBack']]);
     const kiss = track([[4.0, 0], [4.2, 1, 'outBack'], [4.7, 1], [4.9, 0, 'io3']]);
     const cheer = track([[2.5, 0], [2.6, 1, 'out2'], [3.0, 0]]);
@@ -334,7 +320,6 @@ function chefAct(fx, ctx) {
       rot(A.head, side * 5 * lk + wob(t, 2, 1.5) - side * 6 * ks, 0, -125);
       A.mouth(0.6 * ks + 0.5 * cheer(t));
       A.look(side * 0.6 * lk, 0.5 * lk, blinkAt(t, [0.8, 2.7, 4.8]) + 0.6 * ks);
-      // la lettre dans la poêle, qui dore, saute deux fois
       const [px, py] = pt(80, -22), fl = flies.find(([a, b]) => t >= a && t < b);
       let lx = px, ly = py, r = 0, sy = 1, q = 1;
       if (fl) {
@@ -363,7 +348,6 @@ function chefAct(fx, ctx) {
   });
 }
 
-// ---------- Astronaute ----------
 function buildAstro(g) {
   return person(g, {
     body: '#f2f4fa', shoe: '#8c93b0', shoeW: 22, skin: '#f2f4fa', headFill: '#f2f4fa', sleeve: '#f2f4fa', hand: '#6b8cff', eyeR: 9,
@@ -399,7 +383,6 @@ function astroAct(fx, ctx) {
       rot(A.head, side * 6 * lk - side * 5 * gz + wob(t, 2, 1.5), 0, -125);
       A.mouth(0.7 * Math.max(0, Math.sin(Math.PI * clamp((t - 1.9) / 1.0, 0, 1))));
       A.look(side * 0.5 * lk, -0.9 * gz, blinkAt(t, [0.8, 3.7, 4.9]));
-      // la lettre, poussée du doigt, part en flottant vers le haut de l'écran
       const x0 = cx + side * 150, y0 = -150, u = clamp((t - 1.45) / 3.1, 0, 1), top = topOf(fx, S) - 140;
       if (t < 1.45) { const ar = L.arrive(t, x0, y0); L.put(ar.x, ar.y + wob(t, 3, 4), wob(t, 2, 6), ar.s * 0.9); }
       else L.put(x0 - side * 30 * u + wob(t, 1.7, 26) * u, lerp(y0, top, ease.in2(u)) + wob(t, 2.6, 5), (t - 1.45) * 75, 0.9 * (1 - 0.3 * u));

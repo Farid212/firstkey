@@ -1,6 +1,3 @@
-// Écran du jeu de labyrinthe. Un niveau = un tour de 3 exercices.
-// Tours 1-72: un terminal où chaque ligne Python/JavaScript s'exécute tout de suite.
-// Tours 73-114: un éditeur de programme multi-lignes, lancé avec ▶ Lancer (1 ou 3 mondes, budget de lignes).
 import { recordCorrect, answersPerLevel } from './progress.js';
 import { MAX_LEVEL } from './blocks.js';
 import { levelSpec } from './maze/levels.js';
@@ -15,7 +12,7 @@ const play = (id) => {
   const a = document.getElementById(id);
   if (!a) return;
   a.currentTime = 0;
-  a.play().catch(() => {}); // lecture refusée: sans importance
+  a.play().catch(() => {});
 };
 
 const el = (tag, cls, text) => {
@@ -25,13 +22,12 @@ const el = (tag, cls, text) => {
   return e;
 };
 
-const C = 10; // taille d'une case dans le viewBox
-const STEP = 220; // ms par case
-const LOG_MAX = 80; // lignes gardées dans l'historique affiché
-const SHOWN_ON_LIMIT = 16; // boucle sans fin: on n'anime que le début
-const drafts = new Map(); // programme en cours par exercice et langage: retrouvé après « retour »
+const C = 10;
+const STEP = 220;
+const LOG_MAX = 80;
+const SHOWN_ON_LIMIT = 16;
+const drafts = new Map();
 
-// Encadré « Nouveau » au premier exercice des tours qui apportent une notion: [texte, exemples py, exemples js]
 const NEWS = {
   1: ['Tape forward() puis Entrée : ton héros avance d’une case.', ['forward()'], ['forward()']],
   7: ['Ton héros peut tourner à droite, sur place.', ['turn_right()'], ['turnRight()']],
@@ -53,7 +49,6 @@ const NEWS = {
     ['while (!wall()) {\n  forward();\n}', 'if (wall()) {\n  turnLeft();\n} else {\n  forward();\n}']],
 };
 
-// Aide: commandes connues jusqu'au tour (notions cumulées du CURRICULUM)
 function helpFor(level, lang) {
   const n = commandNames(lang);
   const py = lang === 'py';
@@ -62,12 +57,11 @@ function helpFor(level, lang) {
   if (has('turnR')) out.push([`${n.right}()`, 'tourne à droite']);
   if (has('turnL')) out.push([`${n.left}()`, 'tourne à gauche']);
   if (has('long')) out.push([`${n.forward}(3)`, 'avance de 3 cases']);
-  if (level <= 72) { // terminal: tout sur une ligne
+  if (level <= 72) {
     if (has('square')) out.push([py ? 'for i in range(4): …' : 'for (let i = 0; i < 4; i++) …', 'répète 4 fois']);
     out.push(['a; b', 'plusieurs commandes sur une ligne']);
     return out;
   }
-  // programme: une instruction par ligne, le corps d'un bloc sur les lignes du dessous
   const under = py ? 'les lignes décalées en dessous' : 'les lignes entre { et }';
   out.push([py ? 'for i in range(4):' : 'for (let i = 0; i < 4; i++) {', `répète 4 fois ${under}`]);
   if (has('vars')) out.push([py ? 'n = 1' : 'let n = 1;', 'une variable'], [py ? 'n += 1' : 'n += 1;', 'la variable grandit de 1']);
@@ -82,7 +76,6 @@ function helpFor(level, lang) {
   return out;
 }
 
-// Erreurs d'exécution des programmes (codes de executeProgram)
 const FAIL = {
   limit: 'ton héros a fait plus de 500 actions : une boucle ne s’arrête peut-être jamais.',
   steps: 'ce programme tourne sans fin : une boucle ne s’arrête jamais ?',
@@ -99,7 +92,6 @@ function failText(res) {
   return 'Le programme est fini, mais le héros n’est pas sur l’étoile.';
 }
 
-// Cases libres + une case de mur autour (les grilles ont de grandes zones vides)
 function frame(maze) {
   const free = [];
   maze.walls.forEach((row, y) => row.forEach((w, x) => { if (!w) free.push({ x, y }); }));
@@ -109,7 +101,7 @@ function frame(maze) {
   };
 }
 
-function mini(maze) { // vignette d'un monde (palier 7)
+function mini(maze) {
   const { x0, x1, y0, y1 } = frame(maze);
   const svg = svgEl('svg', { viewBox: `${x0} ${y0} ${x1 - x0 + 1} ${y1 - y0 + 1}`, 'aria-hidden': 'true' });
   svg.append(svgEl('rect', { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1, class: 'mz-floor' }));
@@ -158,7 +150,6 @@ export function startMaze(root, state, target, handlers) {
   const log = el('div', 'term-log');
   log.setAttribute('role', 'log');
   log.setAttribute('aria-live', 'polite');
-  // terminal (tours 1-72)
   const line = el('div', 'term-line');
   const prompt = el('span', 'term-prompt');
   prompt.setAttribute('aria-hidden', 'true');
@@ -175,7 +166,6 @@ export function startMaze(root, state, target, handlers) {
   input.setAttribute('aria-label', 'Terminal');
   field.append(ghost, input);
   line.append(prompt, field);
-  // éditeur (tours 73-114)
   const hintBox = el('div', 'term-hint');
   const thumbs = el('div', 'mz-thumbs');
   const edBox = el('div', 'ed');
@@ -210,23 +200,22 @@ export function startMaze(root, state, target, handlers) {
   prompt.textContent = lang === 'py' ? '>>>' : '>';
   let creature;
 
-  let fixed = target.level; // niveau choisi par une pastille; suit le niveau si on le termine
-  let local = 0; // exercice d'un tour rejoué (non compté par recordCorrect): 0, 1, 2, 0…
+  let fixed = target.level;
+  let local = 0;
   let level, ex, spec, prog, maze, world, hero, arrow;
-  let marks = []; // vignettes des mondes
-  let angle = 0; // angle affiché de la flèche (continu, pour tourner dans le bon sens)
-  let pos = { x: 0, y: 0 }; // position affichée du héros (en cases)
+  let marks = [];
+  let angle = 0;
+  let pos = { x: 0, y: 0 };
   let ghostText = '';
   const queue = [];
   let busy = false;
-  let token = 0; // change à chaque annulation: les animations en cours s'arrêtent
+  let token = 0;
   const timers = new Set();
   const frames = new Set();
   const history = [];
   let hist = 0;
-  let escaped = false; // Échap vient d'être pressé: le Tab suivant quitte l'éditeur
+  let escaped = false;
 
-  // ---------- animation (annulable) ----------
   const wait = (ms, t) => new Promise((res) => {
     if (t !== token) return res();
     const id = setTimeout(() => { timers.delete(id); res(); }, ms);
@@ -258,7 +247,6 @@ export function startMaze(root, state, target, handlers) {
   const place = (x, y, dy = 0, extra = '') => hero.setAttribute('transform', `translate(${x * C} ${y * C + dy})${extra}`);
   const aim = () => arrow.setAttribute('transform', `rotate(${angle} ${C / 2} ${C / 2})`);
 
-  // move / turn / bump animés; la position affichée suit
   async function animate(ev, t) {
     if (ev.k === 'move') {
       const from = { ...pos };
@@ -269,7 +257,7 @@ export function startMaze(root, state, target, handlers) {
       pos = { x: ev.x, y: ev.y };
     } else if (ev.k === 'turn') {
       const from = angle;
-      const d = ((ev.dir * 90 - from) % 360 + 540) % 360 - 180; // plus court chemin
+      const d = ((ev.dir * 90 - from) % 360 + 540) % 360 - 180;
       await tween(160, t, (k) => { angle = from + d * k; aim(); });
       angle = from + d;
     } else if (ev.k === 'bump') {
@@ -284,7 +272,6 @@ export function startMaze(root, state, target, handlers) {
   const dance = (t) => tween(520, t, (k) => place(pos.x, pos.y, -Math.abs(Math.sin(k * Math.PI * 2)) * 2.2,
     ` rotate(${Math.sin(k * Math.PI * 2) * 14} ${C / 2} ${C / 2})`));
 
-  // ---------- dessin du labyrinthe ----------
   function draw() {
     const { x0, x1, y0, y1 } = frame(maze);
     const svg = svgEl('svg', { class: 'maze-svg', viewBox: `${x0 * C} ${y0 * C} ${(x1 - x0 + 1) * C} ${(y1 - y0 + 1) * C}`, role: 'img' });
@@ -292,7 +279,7 @@ export function startMaze(root, state, target, handlers) {
     svg.append(svgEl('rect', { x: x0 * C, y: y0 * C, width: (x1 - x0 + 1) * C, height: (y1 - y0 + 1) * C, rx: 4, class: 'mz-floor' }));
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
-        const isWall = maze.walls[y]?.[x] ?? true; // hors grille = mur
+        const isWall = maze.walls[y]?.[x] ?? true;
         if (isWall) svg.append(svgEl('rect', { x: x * C + 0.4, y: y * C + 0.4, width: C - 0.8, height: C - 0.8, rx: 2.6, class: 'mz-wall' }));
         else svg.append(svgEl('circle', { cx: x * C + C / 2, cy: y * C + C / 2, r: 0.7, class: 'mz-dot' }));
       }
@@ -325,7 +312,7 @@ export function startMaze(root, state, target, handlers) {
     aim();
   }
 
-  function showWorld(i) { // monde i du tour, héros au départ
+  function showWorld(i) {
     maze = spec.worlds[i];
     world = createWorld(maze);
     draw();
@@ -340,21 +327,20 @@ export function startMaze(root, state, target, handlers) {
     m.setAttribute('aria-label', `Monde ${i + 1} : ${state === 'ok' ? 'réussi' : state === 'ko' ? 'raté' : 'pas encore testé'}`);
   }
 
-  const counted = () => level === s.progress.maze.level && (level < MAX_LEVEL || s.progress.maze.correct < answersPerLevel(s.settings.age, 'maze')); // recordCorrect compte ce tour
+  const counted = () => level === s.progress.maze.level && (level < MAX_LEVEL || s.progress.maze.correct < answersPerLevel(s.settings.age, 'maze'));
   const draftKey = () => `${level}:${ex}:${lang}`;
 
-  // ---------- tour / exercice ----------
   function load() {
     level = fixed ?? s.progress.maze.level;
     local %= 3;
     ex = counted() ? Math.min(2, s.progress.maze.correct) : local;
     spec = levelSpec(level, ex);
-    creature = CREATURES[s.rewards.unlocked - 1] ?? CREATURES[0]; // relu: un niveau a pu débloquer une créature
+    creature = CREATURES[s.rewards.unlocked - 1] ?? CREATURES[0];
     resetBtn.disabled = false;
     runBtn.disabled = false;
     const wasProg = prog;
     prog = spec.mode === 'program';
-    if (prog !== wasProg || prog) log.replaceChildren(); // changement de mode ou nouvel exercice de programme
+    if (prog !== wasProg || prog) log.replaceChildren();
     screen.classList.toggle('maze-prog', prog);
     const row = CURRICULUM[level - 1];
     title.textContent = `Tour ${level} · Exercice ${ex + 1}/3 · ${row.name}`;
@@ -406,7 +392,7 @@ export function startMaze(root, state, target, handlers) {
     paint();
   }
 
-  function paint(done = counted() ? s.progress.maze.correct : local) { // un tour = 3 exercices: 0/3, 1/3, 2/3
+  function paint(done = counted() ? s.progress.maze.correct : local) {
     score.textContent = `⭐ ${s.score}`;
     const total = answersPerLevel(s.settings.age, 'maze');
     const pct = Math.round((100 * Math.min(done, total)) / total);
@@ -416,7 +402,6 @@ export function startMaze(root, state, target, handlers) {
     lvlTag.textContent = `Niveau ${level} · ${Math.min(done, total)}/${total}`;
   }
 
-  // ---------- journal ----------
   function add(node) {
     log.append(node);
     while (log.childElementCount > LOG_MAX) log.firstElementChild.remove();
@@ -439,15 +424,13 @@ export function startMaze(root, state, target, handlers) {
 
   function wrong() {
     document.dispatchEvent(new CustomEvent('firstkey:wrong', { detail: { blockId: 'maze', level } }));
-    s = handlers.getState(); // la série remise à zéro par le directeur ne doit pas être écrasée
+    s = handlers.getState();
     play('wrongAnswer');
   }
 
-  // voie commune de la victoire (terminal et éditeur): la réussite est comptée dès l'étoile atteinte,
-  // avant la danse, pour qu'un « retour » pendant la danse ne perde pas l'exercice (événements envoyés une seule fois)
   async function win(t) {
-    queue.length = 0; // les lignes tapées pour ce labyrinthe-ci n'ont plus de sens
-    resetBtn.disabled = true; // la victoire ne doit pas être perdue ni laisser l'ancien labyrinthe
+    queue.length = 0;
+    resetBtn.disabled = true;
     runBtn.disabled = true;
     drafts.delete(draftKey());
     correct();
@@ -458,7 +441,7 @@ export function startMaze(root, state, target, handlers) {
     place(pos.x, pos.y);
     await wait(reduced() ? 0 : 450, t);
     if (t !== token) return;
-    queue.length = 0; // lignes tapées pendant la danse
+    queue.length = 0;
     load();
     focusField();
   }
@@ -473,12 +456,11 @@ export function startMaze(root, state, target, handlers) {
     document.dispatchEvent(new CustomEvent('firstkey:correct', { detail: { ...detail, kind: 'letter', display: '⭐', rect: { x, y, width, height } } }));
     if (res.leveledUp && fixed === level) fixed = res.state.progress.maze.level;
     if (res.leveledUp) document.dispatchEvent(new CustomEvent('firstkey:levelup', { detail: { ...detail, newLevel: res.state.progress.maze.level } }));
-    s = handlers.getState(); // relire l'état: un écouteur a pu y ajouter des récompenses
-    if (!wasCounted) local += 1; // tour rejoué: exercice suivant (0, 1, 2, 0…)
-    paint(before + 1); // 1/3, 2/3 puis 3/3 pendant la fête; le tour suivant repart de 0/3 à son chargement
+    s = handlers.getState();
+    if (!wasCounted) local += 1;
+    paint(before + 1);
   }
 
-  // ---------- terminal ----------
   async function run(src) {
     const t = token;
     const row = echo(src);
@@ -494,10 +476,10 @@ export function startMaze(root, state, target, handlers) {
     if (res.error) {
       row.classList.add('bad');
       note('Cette boucle est trop longue, essaie plus court.', 'err');
-      return; // le monde reste comme avant la ligne
+      return;
     }
     if (!res.events.some((ev) => ev.k === 'bump')) row.append(el('span', 'term-ok', ' ✓'));
-    world = res.world; // la ligne suivante part de là, même pendant l'animation
+    world = res.world;
     for (const ev of res.events) {
       if (t !== token) return;
       if (ev.k === 'goal') return win(t);
@@ -517,7 +499,6 @@ export function startMaze(root, state, target, handlers) {
     if (t === token) busy = false;
   }
 
-  // ---------- éditeur ----------
   const codeLines = () => ed.value.split('\n').filter((l) => {
     const cut = l.indexOf(lang === 'py' ? '#' : '//');
     return (cut < 0 ? l : l.slice(0, cut)).trim();
@@ -531,13 +512,13 @@ export function startMaze(root, state, target, handlers) {
     count.classList.toggle('over', used > budget);
     if (ed.value) drafts.set(draftKey(), ed.value); else drafts.delete(draftKey());
   }
-  function insert(text) { // garde l'annulation (Ctrl+Z) quand le navigateur le permet
+  function insert(text) {
     if (!document.execCommand('insertText', false, text)) ed.setRangeText(text, ed.selectionStart, ed.selectionEnd, 'end');
     edChanged();
   }
 
   async function launch() {
-    if (!prog || resetBtn.disabled) return; // victoire en cours
+    if (!prog || resetBtn.disabled) return;
     cancel();
     const t = token;
     log.replaceChildren();
@@ -567,7 +548,7 @@ export function startMaze(root, state, target, handlers) {
         wrong();
         await wait(reduced() ? 0 : 800, t);
         if (t !== token) return;
-        world = createWorld(maze); // le héros revient au départ
+        world = createWorld(maze);
         showHero();
         return;
       }
@@ -612,7 +593,7 @@ export function startMaze(root, state, target, handlers) {
       input.setSelectionRange(input.value.length, input.value.length);
       updateGhost();
     } else if (e.key === 'Tab' && !e.shiftKey && ghostRest.textContent) {
-      e.preventDefault(); // sans suggestion, Tab garde son rôle (clavier jamais piégé)
+      e.preventDefault();
       input.value = ghostText;
       updateGhost();
     }
@@ -622,7 +603,7 @@ export function startMaze(root, state, target, handlers) {
   ed.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { escaped = true; return; }
     if (e.key === 'Tab') {
-      if (escaped || e.shiftKey) { escaped = false; return; } // le clavier n'est jamais piégé
+      if (escaped || e.shiftKey) { escaped = false; return; }
       e.preventDefault();
       insert(UNIT);
       return;
@@ -631,7 +612,6 @@ export function startMaze(root, state, target, handlers) {
     escaped = false;
     const { selectionStart: a, selectionEnd: b } = ed;
     const lineHead = ed.value.slice(ed.value.lastIndexOf('\n', a - 1) + 1, a);
-    // dans le décalage: Retour arrière enlève un cran entier; « } » se place un cran à gauche
     if ((e.key === 'Backspace' || (e.key === '}' && lang === 'js')) && a === b && lineHead && !lineHead.trim()) {
       e.preventDefault();
       const from = a - ((lineHead.length - 1) % UNIT.length + 1);
@@ -648,7 +628,7 @@ export function startMaze(root, state, target, handlers) {
       e.preventDefault();
       launch();
     } else if (!e.shiftKey && !e.altKey) {
-      e.preventDefault(); // même décalage que la ligne, un cran de plus après « : » ou « { »
+      e.preventDefault();
       const before = ed.value.slice(0, ed.selectionStart);
       const cur = before.slice(before.lastIndexOf('\n') + 1);
       const cut = cur.indexOf(lang === 'py' ? '#' : '//');
@@ -662,7 +642,6 @@ export function startMaze(root, state, target, handlers) {
   ed.addEventListener('scroll', () => { gutter.scrollTop = ed.scrollTop; });
   runBtn.onclick = () => { launch(); ed.focus(); };
 
-  // toucher le terminal (hors boutons) redonne le focus à la saisie
   term.addEventListener('click', (e) => {
     if (!e.target.closest('button, a, textarea') && !getSelection().toString()) focusField();
   });
@@ -685,6 +664,6 @@ export function startMaze(root, state, target, handlers) {
     handlers.onExit();
   };
 
-  load(); // exercices précalculés (levels-data.js): rien à générer, chargement immédiat
+  load();
   focusField();
 }

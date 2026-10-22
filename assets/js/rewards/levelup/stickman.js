@@ -2,8 +2,6 @@ import { ease, track, lerp, clamp } from '../anim.js';
 import { svgEl, showCard } from '../fx.js';
 import { SFX } from '../audio.js';
 
-// ---------- Bande basse: tout se dessine dans le tiers bas de l'écran ----------
-// Repère local de la scène: sol en y = 0, unités du prototype (stickman ~210 de haut), mis à l'échelle k.
 export function bandScene(fx, g, { clip = true } = {}) {
   const { w, h } = fx.size();
   const top = h * 0.62, bh = h - top;
@@ -23,8 +21,6 @@ export function bandScene(fx, g, { clip = true } = {}) {
   return { w, h, k, G, W: w / k, top: (top - G) / k, scene, place };
 }
 
-// ---------- Chiffres tracés (pur, testable sous Node) ----------
-// Une seule ligne par chiffre, boîte 60 x 100, commandes absolues uniquement (paires x y).
 const DIGITS = [
   'M 30 0 C -2 0 -2 100 30 100 C 62 100 62 0 30 0',
   'M 12 24 L 34 0 L 34 100',
@@ -39,7 +35,6 @@ const DIGITS = [
 ];
 export const DIGIT_ADVANCE = 72;
 
-// Un chemin `d` par chiffre de n, posé à (x, y) en haut à gauche, hauteur size.
 export function numberPaths(n, x, y, size) {
   const s = size / 100;
   return [...String(n)].map((ch, i) => {
@@ -54,18 +49,13 @@ export function numberPaths(n, x, y, size) {
 }
 export const numberWidth = (n, size) => (String(n).length * DIGIT_ADVANCE - 12) * (size / 100);
 
-// ---------- Squelette articulé ----------
-// Angles: 0 = vers le bas, + = vers l'avant (la droite).
 export const L = { torso: 72, ua: 36, fa: 34, th: 46, sh: 46 };
 const LEG = L.th + L.sh, SWING = 0.5;
 const REACH = LEG * Math.sin(SWING);
-// Foulée liée à la distance: un pas d'appui = 2 * REACH parcourus, le pied d'appui reste planté.
 export const STRIDE = Math.PI / (2 * REACH);
-const BV = [44, 16]; // pinceau: de la main vers la pointe
+const BV = [44, 16];
 const TAU = Math.PI * 2;
 
-// Cibles des pieds pendant la marche (repère local). Pied d'appui: fixe au sol.
-// Pied en l'air: va d'une pose à la suivante en arc, départ et arrivée en douceur.
 const LIFT = 22;
 function feetWalk(p, p0) {
   return [0, 1].map((i) => {
@@ -78,7 +68,6 @@ function feetWalk(p, p0) {
 }
 const armsWalk = (p) => [0, 1].map((i) => { const u = -0.45 * Math.sin(p + i * Math.PI); return { u, f: u + 0.55 }; });
 
-// Deux os: renvoie {a, b} angles du premier et du second segment vers la cible, coude du côté `side`.
 export function ik2(o, tg, l1, l2, side) {
   const dx = tg[0] - o[0], dy = tg[1] - o[1];
   const d = clamp(Math.hypot(dx, dy), 0.01, l1 + l2 - 0.01);
@@ -93,17 +82,14 @@ const seg = (o, a, b, l1, l2) => {
   return [o, k, [k[0] + l2 * Math.sin(b), k[1] + l2 * Math.cos(b)]];
 };
 
-// q: { x, p0, walkW, armWalkW, sT, sS, kT, kS, lean, u0, u1, crouch, tuck, jump, ikW, tip }
 export function solve(q) {
   const p0 = q.p0 || 0, p = q.x * STRIDE + p0, wl = q.walkW;
   const c0 = q.crouch || 0, tk = q.tuck || 0;
-  // pose « libre » (coup de pied, accroupi, saut): angles directs
   const legs = [[q.sT, q.sS], [q.kT, q.kS]].map(([t, s]) => ({ t: t + 0.9 * c0 + 0.6 * tk, s: s - 0.9 * c0 - 1.1 * tk }));
   const off = legs.map((l) => L.th * Math.cos(l.t) + L.sh * Math.cos(l.s));
   let hipY = -Math.max(off[0], off[1]);
   let fw = null;
   if (wl > 0) {
-    // marche: bassin posé sur la jambe d'appui, puis pieds placés par cinématique inverse
     fw = feetWalk(p, p0);
     const st = fw.find((f) => f.stance) || fw[0];
     const rel = st.foot[0] - q.x;
@@ -174,8 +160,6 @@ export function makeFigure(parent) {
   };
 }
 
-// ---------- Coup de pied (pistes partagées avec l'art du stickman) ----------
-// t0: fin de la marche; armé à t0+.6, impact à t0+.78, retour au repos à t0+1.5.
 export function kickKeys(t0) {
   return {
     impact: t0 + 0.78,
@@ -186,12 +170,10 @@ export function kickKeys(t0) {
     lean: [[t0, 0.05], [t0 + 0.6, -0.18], [t0 + 0.78, 0.28, 'in2'], [t0 + 1.1, 0.05, 'out2']],
     u0: [[t0, 0.3], [t0 + 0.6, -0.9], [t0 + 0.78, 0.9, 'in2'], [t0 + 1.4, 0.1]],
     u1: [[t0, -0.3], [t0 + 0.6, 0.9], [t0 + 0.78, -0.9, 'in2'], [t0 + 1.4, -0.1]],
-    // petit balancement amorti du buste après l'impact (follow-through)
     wobble: (t) => (t > t0 + 0.9 && t < t0 + 1.8 ? 0.12 * Math.exp(-6 * (t - t0 - 0.9)) * Math.cos(18 * (t - t0 - 0.9)) : 0),
   };
 }
 
-// ---------- Effets ----------
 export const COLS = ['#ff4d6d', '#ffd23f', '#3bceac', '#4361ee', '#ffffff'];
 
 export function particles(parent) {
@@ -203,7 +185,6 @@ export function particles(parent) {
     parent.append(o.el);
     list.push({ age: 0, spin: 0, ...o });
   };
-  // a0: direction moyenne (radians, 0 = droite, -PI/2 = haut), spread: ouverture
   const shoot = (n, x, y, spd, { a0 = -Math.PI / 2, spread = TAU, lift = 0, g = 520, rect = true, cols = COLS } = {}) => {
     for (let i = 0; i < n; i++) {
       const a = a0 + (Math.random() - 0.5) * spread, s = spd * (0.4 + Math.random());
@@ -232,7 +213,6 @@ export function makePow(parent) {
   txt.textContent = 'POW!';
   pow.append(txt);
   parent.append(pow);
-  // ps: secondes depuis l'impact
   return (ps, x, y) => {
     if (ps <= 0 || ps >= 0.6) return pow.setAttribute('opacity', 0);
     const sc = ps < 0.12 ? lerp(0.2, 1.3, ps / 0.12) : lerp(1.3, 1, ease.out2(clamp((ps - 0.12) / 0.2, 0, 1)));
@@ -241,10 +221,8 @@ export function makePow(parent) {
   };
 }
 
-// Secousse légère (amplitude en px écran) pendant .3 s après l'impact.
 export const shakeAt = (ps) => (ps > 0 && ps < 0.3 ? (1 - ps / 0.3) * 5 : 0);
 
-// Pas: un son à chaque pose de pied pendant la marche.
 export function footsteps(fx) {
   let last = null;
   return (x, p0, on) => {
@@ -254,7 +232,6 @@ export function footsteps(fx) {
   };
 }
 
-// ---------- Passage de niveau: le stickman ----------
 const DUR = 7.8;
 const NUM_H = 150;
 
@@ -266,16 +243,14 @@ export function stickman(fx, { oldLevel, newLevel }) {
     const n = String(newLevel).length;
     const newW = numberWidth(newLevel, NUM_H);
     const kickX = S.W / 2 - (94 + newW) / 2;
-    const numL = kickX + 94, paintX0 = kickX + 20; // assez en retrait pour que le bras atteigne tout le chiffre
+    const numL = kickX + 94, paintX0 = kickX + 20;
     const follow = Math.min(0.85, 0.75 + 0.05 * (n - 1));
-    const p0 = Math.PI - kickX * STRIDE; // à l'arrêt: une jambe en appui sous le bassin, l'autre levée
+    const p0 = Math.PI - kickX * STRIDE;
 
-    // Ancien numéro, posé au sol devant le stickman
     const oldFs = 170, oldCx = kickX + 88 + 0.29 * oldFs * oldTxt.length;
     const old = svgEl('text', { 'font-size': oldFs, 'font-weight': 800, fill: '#2b2d54', 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-family': 'system-ui,sans-serif', stroke: '#fff', 'stroke-width': 6, 'paint-order': 'stroke' });
     old.textContent = oldTxt;
 
-    // Nouveau numéro: guide pointillé + encre tracée
     const ds = numberPaths(newLevel, numL, -8 - NUM_H, NUM_H);
     const guide = svgEl('path', { d: ds.join(' '), fill: 'none', stroke: '#fff', 'stroke-opacity': 0.75, 'stroke-width': 6, 'stroke-dasharray': '2 14', 'stroke-linecap': 'round', opacity: 0 });
     const inks = ds.map((d) => svgEl('path', { d, fill: 'none', stroke: '#ff4d6d', 'stroke-width': 20, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
@@ -286,7 +261,6 @@ export function stickman(fx, { oldLevel, newLevel }) {
     const pow = makePow(fxLayer);
     const parts = particles(fxLayer);
 
-    // Tracé: chaque chiffre + un trajet sans encre jusqu'au suivant
     const lens = inks.map((p) => p.getTotalLength());
     const legs = [];
     inks.forEach((p, i) => {
@@ -313,7 +287,7 @@ export function stickman(fx, { oldLevel, newLevel }) {
     };
 
     const kk = kickKeys(1.9), KT = kk.impact;
-    const paintX = paintX0 + (legs[0].at(0)[0] - numL) * follow; // pose de départ du pinceau, sans saut
+    const paintX = paintX0 + (legs[0].at(0)[0] - numL) * follow;
     const X0 = track([[0, -90], [1.9, kickX, 'out2'], [3.4, kickX], [3.9, paintX]]);
     const walkW = track([[0, 1], [1.8, 1], [2.1, 0], [3.3, 0], [3.6, 1], [5.9, 1], [6.1, 0]]);
     const armWalkW = track([[0, 1], [1.8, 1], [2.1, 0]]);
@@ -351,14 +325,13 @@ export function stickman(fx, { oldLevel, newLevel }) {
       drawFig(P, { t, open: (t > 2.45 && t < 3.2) || (t > 6.3 && t < 7.5), brushOn: t > 3.4 && t < 6.05, tip: iw > 0.5 ? tip : null });
       steps(x, p0, walkW(t) > 0.5 && t < P0);
 
-      // ancien numéro: posé, puis envoyé en arc avec rotation
       const ps = t - KT;
       if (ps < 0) old.setAttribute('transform', `translate(${oldCx} -85)`);
       else {
         const fl = 0.85, rise = clamp(-S.top - 85 - 80, 20, 120);
         const ox = oldCx + ((S.W + 200 - oldCx) * ps) / fl;
         const oy = -85 - rise * (1 - ((ps - fl * 0.45) / (fl * 0.45)) ** 2);
-        const sc = lerp(1, 0.55, clamp(ps / fl, 0, 1)), sq = Math.exp(-25 * ps); // écrasement à l'impact
+        const sc = lerp(1, 0.55, clamp(ps / fl, 0, 1)), sq = Math.exp(-25 * ps);
         old.setAttribute('transform', `translate(${ox.toFixed(1)} ${oy.toFixed(1)}) rotate(${(720 * ps).toFixed(0)}) scale(${(sc * (1 - 0.3 * sq)).toFixed(3)} ${(sc * (1 + 0.2 * sq)).toFixed(3)})`);
         if (ps > fl * 1.2) old.setAttribute('visibility', 'hidden');
       }

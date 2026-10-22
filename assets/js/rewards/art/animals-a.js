@@ -1,11 +1,9 @@
-// Animaux A: vache, chat, grenouille, chien. Vus de face, pieds en (0, 0), ~200 unités de haut.
 import { track, clamp, lerp, ease } from '../anim.js';
 import { svgEl } from '../fx.js';
 import { INK, ell, path, group, rot, tube, eyes, blinkAt, popper, actor, portrait, play, dust } from './kit.js';
 
 const s = (wave, f0, f1, t, d, g, extra) => ({ wave, f0, f1, t, d, g, ...extra });
 const wob = (t, f, a) => Math.sin(t * f) * a;
-// Bouche ouverte: ellipse sombre, scaleY 0..1 autour de son centre.
 const mouthO = (parent, x, y, rx, ry) => {
   const g = group(parent, { transform: `translate(${x} ${y})` });
   const m = group(g);
@@ -15,12 +13,10 @@ const mouthO = (parent, x, y, rx, ry) => {
   return set;
 };
 const blush = (parent, pts) => pts.forEach(([x, y]) => parent.append(ell(x, y, 10, 6, '#ff8fa3', { stroke: 'none', opacity: 0.55 })));
-// Position de départ: un peu à gauche ou à droite, en fraction de largeur (tient au redimensionnement).
 const spot = () => 0.3 + Math.random() * 0.4;
 
-// ---------- Vache ----------
 function buildCow(g) {
-  const tail = group(group(g, { transform: 'translate(58 -70)' })); // pivot sur le flanc droit
+  const tail = group(group(g, { transform: 'translate(58 -70)' }));
   tube(tail, 'M 0 0 Q 40 0 48 -48', '#fff', 8);
   tail.append(ell(48, -56, 11, 14, '#5b4a6b'));
   g.append(ell(-36, -8, 22, 14, '#fff'), ell(36, -8, 22, 14, '#fff'),
@@ -28,7 +24,7 @@ function buildCow(g) {
   g.append(ell(0, -62, 78, 58, '#fff'),
     ell(-40, -70, 18, 14, '#3b3b4f', { stroke: 'none' }), ell(34, -38, 14, 11, '#3b3b4f', { stroke: 'none' }), ell(46, -84, 10, 8, '#3b3b4f', { stroke: 'none' }),
     ell(0, -40, 30, 18, '#ffd1dc', { stroke: 'none' }));
-  g.append(svgEl('circle', { cx: 0, cy: -84, r: 11, fill: '#ffd23f', stroke: INK, 'stroke-width': 4 })); // clochette sous le museau
+  g.append(svgEl('circle', { cx: 0, cy: -84, r: 11, fill: '#ffd23f', stroke: INK, 'stroke-width': 4 }));
   const head = group(g);
   const earL = group(head), earR = group(head);
   earL.append(ell(-62, -142, 22, 11, '#ffc2cf'));
@@ -44,7 +40,6 @@ function buildCow(g) {
   return { tail, head, earL, earR, look, jaw, mouth };
 }
 
-// « Meuh »: glissando grave, filtré, avec vibrato
 const cowCry = { voices: [
   s('sawtooth', 160, 200, 0, 0.35, 0.14, { filter: { type: 'lowpass', freq: 700 } }),
   s('sawtooth', 200, 125, 0.3, 0.95, 0.16, { filter: { type: 'lowpass', freq: 650 }, vib: { rate: 6, depth: 7 } }),
@@ -70,7 +65,6 @@ function cowAct(fx) {
       rot(A.earL, -10 * lift(t) + wob(t, 26, 18 * sh) + wob(t, 4, 4), -40, -140);
       rot(A.earR, 10 * lift(t) - wob(t, 26, 18 * sh) - wob(t, 4, 4), 40, -140);
       rot(A.tail, wob(t, 4 + 6 * c, 26) + 10);
-      // regarde la lettre/le joueur, yeux mi-clos en mâchant, fermés et ravis en meuglant
       A.look(wob(t, 1.3, 0.6), -0.3 * lift(t), Math.max(0.45 * c, 0.85 * lift(t), blinkAt(t, [0.75, 3.6])));
       once('land', t, 0.5, () => dust(S, x));
       once('cry', t, 2.05, () => fx.audio.play(cowCry));
@@ -79,7 +73,6 @@ function cowAct(fx) {
   });
 }
 
-// ---------- Chat ----------
 function buildCat(g) {
   const OR = '#ffa64d', CR = '#ffe8cc', ST = '#e07a1f';
   const tail = group(g, { transform: 'translate(50 -30)' });
@@ -108,7 +101,6 @@ function buildCat(g) {
   return { tail: t1, tip: t2r, paw, head, earL, earR, look, mouth };
 }
 
-// « Miaou »: sinus qui monte puis redescend, avec un harmonique
 const catCry = { voices: [
   s('sine', 480, 950, 0, 0.28, 0.2),
   s('sine', 950, 420, 0.28, 0.5, 0.2, { vib: { rate: 7, depth: 20 } }),
@@ -121,10 +113,8 @@ function catAct(fx) {
   return play(fx, DUR, (S) => {
     const xf = spot(), pop = popper(DUR);
     const A = actor(S.scene, buildCat);
-    // oreilles qui frétillent chacune leur tour
     const twL = track([[0.8, 0], [0.86, 1], [0.94, 0], [1.3, 0], [1.36, 1], [1.44, 0], [3.4, 0], [3.46, 1], [3.54, 0]]);
     const twR = track([[1.05, 0], [1.11, 1], [1.19, 0], [1.3, 0], [1.36, 1], [1.44, 0], [3.5, 0], [3.56, 1], [3.64, 0]]);
-    // patte qui se lève et pétrine l'air
     const pawUp = track([[1.5, 0], [1.75, 1, 'outBack'], [2.5, 1], [2.7, 0, 'outBounce']]);
     const open = track([[2.75, 0], [2.85, 0.8, 'out2'], [3.05, 1], [3.5, 0.5], [3.6, 0]]);
     const tilt = track([[1.5, 0], [1.75, 1], [2.6, 1], [2.8, -0.5], [3.5, -0.5], [3.7, 0]]);
@@ -137,7 +127,6 @@ function catAct(fx) {
       rot(A.head, 10 * tilt(t) + wob(t, 2.5, 2), 0, -90);
       rot(A.earL, -22 * twL(t), -40, -160);
       rot(A.earR, 22 * twR(t), 40, -160);
-      // la queue se dresse et le bout s'enroule en crosse vers l'extérieur
       rot(A.tail, -78 - 6 * c + wob(t, 2.2, 10));
       rot(A.tip, 15 + 95 * c + wob(t, 3.1, 15));
       A.mouth(open(t));
@@ -150,7 +139,6 @@ function catAct(fx) {
   });
 }
 
-// ---------- Grenouille ----------
 function buildFrog(g) {
   const GR = '#5fd068', DK = '#3fae4e';
   g.append(ell(-62, -10, 28, 13, DK), ell(62, -10, 28, 13, DK),
@@ -160,7 +148,7 @@ function buildFrog(g) {
   const look = eyes(g, [[-48, -114], [48, -114]], 18);
   blush(g, [[-52, -72], [52, -72]]);
   g.append(path('M -46 -76 Q 0 -46 46 -76', 'none', { 'stroke-width': 5 }));
-  const sac = group(group(g, { transform: 'translate(0 -40)' }), { visibility: 'hidden' }); // gorge qui gonfle sous le menton
+  const sac = group(group(g, { transform: 'translate(0 -40)' }), { visibility: 'hidden' });
   sac.append(ell(0, 0, 34, 24, '#ffc2d6'));
   const tongue = group(g);
   const tline = svgEl('path', { fill: 'none', stroke: '#ff5c8a', 'stroke-width': 10, 'stroke-linecap': 'round' });
@@ -177,7 +165,6 @@ function buildFly(parent) {
   return { f, wings };
 }
 
-// « Coâ »: carré court et nasal, répété trois fois
 const frogCry = { voices: [
   s('square', 190, 140, 0, 0.11, 0.1, { filter: { type: 'lowpass', freq: 1100 } }),
   s('square', 190, 140, 0.16, 0.11, 0.1, { filter: { type: 'lowpass', freq: 1100 } }),
@@ -199,18 +186,15 @@ function frogAct(fx) {
     return (t, once) => {
       const p = pop(t), x = S.W * xf;
       A.place(x, p, gulp(t) - 0.08 * sac(t));
-      // la mouche arrive du côté libre, tourne au-dessus de la tête
       const come = ease.out2(clamp((t - 0.3) / 1.0, 0, 1));
       let fxp = x + side * lerp(S.W * 0.6, 110, come) + Math.cos(t * 3.1) * 50 * come;
       let fyp = -150 + Math.sin(t * 4.3) * 26 - (1 - come) * 40;
       if (t >= HIT) { hit ??= [fxp, fyp]; }
-      // la langue part de la bouche vers la mouche, l'attrape, revient
       const mouthX = x, mouthY = p.y - 64 * p.sy;
       const out = t < SHOT ? 0 : t < HIT ? ease.out2((t - SHOT) / (HIT - SHOT)) : t < BACK ? 1 - ease.in2((t - HIT) / (BACK - HIT)) : 0;
       const [tx, ty] = hit ?? [fxp, fyp];
       const ex = lerp(mouthX, tx, out), ey = lerp(mouthY, ty, out);
       if (hit) { fxp = ex; fyp = ey; }
-      // langue dessinée dans le repère du corps (qui est mis à l'échelle)
       const lx = (ex - x) / p.sx, ly = (ey - p.y) / p.sy;
       A.tline.setAttribute('d', out > 0.01 ? `M 0 -64 Q ${(lx * 0.5).toFixed(1)} ${(ly * 0.5 - 30).toFixed(1)} ${lx.toFixed(1)} ${ly.toFixed(1)}` : '');
       A.ttip.setAttribute('transform', `translate(${lx.toFixed(1)} ${ly.toFixed(1)})`);
@@ -220,7 +204,6 @@ function frogAct(fx) {
       F.f.setAttribute('visibility', t > 0.3 && t < BACK ? 'visible' : 'hidden');
       A.sac.setAttribute('transform', `scale(${(0.2 + 0.8 * sac(t)).toFixed(3)} ${(0.1 + 0.9 * sac(t)).toFixed(3)})`);
       A.sac.setAttribute('visibility', sac(t) > 0.01 ? 'visible' : 'hidden');
-      // les yeux suivent la mouche, puis se ferment, repus
       A.look((fxp - x) / 120, (fyp + 114 - p.y) / 120, Math.max(0.85 * fed(t), blinkAt(t, [0.75])));
       once('land', t, 0.5, () => dust(S, x));
       once('slurp', t, SHOT, () => fx.audio.play(slurp));
@@ -231,7 +214,6 @@ function frogAct(fx) {
   });
 }
 
-// ---------- Chien ----------
 function buildDog(g) {
   const BR = '#e8b07a', DK = '#9b6234', CR = '#fff3e0';
   const tail = group(group(g, { transform: 'translate(48 -44)' }));
@@ -243,7 +225,7 @@ function buildDog(g) {
   earL.append(ell(-58, -116, 18, 36, DK, { transform: 'rotate(18 -58 -116)' }));
   earR.append(ell(58, -116, 18, 36, DK, { transform: 'rotate(-18 58 -116)' }));
   head.append(ell(0, -132, 58, 50, BR), ell(24, -142, 20, 18, DK, { stroke: 'none' }), ell(0, -108, 30, 22, CR, { stroke: 'none' }));
-  head.append(earL, earR); // les oreilles tombent par-dessus la tête
+  head.append(earL, earR);
   const look = eyes(head, [[-21, -142], [23, -142]], 12);
   blush(head, [[-40, -114], [40, -114]]);
   const tongue = group(group(head, { transform: 'translate(0 -100)' }));
@@ -261,7 +243,6 @@ function buildBall(parent) {
   return { b, spin };
 }
 
-// « Ouaf ouaf »: dent de scie courte filtrée + souffle bruité
 const bark = (t, f) => [
   s('sawtooth', f, f * 0.45, t, 0.16, 0.16, { filter: { type: 'lowpass', freq: 1400 } }),
   s('noise', 900, 400, t, 0.12, 0.1, { filter: { type: 'bandpass', freq: 900 } }),
@@ -279,7 +260,6 @@ function dogAct(fx) {
     const bob = track([[CRY, 0], [CRY + 0.06, -8], [CRY + 0.18, 0], [CRY + 0.26, 0], [CRY + 0.32, -8], [CRY + 0.46, 0]]);
     const proud = track([[CATCH, 0], [CATCH + 0.08, 0.15, 'out2'], [CATCH + 0.4, 0]]);
     const pant = track([[0.6, 0], [0.8, 1], [CRY - 0.05, 1], [CRY, 0], [CRY + 0.5, 0], [CRY + 0.7, 1], [CATCH - 0.1, 1], [CATCH, 0]]);
-    // rebonds de la balle: sauts de plus en plus bas, puis un dernier jusque dans la gueule
     const hops = [[B0, 1.95, 150], [1.95, 2.3, 85], [2.3, 2.55, 45]];
     return (t, once) => {
       const p = pop(t), x = S.W * xf, wag = t > CATCH ? 2 : 1;
@@ -291,7 +271,6 @@ function dogAct(fx) {
       rot(A.earR, -wob(t, 9, 8 * pa) - bob(t) * 2, 50, -140);
       A.tongue.setAttribute('transform', `scale(1 ${(pa * (1 + 0.25 * Math.sin(t * 22))).toFixed(3)})`);
       A.mouth(Math.max(open(t), t > CATCH ? 0.9 : 0));
-      // balle: arrive du bord libre, rebondit, puis file dans la gueule et y reste
       const mx = x, my = p.y - 98 * p.sy;
       const bx0 = x + side * (S.W * 0.5 + 60), bx1 = x + side * 40;
       let bx, by, spin;

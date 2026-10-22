@@ -38,9 +38,9 @@ test('chaque sortie est celle du vrai JavaScript (même évaluateur, même mini-
 
 test('asynchrone: 20 exécutions sous charge, toujours le même ordre', async () => {
   assert.equal(ASYNC.length, 27);
-  const busy = (ms) => { const t = Date.now(); while (Date.now() - t < ms) { /* la machine rame */ } };
+  const busy = (ms) => { const t = Date.now(); while (Date.now() - t < ms) { } };
   for (let k = 0; k < 20; k++) {
-    const hog = setInterval(() => busy(15), 1); // boucle d'événements bloquée par moments: les délais 10 et 20 échoient ensemble
+    const hog = setInterval(() => busy(15), 1);
     const outs = await Promise.all(ASYNC.flatMap(([, , x]) => lines(x).map(async (v, j) => { busy((j * k) % 5); return run2(v.code); })));
     clearInterval(hog);
     assert.deepEqual(outs, ASYNC.flatMap(([, , x]) => lines(x).map((v) => v.out)), `passage ${k + 1}`);
@@ -117,7 +117,6 @@ test('règles: déjà vues (ce jeu, chapitre courant ou précédent), et chaque 
   for (const [i, rules] of RULES_BY_CHAPTER2.entries()) for (const r of rules) assert.ok(used[i].has(r), `chapitre ${i + 1}: ${r} jamais introduite`);
 });
 
-// Même mesure que « Découvre »: longueur du code de la question + 3 × nombre d'opérations, tolérance 50 %.
 const OPS = /===|!==|<=|>=|\+=|-=|\*=|\+\+|--|=>|[-+*/<>=]|\.\w+|\[|\bif\b|\bfor\b|\bwhile\b|\bswitch\b|\bcase\b|\bfunction\b|\breturn\b/g;
 const difficulty = (code) => code.length + 3 * (code.match(OPS) ?? []).length;
 test('difficulté non décroissante dans un chapitre (tolérance 50 %)', () => {
@@ -136,7 +135,6 @@ test('page HTML seulement pour le DOM et les événements; programmes courts et 
       assert.doesNotMatch(code, /Date|Math\.random/, `${l}.${e}`);
       const ls = code.split('\n');
       assert.ok(ls.length <= 7, `${l}.${e}: trop de lignes`);
-      // une ligne qui commence par [ ou ( se collerait à la précédente (pas de point-virgule automatique)
       assert.ok(ls.slice(1).every((s) => !/^[[(]/.test(s)), `${l}.${e}: ligne qui commence par [ ou (`);
     }
   }

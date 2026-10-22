@@ -35,11 +35,9 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
     } finally { playing = false; }
   }
 
-  // file: toujours mis en file (bornée); random: abandonné si quelque chose joue
   function play(job, mode) {
     if (!settings().rewardAnimations) return false;
     if (mode === 'random' && (playing || queue.length)) return false;
-    // aperçus (collection): un enfant qui tape 30 fois une carte ne fait pas une file de 2 minutes
     if (mode === 'preview' && queue.length >= MAX_QUEUE) return false;
     queue.push(job);
     if (mode === 'queue' && queue.length > MAX_QUEUE) queue.splice(0, queue.length - MAX_QUEUE);
@@ -59,7 +57,6 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
     gap = nextGap(rng);
     const pick = pickReward(getState().rewards, memory, rng);
     const ctx = { letter: rect ? { display, rect } : null, lang: lang() };
-    // la mémoire ne change que si la récompense joue vraiment (sinon on pourrait répéter la dernière vue)
     if (play(() => (pick.creatureId ? runAct(getArt(pick.creatureId), fx, ctx) : party(fx)), 'random')) {
       memory = { lastFamily: pick.family, lastCreatureId: pick.creatureId ?? memory.lastCreatureId };
     }
@@ -70,7 +67,6 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
     play(() => levelup({ oldLevel: level, newLevel }), 'queue');
     if (unlockedId) play(() => reveal(fx, { creatureId: unlockedId, lang: lang() }), 'queue');
     award(rewards);
-    // autocollant: dernier niveau d'un chapitre vraiment passé, fêté après niveau, créature et badges
     const id = chapterToAward(blockId, level);
     if (id && !getState().rewards.stickers.includes(id)) {
       save(awardSticker(getState().rewards, id));
@@ -100,7 +96,6 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
   }]);
   for (const [type, fn] of wrapped) doc.addEventListener(type, fn);
 
-  // la collection appelle replay/playBadge hors événement: appliquer ici le réglage des sons
   const prepare = () => { audio.unlock(); audio.setEnabled(settings().rewardSounds); };
   function replay(creatureId) {
     prepare();
@@ -114,7 +109,6 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
     prepare();
     if (STICKER_IDS.includes(chapterId)) play(() => sticker(chapterId), 'preview');
   }
-  // Vide la file et efface l'animation en cours (retour à l'accueil).
   function clear() {
     queue.length = 0;
     fx.cancel();

@@ -1,5 +1,3 @@
-// Badges: deux habillages originaux (têtes d'animaux « cute », insignes « emblem »), dessinés par
-// deux générateurs paramétrés. Le DOM n'est touché que dans les fonctions (importable sous Node).
 import { track, clamp } from './anim.js';
 import { svgEl, showCard } from './fx.js';
 import { SFX } from './audio.js';
@@ -29,7 +27,6 @@ export const BADGE_ART = {
   faithful_3: a('pig', '#ffb3c7', 'hexagone', '#ffb3b3', '#c0293a', 'heart'),
 };
 
-// ---------- couleurs ----------
 const mix = (hex, to, k) => '#' + [1, 3, 5].map((i) => {
   const v = parseInt(hex.slice(i, i + 2), 16);
   return Math.round(v + (to - v) * k).toString(16).padStart(2, '0');
@@ -38,14 +35,12 @@ const dark = (hex, k = 0.35) => mix(hex, 0, k);
 const light = (hex, k = 0.5) => mix(hex, 255, k);
 const INK = '#2b2d54', PINK = '#ff8fab', BEAK = '#ffa62b';
 
-let uid = 0; // ids de dégradé uniques, même avec plusieurs badges sur la page
+let uid = 0;
 
-// ---------- têtes d'animaux ----------
-// Repère 100 x 100, tête centrée en (50, 56). P = { c couleur, o contour, l clair, k noir, w blanc }.
 const E = (cx, cy, rx, ry, fill, x = {}) => ['ellipse', { cx, cy, rx, ry, fill, ...x }];
 const C = (cx, cy, r, fill, x = {}) => ['circle', { cx, cy, r, fill, ...x }];
 const D = (d, fill, x = {}) => ['path', { d, fill, ...x }];
-const sym = (f) => [...f(1), ...f(-1)]; // f(s): s = 1 à gauche, -1 en miroir à droite
+const sym = (f) => [...f(1), ...f(-1)];
 const X = (s, x) => 50 - s * (50 - x);
 const tri = (s, x1, y1, x2, y2, x3, y3) => `M${X(s, x1)} ${y1} L${X(s, x2)} ${y2} L${X(s, x3)} ${y3} Z`;
 const line = { fill: 'none', 'stroke-width': 2.5, 'stroke-linecap': 'round' };
@@ -157,13 +152,11 @@ function head(id, P, locked) {
   return out;
 }
 
-// ---------- insignes ----------
 const star = (r1, r2, cx, cy, n = 5) => 'M' + Array.from({ length: n * 2 }, (_, i) => {
   const r = i % 2 ? r2 : r1, t = (i / n) * Math.PI - Math.PI / 2;
   return `${(cx + Math.cos(t) * r).toFixed(1)} ${(cy + Math.sin(t) * r).toFixed(1)}`;
 }).join(' L') + ' Z';
 
-// d: contour; c: centre de l'icône; s: échelle de l'icône (icône dessinée dans -20..20)
 export const SHAPES = {
   hexagone: { d: 'M50 5 L89 27.5 L89 72.5 L50 95 L11 72.5 L11 27.5 Z', c: [50, 50], s: 1 },
   cercle: { d: 'M6 50 A44 44 0 1 0 94 50 A44 44 0 1 0 6 50 Z', c: [50, 50], s: 1 },
@@ -173,7 +166,7 @@ export const SHAPES = {
   losange: { d: 'M50 4 L94 50 L50 96 L6 50 Z', c: [50, 50], s: 0.85 },
 };
 
-const W = '#fff', K = 'DARK'; // K: remplacé par la couleur foncée de l'insigne
+const W = '#fff', K = 'DARK';
 const stroke = (w = 4) => ({ fill: 'none', stroke: W, 'stroke-width': w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
 export const ICONS = {
   star: [D(star(20, 8.5, 0, 1), W)],
@@ -226,7 +219,7 @@ function emblem({ shape, colors: [c0, c1], icon }, locked) {
   return [['defs', {}, [grad]],
     D(sh.d, `url(#${id})`, { stroke: light(c0, 0.6), 'stroke-width': 3, 'stroke-linejoin': 'round' }),
     D(sh.d, c1, { transform: inner, opacity: 0.45 }),
-    E(36, 24, 14, 6, '#fff', { opacity: 0.35, transform: 'rotate(-30 36 24)' }), // reflet
+    E(36, 24, 14, 6, '#fff', { opacity: 0.35, transform: 'rotate(-30 36 24)' }),
     ['g', { transform: `translate(${ix} ${iy}) scale(${sh.s})`, opacity: 0.95 }, ICONS[icon].map(fix)]];
 }
 
@@ -253,14 +246,11 @@ export function badgeSvg(id, style, locked) {
   return svg;
 }
 
-// ---------- célébration ----------
 const DUR = 3.4;
 const nameOf = (id, lang) => { const n = BADGES.find((b) => b.id === id)?.names; return n?.[lang] ?? n?.fr ?? id; };
 
-// Dans la bande basse: le badge rebondit, une aura douce respire (< 1 Hz), étincelles, nom, puis départ.
 export const celebrateBadge = (fx, { badgeId, style, lang }) => celebrateCard(fx, () => badgeSvg(badgeId, style, false), nameOf(badgeId, lang));
 
-// Fête de la bande basse (badges, autocollants): `draw()` rend un SVG en repère 100 x 100.
 export function celebrateCard(fx, draw, name) {
   if (fx.reduced) return showCard(fx, draw, SFX.sparkle, name);
   return fx.run(async (g) => {
@@ -282,7 +272,6 @@ export function celebrateCard(fx, draw, name) {
     const txt = svgEl('text', { 'text-anchor': 'middle', 'font-weight': 800, fill: INK, stroke: '#fff', 'stroke-width': 6,
       'paint-order': 'stroke', 'font-family': 'system-ui,sans-serif' });
     txt.textContent = name;
-    // découpe: rien ne dépasse au-dessus de la bande basse
     const clipId = `fkb-clip-${++uid}`, cp = svgEl('clipPath', { id: clipId }), band = svgEl('rect', { x: 0 });
     cp.append(band);
     g.append(cp, aura, ...sparks.map((s) => s.e), badge, txt);
@@ -297,7 +286,7 @@ export function celebrateCard(fx, draw, name) {
 
     await fx.tween(DUR * 1000, (u) => {
       const t = u * DUR;
-      const { w, h } = fx.size(); // relu à chaque image: suit un redimensionnement
+      const { w, h } = fx.size();
       const top = h * 0.62, bh = h - top;
       for (const [k, v] of Object.entries({ y: top, width: w, height: bh })) band.setAttribute(k, v);
       const fs = Math.min(40, bh * 0.14, (w * 0.9) / (0.6 * Math.max(4, name.length)));
@@ -307,7 +296,7 @@ export function celebrateCard(fx, draw, name) {
       const y = cy + rise(t) * (bh + S) + lv * (bh * 0.3), sc = (S / 100) * grow(t) * (1 - 0.6 * lv);
       const bob = Math.sin(t * 3) * 3 * clamp(t - 0.9, 0, 1);
       badge.setAttribute('transform', `translate(${cx} ${(y + bob).toFixed(1)}) scale(${sc.toFixed(3)})`);
-      const ai = auraIn(t), breathe = 1 + 0.06 * Math.sin(t * Math.PI * 1.6); // 0.8 Hz, sans flash
+      const ai = auraIn(t), breathe = 1 + 0.06 * Math.sin(t * Math.PI * 1.6);
       aura.setAttribute('transform', `translate(${cx} ${(y + bob).toFixed(1)}) scale(${(sc * breathe).toFixed(3)}) rotate(${(t * 25).toFixed(1)})`);
       aura.setAttribute('opacity', (ai * 0.55).toFixed(3));
       glow.setAttribute('opacity', (0.6 + 0.15 * Math.sin(t * Math.PI * 1.6)).toFixed(3));

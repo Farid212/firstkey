@@ -1,7 +1,3 @@
-// Précalcule les 342 exercices de « Découvre le JavaScript » (niveaux 1-114 × exercices 0-2) dans assets/js/data/discover-js.js.
-// Les sorties sont calculées avec du vrai JavaScript (node:vm). À relancer après toute modification: npm run build:discover
-// Une famille = une règle: gen(rng, exercice, case) rend un code (case 0..2 = exemples, 3 = question).
-// La case permet d'imposer un exemple qui montre un cas limite (zéro, égalité, branche du si...).
 import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import vm from 'node:vm';
@@ -19,11 +15,10 @@ export const NAMES = ['Tom', 'Lea', 'Zoe', 'Max', 'Noa', 'Ali', 'Sam', 'Lou', 'E
 export const SOUNDS = ['ha', 'oh', 'bip', 'la', 'do', 'hop', 'zou'];
 const LETTERS = ['a', 'b', 'n', 'x', 'y', 'k'];
 const VARS = ['age', 'prix', 'score', 'total', 'nb'];
-// Vrais mots composés (pas de « veloours » inventé): plus faciles à lire et à taper.
 export const COMP2 = [['chou', 'fleur'], ['tourne', 'sol'], ['para', 'pluie'], ['cerf', 'volant'], ['sous', 'marin'], ['garde', 'robe'],
   ['mille', 'pattes'], ['rouge', 'gorge'], ['pique', 'nique'], ['casse', 'tete'], ['grand', 'pere'], ['porte', 'cle'], ['tire', 'bouchon']];
 export const COMP3 = [['arc', 'en', 'ciel'], ['pomme', 'de', 'terre'], ['pot', 'au', 'feu'], ['sac', 'a', 'dos'], ['tete', 'a', 'tete'], ['moulin', 'a', 'vent']];
-const VAR_HINT = [...VARS, ...LETTERS]; // indice = la variable de la question (les noms longs d'abord: « age » avant « a »)
+const VAR_HINT = [...VARS, ...LETTERS];
 
 export const ints = (n, lo, hi, r) => shuffle(Array.from({ length: hi - lo + 1 }, (_, k) => lo + k), r).slice(0, n);
 export const word = (r, max = 6) => pick(WORDS.filter((w) => w.length <= max), r);
@@ -33,9 +28,8 @@ const caseMix = (w, r) => [...w].map((c) => (r() < 0.5 ? c.toUpperCase() : c)).j
 export const F = (rule, hint, gen, o = {}) => ({ rule, hint, gen, ...o });
 export const byEx = (...gens) => (r, e, i) => gens[Math.min(e, gens.length - 1)](r, e, i);
 
-// ---- 1. Plus et moins ----
 const C1 = [
-  F('add', '+', (r, e) => ints(2, 1, 4 + e, r).join(' + ')), // jamais a + a: on ne confond pas avec « le double »
+  F('add', '+', (r, e) => ints(2, 1, 4 + e, r).join(' + ')),
   F('add', '+', byEx((r) => ints(2, 2, 9, r).join(' + '), (r) => `${int(5, 9, r)} + ${int(5, 9, r)}`,
     (r) => `${int(10, 19, r)} + ${int(2, 9, r)}`)),
   F('sub', '-', (r, e) => { const a = int(3, 6 + 2 * e, r); return `${a} - ${int(1, a - 1, r)}`; }),
@@ -44,7 +38,6 @@ const C1 = [
     (r) => `${int(10, 40, r)} + ${int(10, 40, r)}`)),
   F('sub', '-', byEx((r) => { const a = int(3, 9, r); return `${10 * a} - ${10 * int(1, a - 1, r)}`; },
     (r) => `${int(20, 59, r)} - ${int(1, 9, r)}`, (r) => { const a = int(30, 99, r); return `${a} - ${int(10, a - 1, r)}`; })),
-  // Négatifs: le premier exemple reste positif (contraste), les autres passent sous zéro.
   F('neg', '-', (r, e, i) => {
     if (i === 0) { const a = int(4, 8, r); return `${a} - ${int(1, a - 1, r)}`; }
     const a = int(0, 3 + 2 * e, r); return `${a} - ${a + int(1, 3 + 2 * e, r)}`;
@@ -60,7 +53,6 @@ const C1 = [
   }),
 ];
 
-// ---- 2. Fois et divisé (résultats entiers), priorités ----
 const mulPair = (lo, hi, r) => { let a, b; do { a = int(lo, hi, r); b = int(lo, hi, r); } while (a === 2 && b === 2); return [a, b]; };
 const divPair = (qlo, qhi, blo, bhi, r) => { let qq, b; do { qq = int(qlo, qhi, r); b = int(blo, bhi, r); } while (qq * b - b === qq); return [qq * b, b]; };
 const C2 = [
@@ -70,12 +62,10 @@ const C2 = [
   F('div', '/', (r, e) => divPair(2, 5 + e, 2, 4 + e, r).join(' / ')),
   F('div', '/', byEx((r) => divPair(2, 9, 2, 9, r).join(' / '), (r) => divPair(3, 9, 6, 9, r).join(' / '),
     (r) => divPair(3, 12, 5, 10, r).join(' / '))),
-  // Priorité: d'abord a * b + c (de gauche à droite marche), puis c + a * b mêlé, puis a + b * c.
   F('prio', '*', byEx(
     (r) => `${int(2, 5, r)} * ${int(2, 5, r)} + ${int(1, 9, r)}`,
     (r, e, i) => (i === 0 ? `${int(2, 5, r)} * ${int(2, 5, r)} + ${int(1, 9, r)}` : `${int(1, 9, r)} + ${int(2, 5, r)} * ${int(2, 5, r)}`),
     (r) => `${int(1, 9, r)} + ${int(2, 6, r)} * ${int(2, 6, r)}`)),
-  // Parenthèses: la paire (a + b * c, (a + b) * c) côte à côte montre qu'elles changent le résultat.
   F('paren', '(', byEx(
     (r) => `(${int(1, 4, r)} + ${int(1, 4, r)}) * ${int(2, 5, r)}`,
     (r, e, i) => { if (i > 1) return `(${int(1, 5, r)} + ${int(1, 5, r)}) * ${int(2, 5, r)}`; r.p ??= [int(1, 5, r), int(2, 5, r), int(2, 5, r)];
@@ -96,19 +86,16 @@ const C2 = [
 ];
 function noNeg(codes, outs) { return outs.every((o) => !o.startsWith('-')); }
 
-// ---- 3. Les textes ----
 const C3 = [
   F('str', '"', byEx((r) => q(pick(SHORT, r)), (r) => q(word(r)), (r) => q(`${word(r, 5)} ${int(1, 9, r)}`))),
   F('concat', '+', byEx((r) => pick(SYL, r).map(q).join(' + '), (r) => pick(SYL, r).map(q).join(' + '),
     (r) => { const [a, b] = pick(SYL, r); return [a.slice(0, 1), a.slice(1), b].map(q).join(' + '); })),
   F('strNum', '"', byEx((r) => ints(2, 1, 9, r).map(q).join(' + '), (r) => ints(2, 1, 9, r).map(q).join(' + '),
     (r) => [String(int(10, 20, r)), String(int(1, 9, r))].map(q).join(' + '))),
-  // Contraste nombres / textes de chiffres: les deux sortes figurent dans les exemples.
   F('strNum', ['"', '+'], (r, e, i) => {
     const [a, b] = ints(2, 1, 9 + 5 * e, r);
     return (i === 3 ? r() < 0.5 : i % 2 === 1) ? `${q(a)} + ${q(b)}` : `${a} + ${b}`;
   }),
-  // "10" + 5: un exemple en nombres purs pour le contraste, puis texte d'un côté ou de l'autre.
   F('strPlusNum', '"', (r, e, i) => {
     const a = int(2, 9 + 10 * e, r), b = int(1, 9, r);
     if (i === 0) return `${a} + ${b}`;
@@ -116,7 +103,6 @@ const C3 = [
   }),
   F('concat', '+', byEx((r) => pick(COMP2, r).map(q).join(' + '), (r) => pick(COMP2, r).map(q).join(' + '),
     (r) => pick(COMP3, r).map(q).join(' + '))),
-  // Espace: d'abord " " au milieu; puis un exemple sans espace en contraste; enfin l'espace dans les guillemets.
   F('concatSpace', ['" "', ' " +'], byEx(
     (r) => { const [a, b] = words(2, r, 5); return `${q(a)} + " " + ${q(b)}`; },
     (r, e, i) => { const [a, b] = words(2, r, 5); return i === 0 ? `${q(a)} + ${q(b)}` : `${q(a)} + " " + ${q(b)}`; },
@@ -126,7 +112,6 @@ const C3 = [
   F('strPlusNum', '+', byEx((r) => `${q(pick(['page ', 'niveau ', 'score ', 'il a '], r))} + ${int(2, 9, r)}`,
     (r) => `${int(2, 12, r)} + ${q(pick([' ans', ' chats', ' points', ' amis'], r))}`,
     (r, e, i) => (i % 2 ? `${q(pick(['page ', 'niveau ', 'score '], r))} + ${int(2, 20, r)}` : `${int(2, 12, r)} + ${q(pick([' ans', ' chats', ' amis'], r))}`))),
-  // De gauche à droite: 1 + 2 + "x" donne 3x mais "x" + 1 + 2 donne x12; à la fin les parenthèses.
   F('leftToRight', '+', byEx(
     (r, e, i) => { const [a, b] = ints(2, 1, 5, r); const w = pick(SHORT, r); return i % 2 === 0 ? `${a} + ${b} + ${q(w)}` : `${q(w)} + ${a} + ${b}`; },
     (r, e, i) => { const [a, b] = ints(2, 1, 9, r); const w = pick(['x', 'a', 'z', 'ok'], r);
@@ -135,7 +120,6 @@ const C3 = [
       return i === 0 ? `${q(w)} + ${a} + ${b}` : i === 1 ? `${q(w)} + (${a} + ${b})` : r() < 0.5 ? `${q(w)} + (${a} + ${b})` : `${a} + ${b} + ${q(w)}`; })),
 ];
 
-// ---- 4. Longueur et majuscules ----
 const lengthWord = (r, i) => q(pick(WORDS.filter((w) => w.length === [3, 4, 5, 6][i] || i === 3), r));
 const C4 = [
   F('length', '.length', byEx((r, e, i) => `${lengthWord(r, i)}.length`, (r) => `${q(word(r))}.length`,
@@ -163,7 +147,6 @@ const C4 = [
     (r, e, i) => (i % 2 ? `(${q(word(r, 5))} + " " + ${q(pick(SHORT, r))}).toUpperCase()` : `(${q(word(r, 5))} + ${q(word(r, 5))}).length`))),
 ];
 
-// ---- 5. Variables (la dernière ligne est affichée) ----
 const C5 = [
   F('var', 'let', byEx((r) => `let a = ${int(1, 9, r)}\na`, (r) => { const v = pick(LETTERS, r); return `let ${v} = ${int(1, 20, r)}\n${v}`; },
     (r) => { const v = pick(VARS, r); return `let ${v} = ${int(5, 50, r)}\n${v}`; })),
@@ -189,7 +172,6 @@ const C5 = [
     (r) => `let a = ${int(2, 9, r)}\nlet b = ${int(2, 9, r)}\na + b + " " + (a * b)`)),
 ];
 
-// ---- 6. Variables qui changent ----
 const C6 = [
   F('reassign', 'a =', byEx((r) => { const [x, y] = ints(2, 1, 9, r); return `let a = ${x}\na = ${y}\na`; },
     (r) => { const [x, y] = ints(2, 1, 30, r); return `let a = ${x}\na = ${y}\na`; },
@@ -210,7 +192,6 @@ const C6 = [
     (r) => `let a = ${int(1, 9, r)}\nlet b = ${int(1, 9, r)}\nb += a\nb * a`)),
 ];
 
-// ---- 7. Comparer (sorties true/false: les deux sont montrées) ----
 const cmp = (op, lo, hi) => (r, e, i) => {
   const [a, b] = ints(2, lo, hi + 5 * e, r);
   const lt = (i === 0) === (op === '<');
@@ -220,11 +201,10 @@ const free = (op, lo, hi) => (r, e, i) => (i < 2 ? cmp(op, lo, hi)(r, e, i) : `$
 const C7 = [
   F('lt', '<', free('<', 1, 9), { pair: true }),
   F('gt', '>', free('>', 1, 9), { pair: true }),
-  // Égalité: 4 < 4 donne false; un exemple égal est toujours montré.
   F('ltgtEq', ['<', '>'], (r, e, i) => { const op = e === 1 ? '>' : e === 0 ? '<' : pick(['<', '>'], r); const a = int(1, 20, r);
     return i === 0 ? `${a} ${op} ${a}` : free(op, 1, 9)(r, e, i === 1 ? 0 : i); }, { pair: true }),
   F('leGe', ['<=', '>='], (r, e, i) => { const op = e === 1 ? '>=' : e === 0 ? '<=' : pick(['<=', '>='], r); const [a, b] = ints(2, 1, 9 + 5 * e, r);
-    if (i === 0) return `${a} ${op} ${a}`; // égalité: true
+    if (i === 0) return `${a} ${op} ${a}`;
     const lo = Math.min(a, b), hi = Math.max(a, b);
     return i === 1 ? (op === '<=' ? `${hi} <= ${lo}` : `${lo} >= ${hi}`) : `${a} ${op} ${b}`; }, { pair: true }),
   F('eq', '===', (r, e, i) => { const a = int(1, 9 + 10 * e, r); return i === 0 || (i > 1 && r() < 0.5) ? `${a} === ${a}` : `${a} === ${a + int(1, 3, r)}`; }, { pair: true }),
@@ -233,11 +213,10 @@ const C7 = [
     const [a, b] = words(2, r);
     if (i === 0) return `${q(a)} === ${q(a)}`;
     if (i === 1) return `${q(a)} === ${q(b)}`;
-    if (e === 2 && i === 2) return `${q(a[0].toUpperCase() + a.slice(1))} === ${q(a)}`; // la casse compte
+    if (e === 2 && i === 2) return `${q(a[0].toUpperCase() + a.slice(1))} === ${q(a)}`;
     return r() < 0.5 ? `${q(a)} === ${q(a)}` : e === 2 ? `${q(a)} === ${q(a.toUpperCase())}` : `${q(a)} === ${q(b)}`;
   }),
-  // Le type compte: "3" === 3 donne false, montré à côté de 3 === 3 et "3" === "3".
-  F('eqType', '"', (r, e, i) => { const a = int(1, 9 + 10 * e, r); const k = i < 3 ? i : r() < 0.6 ? 1 : 2; // la question porte surtout sur le piège "3" === 3
+  F('eqType', '"', (r, e, i) => { const a = int(1, 9 + 10 * e, r); const k = i < 3 ? i : r() < 0.6 ? 1 : 2;
     return [`${a} === ${a}`, `${q(a)} === ${a}`, `${q(a)} === ${q(a)}`][k]; }, { pair: true }),
   F('cmpExpr', ['>', '<'], (r, e, i) => { const a = int(1, 5, r), b = int(1, 5, r), op = pick(['>', '<'], r);
     const c = i === 0 ? (op === '>' ? a + b - 1 : a + b + 1) : i === 1 ? a + b : int(2, 10, r);
@@ -247,9 +226,8 @@ const C7 = [
     (r, e, i) => { const w = word(r); return `${q(w)}.length ${pick(['>', '<'], r)} ${i === 0 ? w.length - 1 : i === 1 ? w.length : int(3, 6, r)}`; })),
 ];
 
-// ---- 8. Si / sinon (console.log, plusieurs sorties sur une ligne) ----
 const ifElse = (cond, yes, no) => `if (${cond}) console.log(${yes})\nelse console.log(${no})`;
-const branch = (i, r) => (i < 2 ? i === 0 : r() < 0.5); // case 0: vrai, case 1: faux, sinon au hasard
+const branch = (i, r) => (i < 2 ? i === 0 : r() < 0.5);
 const C8 = [
   F('log', 'console.log', byEx((r) => `console.log(${int(1, 9, r)} + ${int(1, 9, r)})`, (r) => `console.log(${q(word(r))})`,
     (r) => `console.log(${q(pick(SOUNDS, r))})\nconsole.log(${int(1, 9, r)})`)),
@@ -272,7 +250,6 @@ const C8 = [
   { ok: (codes, outs) => new Set(outs.slice(0, 3)).size === 3 }),
 ];
 
-// ---- 9. Boucles for ----
 const loop = (from, cond, step, body) => `for (let i = ${from}; ${cond}; ${step}) ${body}`;
 const C9 = [
   F('forLog', 'i < ', (r, e) => loop(0, `i < ${int(2, 5 + e, r)}`, 'i++', 'console.log(i)')),
@@ -291,7 +268,6 @@ const C9 = [
   F('forProd', 'p *= ', (r, e) => { const k = e === 2 ? 3 : 2; return `let p = ${e === 1 ? int(2, 5, r) : 1}\n${loop(0, `i < ${int(1, k === 3 ? 4 : 5, r)}`, 'i++', `p *= ${k}`)}\nconsole.log(p)`; }),
 ];
 
-// ---- 10. Tableaux (l'indice commence à 0: les exemples montrent [0]) ----
 const C10 = [
   F('index', ['[0]', ']['], (r, e, i) => { const t = ints(3 + e, 3, 20 + 20 * e, r); return `${arr(t)}[${i < 3 ? [0, 1, 2][i] : int(0, t.length - 1, r)}]`; }),
   F('index', '][', (r, e, i) => { const t = words(3 + (e > 0), r).map(q); return `${arr(t)}[${i < 2 ? i : int(0, t.length - 1, r)}]`; }),
@@ -304,12 +280,11 @@ const C10 = [
     (r) => `let t = ${arr(ints(int(1, 4, r), 1, 9, r))}\nt.push(${int(1, 9, r)})\nt.length`,
     (r) => `let t = ${arr(words(1, r, 4).map(q))}\nt.push(${q(pick(SHORT, r))})\nt.join("-")`)),
   F('arrSet', 't[', (r, e) => { const t = ints(3, 1, 9, r); return `let t = ${arr(t)}\nt[${int(0, 2, r)}] = ${e === 2 ? `t[${int(0, 2, r)}] * 2` : int(1, 9, r)}\nt.join(" ")`; },
-    { ok: (codes, outs) => codes.every((c, k) => c.slice(9, c.indexOf(']')).replace(/,/g, '') !== outs[k]) }), // l'affectation change vraiment le tableau
+    { ok: (codes, outs) => codes.every((c, k) => c.slice(9, c.indexOf(']')).replace(/,/g, '') !== outs[k]) }),
   F('arrLast', 't.length - 1', (r, e, i) => `let t = ${arr(ints(2 + ((i + e) % 4), 1, 30, r))}\nt[t.length - 1]`),
   F('arrLoop', 't[i]', (r, e) => `let t = ${arr(ints(int(2, 3 + e, r), 1, 9, r))}\nlet s = 0\n${loop(0, 'i < t.length', 'i++', e === 2 ? 's += t[i] * 2' : 's += t[i]')}\nconsole.log(s)`),
 ];
 
-// ---- 11. Fonctions ----
 const fn = (name, args, body) => `function ${name}(${args}) { return ${body} }`;
 const C11 = [
   F('fnCall', 'return', byEx((r) => `${fn('double', 'n', 'n * 2')}\ndouble(${int(1, 9, r)})`, (r) => `${fn('triple', 'n', 'n * 3')}\ntriple(${int(1, 9, r)})`,
@@ -329,7 +304,6 @@ const C11 = [
   F('fnBody', 'let', (r, e) => `function f(n) { let m = n ${['+ 1', '* 2', '* n'][e]}; return m + m }\nf(${int(1, 9, r)})`),
 ];
 
-// ---- 12. Le grand mélange ----
 const C12 = [
   F('fnIf', 'if', (r, e, i) => { const t = branch(i, r), n = t ? int(6, 15, r) : int(1, 5, r);
     return `function f(n) {\n  if (n > 5) return ${e === 0 ? 'n - 5' : 'n * 2'}\n  return ${e === 2 ? 'n * 10' : 'n + 5'} }\nf(${n})`; }),
@@ -340,7 +314,7 @@ const C12 = [
   F('loopPush', '.push', (r, e) => `let t = []\n${loop(1, `i <= ${int(2, 5, r)}`, 'i++', `t.push(${['i * 2', 'i * i', 'i * 10'][e]})`)}\nconsole.log(t.join(" "))`),
   F('loopCount', 'c++', (r, e) => `let t = ${arr(ints(4 + (e > 0), 1, 9, r))}\nlet c = 0\n${loop(0, 'i < t.length', 'i++', `if (t[i] > ${int(2, 6, r)}) c++`)}\nconsole.log(c)`),
   F('loopMax', 'm = t[i]', (r, e) => `let t = ${arr(ints(3 + e, 1, 30, r))}\nlet m = 0\n${loop(0, 'i < t.length', 'i++', 'if (t[i] > m) m = t[i]')}\nconsole.log(m)`,
-    { ok: (codes, outs) => codes.every((c, k) => !c.startsWith(`let t = [${outs[k]},`)) }), // le plus grand n'est pas toujours le premier
+    { ok: (codes, outs) => codes.every((c, k) => !c.startsWith(`let t = [${outs[k]},`)) }),
   F('loopIfStr', 't +=', (r, e) => { const n = int(4, 6, r), lim = e === 1 ? int(2, n, r) : int(1, n - 2, r);
     return `let t = ""\n${loop(1, `i <= ${n}`, 'i++', `if (i ${e === 1 ? '<' : '>'} ${lim}) t += ${e === 2 ? '"*"' : 'i'}`)}\nconsole.log(t)`; }),
   F('mapLike', 't[i] = f(t[i])', (r, e) => `${fn('f', 'n', ['n + 1', 'n * 2', 'n * n'][e])}\nlet t = ${arr(ints(3, 1, 5 + 2 * e, r))}\n${loop(0, 'i < t.length', 'i++', 't[i] = f(t[i])')}\nconsole.log(t.join(" "))`),
@@ -348,9 +322,8 @@ const C12 = [
 
 export const FAMILIES = [C1, C2, C3, C4, C5, C6, C7, C8, C9, C10, C11, C12];
 const CATEGORICAL = new Set(['lt', 'gt', 'ltgtEq', 'leGe', 'eq', 'neq', 'eqStr', 'cmpExpr', 'cmpVar', 'eqType',
-  'ifElse', 'ifVar', 'ifStr', 'ifNoElse', 'elseIf']); // même liste que CATEGORICAL_RULES (discover.js), vérifiée par les tests
+  'ifElse', 'ifVar', 'ifStr', 'ifNoElse', 'elseIf']);
 
-// Exécute comme une console: sans console.log, la dernière ligne est affichée; plusieurs sorties → une ligne séparée par des espaces.
 export function runJs(code) {
   const out = [];
   const lines = code.split('\n');
@@ -363,7 +336,6 @@ export function runJs(code) {
   return out.join(' ');
 }
 
-// Coupe une boucle trop longue pour un petit écran (corps indenté à la ligne) tant que le programme garde au plus 4 lignes.
 function fit(code) {
   const lines = code.split('\n');
   for (let k = 0; k < lines.length && lines.length < 4; k++) {
@@ -378,8 +350,6 @@ function makeExercise(fam, level, ex, used) {
   for (let attempt = 0; attempt < 2000; attempt++) {
     const r = mulberry32(level * 7919 + ex * 104729 + attempt * 15485863 + 2026);
     r.perm = shuffle([0, 1, 2], r);
-    // Paire (chapitre 7, exercice 3): deux comparaisons sur une ligne; les 4 cas vrai/faux sont tous différents,
-    // la question est le seul cas pas encore montré: plus de réponse à pile ou face.
     const pair = fam.pair && ex === 2;
     const codes = pair
       ? shuffle([[0, 0], [0, 1], [1, 0], [1, 1]], r).map(([a, b]) => `(${fam.gen(r, ex, a)}) + " " + (${fam.gen(r, ex, b)})`)
@@ -392,7 +362,6 @@ function makeExercise(fam, level, ex, used) {
     if (ex3.size < 2) continue;
     if (CATEGORICAL.has(rule) ? !ex3.has(outs[3]) : new Set(outs).size < 4) continue;
     if (fam.ok && !fam.ok(codes, outs)) continue;
-    // indice: le premier morceau qui est dans la question ET dans un exemple (ex.: .toLowerCase() si la question l'utilise)
     const hint = [fam.hint].flat().find((h) => codes[3].includes(h) && codes.slice(0, 3).some((c) => c.includes(h)));
     if (!hint) continue;
     used.add(codes[3]);
@@ -410,9 +379,7 @@ export function buildDiscover() {
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const rows = buildDiscover();
-  const text = `// Généré par scripts/build-discover.mjs: ne pas modifier à la main (npm run build:discover).
-// Ligne: [règle, indice, code1, sortie1, code2, sortie2, code3, sortie3, question, réponse]. Index: (niveau - 1) * 3 + exercice.
-export const EXERCISES = [
+  const text = `export const EXERCISES = [
 ${rows.map((r) => JSON.stringify(r)).join(',\n')},
 ];
 `;

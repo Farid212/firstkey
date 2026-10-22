@@ -2,7 +2,6 @@ const A = 'animal';
 const C = 'character';
 const c = (id, kind, fr, en, ja) => ({ id, kind, names: { fr, en, ja } });
 
-// Ordre de déblocage.
 export const CREATURES = [
   c('stickman', C, 'Stickman', 'Stickman', 'ぼうにんげん'),
   c('cow', A, 'Vache', 'Cow', 'うし'),

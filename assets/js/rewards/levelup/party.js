@@ -6,7 +6,6 @@ import { bandScene, particles, COLS } from './stickman.js';
 const DUR = 4.2;
 const BALLOON = ['#ff4d6d', '#ffd23f', '#3bceac', '#4361ee', '#b15cff', '#ff9f1c'];
 
-// Fête dans la bande basse: ballons qui montent, confettis, et le nouveau numéro s'il y en a un.
 export function party(fx, { newLevel } = {}) {
   const label = newLevel != null ? String(newLevel) : null;
   if (fx.reduced) return showCard(fx, null, SFX.fanfare, label ? `Niveau ${label}` : 'Bravo !');
@@ -50,7 +49,6 @@ export function party(fx, { newLevel } = {}) {
         const sc = pop(t), wob = Math.sin(t * 5) * 4 * clamp(t - 0.75, 0, 1);
         num.setAttribute('transform', `translate(${S.W / 2} -88) rotate(${wob.toFixed(1)}) scale(${sc.toFixed(3)})`);
       }
-      // canons à confettis depuis les coins, trois salves
       while (fired < 3 && t >= 0.3 + fired * 0.9) {
         parts.shoot(18, 20, -10, 260, { a0: -1.0, spread: 0.6, g: 420 });
         parts.shoot(18, S.W - 20, -10, 260, { a0: -Math.PI + 1.0, spread: 0.6, g: 420 });

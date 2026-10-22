@@ -1,5 +1,3 @@
-// Autocollants de chapitre: rond blanc à bord coloré, icône, ruban avec le nom court.
-// Le DOM n'est touché que dans les fonctions (importable sous Node).
 import { CHAPTERS, chapterColor } from '../chapters.js';
 import { svgEl } from './fx.js';
 import { celebrateCard } from './badge-art.js';
@@ -25,7 +23,6 @@ export function stickerSvg(chapterId, locked) {
   icon.textContent = chapter.icon;
   svg.append(icon);
   if (locked) {
-    // cadenas
     svg.append(
       svgEl('path', { d: 'M41 46 v-7 a9 9 0 0 1 18 0 v7', fill: 'none', stroke: '#6e6e80', 'stroke-width': 4.5, 'stroke-linecap': 'round' }),
       svgEl('rect', { x: 36, y: 45, width: 28, height: 20, rx: 4, fill: '#6e6e80' }),
@@ -40,7 +37,5 @@ export function stickerSvg(chapterId, locked) {
   return svg;
 }
 
-// Même fête que les badges (bande basse, rebond, halo doux, SFX.sparkle, repli reduced-motion).
-// shortcut: noms de chapitres en français seulement, `lang` ignoré tant que CHAPTERS n'est pas traduit.
 export const celebrateSticker = (fx, { chapterId }) =>
   celebrateCard(fx, () => stickerSvg(chapterId, false), find(chapterId)?.chapter.name ?? '');

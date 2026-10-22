@@ -1,5 +1,3 @@
-// Généré par scripts/build-discover.mjs: ne pas modifier à la main (npm run build:discover).
-// Ligne: [règle, indice, code1, sortie1, code2, sortie2, code3, sortie3, question, réponse]. Index: (niveau - 1) * 3 + exercice.
 export const EXERCISES = [
 ["add","+","1 + 4","5","3 + 1","4","3 + 4","7","4 + 2","6"],
 ["add","+","2 + 3","5","5 + 2","7","4 + 2","6","1 + 3","4"],

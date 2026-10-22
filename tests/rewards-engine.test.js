@@ -64,7 +64,7 @@ test('nextGap', () => {
 });
 
 test('pickReward', () => {
-  const r = defaultRewards(); // stickman (character) + cow (animal)
+  const r = defaultRewards();
   const mem = { lastFamily: null, lastCreatureId: null };
   assert.equal(pickReward(r, { ...mem, lastFamily: 'animal' }, () => 0).family, 'character');
   assert.equal(pickReward(r, { ...mem, lastFamily: 'character' }, () => 0).family, 'animal');
@@ -72,17 +72,14 @@ test('pickReward', () => {
     for (const rng of [0, 0.5, 0.99]) assert.notEqual(pickReward(r, { ...mem, lastFamily: f }, () => rng).family, f);
   }
   const p = pickReward(r, { lastFamily: 'character', lastCreatureId: 'cow' }, () => 0);
-  assert.deepEqual(p, { family: 'animal', creatureId: 'cow' }); // seule option, autorisée
+  assert.deepEqual(p, { family: 'animal', creatureId: 'cow' });
   assert.equal(pickReward(r, mem, () => 0.99).family, 'party');
   assert.equal(pickReward(r, mem, () => 0.99).creatureId, null);
-  // sans animal débloqué
   const one = { ...r, unlocked: 1 };
   assert.deepEqual([...new Set([0, 0.4, 0.99].map((x) => pickReward(one, mem, () => x).family))].sort(), ['character', 'party']);
-  // party quand animal et character écartés
   const only = { ...r, unlocked: 1 };
   assert.equal(pickReward(only, { lastFamily: 'character', lastCreatureId: null }, () => 0).family, 'party');
-  // créature différente de lastCreatureId quand une autre existe
-  const three = { ...r, unlocked: 3 }; // + cat
+  const three = { ...r, unlocked: 3 };
   for (const x of [0, 0.99]) assert.notEqual(pickReward(three, { lastFamily: 'character', lastCreatureId: 'cow' }, () => x).creatureId, 'cow');
 });
 
@@ -99,7 +96,6 @@ test('chapterToAward aux bornes', () => {
   assert.equal(chapterToAward('letters', 17), null);
   assert.equal(chapterToAward('math', 24), 'math:0');
   assert.equal(chapterToAward('nope', 16), null);
-  // le dernier chapitre finit à 114, mais le niveau 114 ne monte jamais (MAX_LEVEL): aucun levelup ne le demande
   assert.equal(chapterToAward('letters', 114), 'letters:6');
 });
 

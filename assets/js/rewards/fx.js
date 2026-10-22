@@ -15,7 +15,6 @@ export function createFx(host, audio) {
   fit();
   host.append(layer);
 
-  // cancel() avance gen: les tweens et sons de l'animation en cours s'arrêtent net
   let gen = 0, live = 0;
   const alive = () => live === gen;
 
@@ -37,7 +36,6 @@ export function createFx(host, audio) {
         let last = null, elapsed = 0;
         const step = (now) => {
           if (!alive()) return resolve();
-          // onglet caché: rAF s'arrête; au retour, on repart sans compter l'absence
           if (document.hidden || last === null || now - last > 100) last = now;
           elapsed += now - last;
           last = now;
@@ -54,7 +52,6 @@ export function createFx(host, audio) {
   return fx;
 }
 
-// Portrait (ou texte seul) dans le tiers bas, apparition et disparition douces.
 export function showCard(fx, draw, sound, label) {
   return fx.run(async (g) => {
     const { w, h } = fx.size();
