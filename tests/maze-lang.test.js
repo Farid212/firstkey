@@ -2,6 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parse, parseProgram, commandNames, suggest } from '../assets/js/maze/lang.js';
 import { TWINS } from './maze-twins.js';
+import { formatError } from '../assets/js/maze/format-error.js';
+
+const fr = (r) => formatError(r.error, 'fr');
 
 const c = (name, n = 1) => ({ t: 'call', name, n });
 const ok = (src, lang, prog) => assert.deepEqual(parse(src, lang), { ok: true, prog }, src);
@@ -9,8 +12,8 @@ const bad = (src, lang, code, hint) => {
   const r = parse(src, lang);
   assert.equal(r.ok, false, src);
   assert.equal(r.error.code, code, `${src} -> ${JSON.stringify(r.error)}`);
-  assert.ok(r.error.message.length > 0);
-  if (hint) assert.ok(r.error.hint.includes(hint), `${src} hint ${r.error.hint}`);
+  assert.ok(fr(r).message.length > 0);
+  if (hint) assert.ok(fr(r).hint.includes(hint), `${src} hint ${fr(r).hint}`);
 };
 
 test('noms de commandes et suggestion', () => {
@@ -113,7 +116,7 @@ test('fuzz: 2000 chaînes, aucune exception', () => {
     for (let k = 0; k < len; k++) s += alpha[Math.floor(rng() * alpha.length)] + (rng() < 0.5 ? ' ' : '');
     for (const lang of ['py', 'js']) {
       const r = parse(s, lang);
-      if (r.ok) { valid++; assert.ok(wellFormed(r.prog), s); } else assert.ok(r.error.code && r.error.message.length > 0, s);
+      if (r.ok) { valid++; assert.ok(wellFormed(r.prog), s); } else assert.ok(r.error.code && fr(r).message.length > 0, s);
     }
   }
   assert.ok(valid >= 0);
@@ -127,7 +130,7 @@ test('espaces Unicode acceptés, autre caractère non ASCII montré entier', () 
   for (const [src, ch] of [['forward() 🐢', '🐢'], ['forwärd()', 'ä'], ['forward(\u200b)', 'U+200B']]) {
     const r = parse(src, 'py');
     assert.equal(r.ok, false);
-    assert.equal(r.error.message, `Je ne comprends pas ce caractère : « ${ch} »`);
+    assert.equal(fr(r).message, `Je ne comprends pas ce caractère : « ${ch} »`);
   }
 });
 
@@ -141,12 +144,12 @@ const pbad = (src, lang, code, { line, hint } = {}) => {
   const r = parseProgram(src, lang);
   assert.equal(r.ok, false, src);
   assert.equal(r.error.code, code, `${src} -> ${JSON.stringify(r.error)}`);
-  assert.ok(r.error.message.length > 0);
+  assert.ok(fr(r).message.length > 0);
   if (line !== undefined) {
     assert.equal(r.error.line, line, `${src} -> ${JSON.stringify(r.error)}`);
-    assert.ok(r.error.message.startsWith(`Ligne ${line} : `), r.error.message);
+    assert.ok(fr(r).message.startsWith(`Ligne ${line} : `), fr(r).message);
   }
-  if (hint) assert.ok(r.error.hint && r.error.hint.includes(hint), `${src} hint ${r.error.hint}`);
+  if (hint) assert.ok(fr(r).hint && fr(r).hint.includes(hint), `${src} hint ${fr(r).hint}`);
   return r;
 };
 
@@ -234,7 +237,7 @@ test('programmes: une instruction par ligne, corps des blocs sur les lignes du d
   for (const [src, lang] of [['forward(); turn_left()', 'py'], ['forward(); turnLeft();', 'js'], ['forward()\nturn_left(); forward(2)', 'py'],
     ['n = 1; forward(n)', 'py'], ['if (wall()) {\n  turnLeft(); forward();\n}', 'js']]) {
     const r = pbad(src, lang, 'one_per_line');
-    assert.ok(r.error.message.includes('Écris une seule instruction par ligne'), r.error.message);
+    assert.ok(fr(r).message.includes('Écris une seule instruction par ligne'), fr(r).message);
   }
   pbad('if (wall()) {\n  turnLeft() }', 'js', 'one_per_line', { line: 2 });
   pbad('while (!wall()) {\n  forward()\n} forward()', 'js', 'one_per_line', { line: 3 });
@@ -244,9 +247,9 @@ test('programmes: une instruction par ligne, corps des blocs sur les lignes du d
     ['for (let i = 0; i < 4; i++) { forward(); turnLeft(); }', 'js', 1], ['if (wall()) turnLeft();', 'js', 1], ['while (!wall())\n  forward();', 'js', 1],
     ['if (wall()) {\n  turnLeft()\n} else forward()', 'js', 3], ['function f() { forward() }\nf()', 'js', 1]]) {
     const r = pbad(src, lang, 'inline_block', { line });
-    assert.ok(r.error.message.includes('Mets le corps'), r.error.message);
+    assert.ok(fr(r).message.includes('Mets le corps'), fr(r).message);
   }
-  assert.ok(parseProgram('for i in range(4): forward()', 'py').error.message.includes('sur les lignes en dessous, décalé'));
+  assert.ok(fr(parseProgram('for i in range(4): forward()', 'py')).message.includes('sur les lignes en dessous, décalé'));
   assert.equal(pok('forward();\nturn_left()', 'py').lines, 2);
   assert.equal(pok('for (let i = 0; i < 2; i++)\n{\n  forward();\n}', 'js').lines, 4);
   assert.ok(parse('forward(); turn_left()', 'py').ok && parse('for i in range(4): forward(); turn_left()', 'py').ok);
@@ -327,8 +330,8 @@ test('programmes: fuzz de 3000 chaînes, aucune exception', () => {
     for (const lang of ['py', 'js']) {
       const r = parseProgram(s, lang);
       if (r.ok) { valid++; assert.ok(Array.isArray(r.program.body) && r.lines >= 1 && r.lines <= 40, s); } else {
-        assert.ok(r.error.code && r.error.message.length > 0, s);
-        assert.notEqual(r.error.message, 'Je ne comprends pas ce programme.', `erreur interne: ${JSON.stringify(s)}`);
+        assert.ok(r.error.code && fr(r).message.length > 0, s);
+        assert.notEqual(fr(r).message, 'Je ne comprends pas ce programme.', `erreur interne: ${JSON.stringify(s)}`);
       }
     }
   }

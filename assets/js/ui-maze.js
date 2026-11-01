@@ -3,6 +3,7 @@ import { MAX_LEVEL } from './blocks.js';
 import { levelSpec } from './maze/levels.js';
 import { CURRICULUM, skillIntro, mazeLevelName } from './maze/curriculum.js';
 import { parse, parseProgram, commandNames } from './maze/lang.js';
+import { formatError } from './maze/format-error.js';
 import { createWorld, execute, executeProgram } from './maze/world.js';
 import { getArt } from './rewards/art/index.js';
 import { CREATURES } from './rewards/creatures.js';
@@ -477,8 +478,9 @@ export function startMaze(root, state, target, handlers) {
     const r = parse(src, lang);
     if (!r.ok) {
       row.classList.add('bad');
-      note(r.error.message, 'err');
-      if (r.error.hint) note(r.error.hint, 'tip');
+      const { message, hint } = formatError(r.error, handlers.getState().settings.language);
+      note(message, 'err');
+      if (hint) note(hint, 'tip');
       if (r.error.code !== 'empty') wrong();
       return;
     }
@@ -536,8 +538,9 @@ export function startMaze(root, state, target, handlers) {
     const r = parseProgram(ed.value, lang);
     if (!r.ok) {
       showWorld(0);
-      note(r.error.message, 'err');
-      if (r.error.hint) note(r.error.hint, 'tip');
+      const { message, hint } = formatError(r.error, handlers.getState().settings.language);
+      note(message, 'err');
+      if (hint) note(hint, 'tip');
       if (r.error.code !== 'empty') wrong();
       return;
     }

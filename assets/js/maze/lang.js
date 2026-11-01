@@ -27,8 +27,11 @@ export function suggest(word, lang) {
   return best;
 }
 
-class Fail { constructor(code, message, hint) { this.error = hint ? { code, message, hint } : { code, message }; } }
-const fail = (code, message, hint) => { throw new Fail(code, message, hint); };
+class Fail { constructor(error) { this.error = error; } }
+const errorOf = (code, key, params = {}, hint) => ({ code, key: `maze.err.${key}`, params, ...(hint && { hintKey: `maze.err.${hint}` }) });
+const oops = (...args) => { throw new Fail(errorOf(...args)); };
+const legacy = (code, message, hint) => (hint ? { code, message, hint } : { code, message });
+const fail = (code, message, hint) => { throw new Fail(legacy(code, message, hint)); };
 
 const isDigit = (c) => c >= '0' && c <= '9';
 const isIdStart = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_';
@@ -43,7 +46,7 @@ function tokenize(src) {
     if (c > '\x7f') {
       const ch = String.fromCodePoint(src.codePointAt(i));
       const seen = /[\p{L}\p{N}\p{P}\p{S}]/u.test(ch) ? ch : `U+${ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}`;
-      fail('syntax', `Je ne comprends pas ce caractère : « ${seen} »`);
+      oops('syntax', 'char', { ch: seen });
     }
     let j = i + 1;
     let k = 'sym';
@@ -63,35 +66,35 @@ function run(src, lang) {
   const peek = () => toks[p];
   const is = (v) => p < toks.length && toks[p].v === v && toks[p].k !== 'num';
   const eat = (v) => (is(v) ? (p++, true) : false);
-  const need = (v, code, msg) => { if (!eat(v)) fail(code, msg); };
-  const syntax = (msg) => fail('syntax', msg);
-  const show = () => (peek() ? `« ${peek().v.slice(0, 20)} »` : 'la fin de la ligne');
+  const need = (v, code, key, params) => { if (!eat(v)) oops(code, key, params); };
+  const syntax = (key, params) => oops('syntax', key, params);
+  const show = () => (peek() ? { frag: 'tok', v: peek().v.slice(0, 20) } : { frag: 'end' });
 
   const number = (what) => {
     const t = peek();
-    if (!t || t.k !== 'num') fail('bad_number', `${what} attend un nombre entier de 1 à 99.`);
+    if (!t || t.k !== 'num') oops('bad_number', 'number', { what });
     p++;
     const n = t.v.length > 3 ? 1000 : Number(t.v);
-    if (n === 0) fail('bad_number', 'Le nombre doit être au moins 1.');
-    if (n > 99) fail('too_big', 'Ce nombre est trop grand, essaie avec 99 ou moins.');
+    if (n === 0) oops('bad_number', 'atLeast1');
+    if (n > 99) oops('too_big', 'tooBig');
     return n;
   };
 
   const unknown = (word) => {
     const s = suggest(word, lang);
-    fail('unknown_command', `Je ne connais pas "${word.slice(0, 20)}".`, s ? `Tu voulais écrire ${s}() ?` : undefined);
+    oops('unknown_command', 'unknown', s ? { word: word.slice(0, 20), s } : { word: word.slice(0, 20) }, s && 'unknownHint');
   };
 
   const parens = (name) => {
-    if (!eat('(')) fail('missing_paren', `Il manque une parenthèse ( ) après ${name}`, `Écris ${name}()`);
-    need(')', 'missing_paren', `Il manque la parenthèse fermante ) après ${name}`);
+    if (!eat('(')) oops('missing_paren', 'parens', { name }, 'parensHint');
+    need(')', 'missing_paren', 'closeParen', { name });
   };
 
   const cond = () => {
     let neg = false;
     if (js ? eat('!') : eat('not')) neg = true;
     const t = peek();
-    if (!t || t.k !== 'id') syntax('Il manque wall() ou goal() dans la condition.');
+    if (!t || t.k !== 'id') syntax('condMissing');
     if (t.v !== 'wall' && t.v !== 'goal') unknown(t.v);
     p++;
     parens(t.v);
@@ -101,13 +104,13 @@ function run(src, lang) {
   const call = (t) => {
     p++;
     const key = Object.keys(names).find((k) => names[k] === t.v);
-    if (!eat('(')) fail('missing_paren', `Il manque une parenthèse ( ) après ${t.v}`, `Écris ${t.v}()`);
+    if (!eat('(')) oops('missing_paren', 'parens', { name: t.v }, 'parensHint');
     let n = 1;
     if (!is(')')) {
-      if (key !== 'forward') syntax(`${t.v}() s'écrit sans rien entre les parenthèses.`);
+      if (key !== 'forward') syntax('noArgs', { name: t.v });
       n = number('forward');
     }
-    need(')', 'missing_paren', `Il manque la parenthèse fermante ) après ${t.v}`);
+    need(')', 'missing_paren', 'closeParen', { name: t.v });
     return { t: 'call', name: key, n };
   };
 
@@ -116,67 +119,67 @@ function run(src, lang) {
     if (js) {
       if (eat('{')) {
         b = list(depth, '}');
-        need('}', 'syntax', 'Il manque une accolade } à la fin.');
+        need('}', 'syntax', 'braceEnd');
       } else {
-        if (!peek()) syntax('Il manque ce qu\'il faut répéter ou faire.');
+        if (!peek()) syntax('bodyMissing');
         b = [stmt(depth)];
         eat(';');
       }
     } else {
-      need(':', 'syntax', 'Il manque le signe : avant la suite.');
+      need(':', 'syntax', 'colon');
       b = list(depth, null);
     }
-    if (!b.length) syntax('Il manque une commande à répéter ou à faire.');
+    if (!b.length) syntax('bodyEmpty');
     return b;
   }
 
   function stmt(depth) {
     const t = peek();
-    if (t.k !== 'id') syntax(`Je ne comprends pas ${show()}.`);
+    if (t.k !== 'id') syntax('notUnderstood', { what: show() });
     if (KEYWORDS.includes(t.v)) {
-      if (depth > 0) fail('nested', 'Pour l\'instant, pas de boucle ni de si à l\'intérieur d\'une autre.');
+      if (depth > 0) oops('nested', 'nested');
       p++;
       if (t.v === 'for') {
         let n;
         if (js) {
-          need('(', 'missing_paren', 'Il manque une parenthèse ( après for');
-          need('let', 'syntax', 'Écris for (let i = 0; i < 4; i++)');
+          need('(', 'missing_paren', 'openParen', { name: 'for' });
+          need('let', 'syntax', 'jsFor');
           const id = peek();
-          if (!id || id.k !== 'id') syntax('Il manque le nom de la variable, par exemple i.');
+          if (!id || id.k !== 'id') syntax('varName');
           p++;
-          need('=', 'syntax', 'Écris for (let i = 0; i < 4; i++)');
-          if (!peek() || peek().v !== '0') syntax('La boucle commence à 0 : let i = 0');
+          need('=', 'syntax', 'jsFor');
+          if (!peek() || peek().v !== '0') syntax('startZero');
           p++;
-          need(';', 'syntax', 'Il manque un ; après let i = 0');
-          if (!peek() || peek().v !== id.v) syntax(`Écris ${id.v} < 4 après le premier ;`);
+          need(';', 'syntax', 'semiAfterLet');
+          if (!peek() || peek().v !== id.v) syntax('lessThan', { v: id.v });
           p++;
-          need('<', 'syntax', `Écris ${id.v} < 4 après le premier ;`);
-          n = number('La boucle');
-          need(';', 'syntax', `Il manque un ; après ${id.v} < ${n}`);
-          if (!peek() || peek().v !== id.v) syntax(`Écris ${id.v}++ à la fin`);
+          need('<', 'syntax', 'lessThan', { v: id.v });
+          n = number({ frag: 'theLoop' });
+          need(';', 'syntax', 'semiAfterCmp', { v: id.v, n });
+          if (!peek() || peek().v !== id.v) syntax('plusPlus', { v: id.v });
           p++;
-          need('+', 'syntax', `Écris ${id.v}++ à la fin`);
-          need('+', 'syntax', `Écris ${id.v}++ à la fin`);
-          need(')', 'missing_paren', 'Il manque une parenthèse ) après i++');
+          need('+', 'syntax', 'plusPlus', { v: id.v });
+          need('+', 'syntax', 'plusPlus', { v: id.v });
+          need(')', 'missing_paren', 'closeAfterInc');
         } else {
           const id = peek();
-          if (!id || id.k !== 'id') syntax('Écris for i in range(4):');
+          if (!id || id.k !== 'id') syntax('pyFor');
           p++;
-          need('in', 'syntax', 'Écris for i in range(4):');
-          need('range', 'syntax', 'Écris for i in range(4):');
-          if (!eat('(')) fail('missing_paren', 'Il manque une parenthèse ( après range');
+          need('in', 'syntax', 'pyFor');
+          need('range', 'syntax', 'pyFor');
+          if (!eat('(')) oops('missing_paren', 'openParen', { name: 'range' });
           n = number('range');
-          need(')', 'missing_paren', 'Il manque la parenthèse fermante ) de range');
+          need(')', 'missing_paren', 'closeRange');
         }
         return { t: 'loop', n, body: body(depth + 1) };
       }
-      if (js) need('(', 'missing_paren', `Il manque une parenthèse ( après ${t.v}`);
+      if (js) need('(', 'missing_paren', 'openParen', { name: t.v });
       const c = cond();
-      if (js) need(')', 'missing_paren', `Il manque une parenthèse ) après la condition de ${t.v}`);
+      if (js) need(')', 'missing_paren', 'closeCond', { name: t.v });
       return { t: t.v, ...c, body: body(depth + 1) };
     }
     if (Object.values(names).includes(t.v)) return call(t);
-    if (t.v === 'wall' || t.v === 'goal') syntax(`${t.v}() se pose dans un if ou un while.`);
+    if (t.v === 'wall' || t.v === 'goal') syntax('senseAlone', { name: t.v });
     return unknown(t.v);
   }
 
@@ -187,25 +190,25 @@ function run(src, lang) {
       out.push(stmt(depth));
       if (eat(';')) continue;
       const prev = toks[p - 1].v;
-      if (peek() && !is(stop) && prev !== ';' && !(js && prev === '}')) syntax(`Sépare les commandes avec un ; (j'ai trouvé ${show()}).`);
+      if (peek() && !is(stop) && prev !== ';' && !(js && prev === '}')) syntax('separate', { what: show() });
     }
     return out;
   }
 
   const prog = list(0, null);
-  if (peek()) syntax(`Je ne comprends pas ${show()}.`);
-  if (!prog.length) fail('empty', 'Écris une commande, par exemple forward()');
+  if (peek()) syntax('notUnderstood', { what: show() });
+  if (!prog.length) oops('empty', 'empty');
   return prog;
 }
 
 export function parse(src, lang) {
   try {
-    if (typeof src !== 'string' || (lang !== 'py' && lang !== 'js')) return { ok: false, error: { code: 'syntax', message: 'Je ne comprends pas cette ligne.' } };
-    if (!src.trim()) return { ok: false, error: { code: 'empty', message: 'Écris une commande, par exemple forward()' } };
-    if (src.length > MAX_LEN) return { ok: false, error: { code: 'too_long', message: `Cette ligne est trop longue (${MAX_LEN} caractères au plus).` } };
+    if (typeof src !== 'string' || (lang !== 'py' && lang !== 'js')) return { ok: false, error: errorOf('syntax', 'line') };
+    if (!src.trim()) return { ok: false, error: errorOf('empty', 'empty') };
+    if (src.length > MAX_LEN) return { ok: false, error: errorOf('too_long', 'tooLong', { max: MAX_LEN }) };
     return { ok: true, prog: run(src, lang) };
   } catch (e) {
-    return { ok: false, error: e instanceof Fail ? e.error : { code: 'syntax', message: 'Je ne comprends pas cette ligne.' } };
+    return { ok: false, error: e instanceof Fail ? e.error : errorOf('syntax', 'line') };
   }
 }
 
@@ -257,7 +260,7 @@ export function parseProgram(src, lang) {
   const toks = [];
   let p = 0;
   let lexLine = 0;
-  const failAt = (line, code, message, hint) => { const f = new Fail(code, message, hint); f.line = line; throw f; };
+  const failAt = (line, code, message, hint) => { const f = new Fail(legacy(code, message, hint)); f.line = line; throw f; };
   try {
     const lines = [];
     src.split('\n').forEach((raw, i) => {
@@ -554,6 +557,6 @@ export function parseProgram(src, lang) {
   } catch (e) {
     if (!(e instanceof Fail)) return { ok: false, error: { code: 'syntax', message: 'Je ne comprends pas ce programme.' } };
     const line = e.line ?? (lexLine || (toks[p] ?? toks.at(-1) ?? { line: 1 }).line);
-    return { ok: false, error: { ...e.error, message: `Ligne ${line} : ${e.error.message}`, line } };
+    return { ok: false, error: { ...e.error, line } };
   }
 }
