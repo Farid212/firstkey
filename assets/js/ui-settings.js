@@ -84,7 +84,7 @@ export function openSettings(root, state, handlers) {
     }
 
     const lang = el('select', 'num');
-    for (const [v, t] of [['fr', 'Français'], ['en', 'English'], ['ja', '日本語']]) {
+    for (const [v, t] of [['fr', 'Français'], ['en', 'English'], ['es', 'Español'], ['ja', '日本語']]) {
       const o = el('option', '', t);
       o.value = v;
       lang.append(o);

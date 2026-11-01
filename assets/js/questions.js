@@ -8,7 +8,7 @@ const WINDOW = 10;
 
 function textAccepts(text, lang) {
   const t = text.toLowerCase().replace(/[’‘]/g, "'").replace(/[^\p{L}\p{N} ']/gu, '').replace(/\s+/g, ' ').trim();
-  if (lang !== 'fr') return [t];
+  if (lang !== 'fr' && lang !== 'es') return [t];
   const plain = t.replace(/œ/g, 'oe').replace(/æ/g, 'ae').normalize('NFD').replace(/\p{M}/gu, '');
   return plain === t ? [t] : [t, plain];
 }
