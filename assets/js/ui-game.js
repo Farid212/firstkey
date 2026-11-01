@@ -101,7 +101,10 @@ export function startGame(root, state, target, handlers) {
     document.dispatchEvent(new CustomEvent('firstkey:wrong', { detail: { blockId, level } }));
     s = handlers.getState();
     play('wrongAnswer');
-    if (penalty.wrong({ state: s, blockId, level, onChange: handlers.onChange })) s = handlers.getState();
+    if (penalty.wrong({ state: s, blockId, level, onChange: handlers.onChange })) {
+      s = handlers.getState();
+      paint();
+    }
   }
 
   function correct() {
