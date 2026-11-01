@@ -2,6 +2,7 @@ import ui from './i18n/ui.js';
 import game from './i18n/game.js';
 import rewards from './i18n/rewards.js';
 import maze from './i18n/maze.js';
+import mazeUi from './i18n/maze-ui.js';
 
 export const LANG_LIST = [
   { id: 'fr', flag: '🇫🇷', name: 'Français' },
@@ -10,7 +11,7 @@ export const LANG_LIST = [
   { id: 'es', flag: '🇪🇸', name: 'Español' },
 ];
 
-export const DICTIONARIES = [ui, game, rewards, maze];
+export const DICTIONARIES = [ui, game, rewards, maze, mazeUi];
 
 const STRINGS = Object.fromEntries(LANG_LIST.map(({ id }) => [id, Object.assign({}, ...DICTIONARIES.map((d) => d[id]))]));
 

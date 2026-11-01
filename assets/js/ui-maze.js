@@ -1,6 +1,6 @@
 import { recordCorrect, answersPerLevel } from './progress.js';
 import { MAX_LEVEL } from './blocks.js';
-import { levelSpec } from './maze/levels.js';
+import { levelSpec, hintFor } from './maze/levels.js';
 import { CURRICULUM, skillIntro, mazeLevelName } from './maze/curriculum.js';
 import { parse, parseProgram, commandNames } from './maze/lang.js';
 import { formatError } from './maze/format-error.js';
@@ -9,6 +9,7 @@ import { getArt } from './rewards/art/index.js';
 import { CREATURES } from './rewards/creatures.js';
 import { svgEl } from './rewards/fx.js';
 import { createPenalty } from './penalty.js';
+import { t, tf, tn } from './i18n.js';
 
 const play = (id) => {
   const a = document.getElementById(id);
@@ -31,67 +32,58 @@ const SHOWN_ON_LIMIT = 16;
 const drafts = new Map();
 
 const NEWS = {
-  1: ['Tape forward() puis Entrée : ton héros avance d’une case.', ['forward()'], ['forward()']],
-  7: ['Ton héros peut tourner à droite, sur place.', ['turn_right()'], ['turnRight()']],
-  13: ['Il peut aussi tourner à gauche. Regarde bien de quel côté va le chemin !', ['turn_left()'], ['turnLeft()']],
-  19: ['Un chemin en L a un virage ; un chemin en Z en a deux, dans des sens opposés.', ['forward(); turn_left(); forward()'], ['forward(); turnLeft(); forward();']],
-  25: ['Un nombre dans forward() fait avancer de plusieurs cases d’un coup.', ['forward(3)'], ['forward(3)']],
-  33: ['Deux virages du même côté font un demi-tour en U. Pour contourner un mur : tourne, avance, puis retourne.', ['turn_right(); forward(); turn_right()'], ['turnRight(); forward(); turnRight();']],
-  41: ['Une boucle for répète des commandes : parfait pour tracer un carré !', ['for i in range(4): forward(2); turn_left()'], ['for (let i = 0; i < 4; i++) { forward(2); turnLeft(); }']],
-  53: ['Un escalier, c’est une marche répétée : avance, tourne, avance, tourne de l’autre côté.', ['for i in range(3): forward(); turn_left(); forward(); turn_right()'], ['for (let i = 0; i < 3; i++) { forward(); turnLeft(); forward(); turnRight(); }']],
-  63: ['Spirales et zigzags : une boucle avec forward(n) et des virages.', ['for i in range(2): forward(3); turn_right()'], ['for (let i = 0; i < 2; i++) { forward(3); turnRight(); }']],
-  73: ['Tu écris maintenant un vrai programme sur plusieurs lignes, puis tu appuies sur ▶ Lancer. Une boucle peut en contenir une autre ; une variable garde un nombre.',
-    ['for i in range(2):\n    for j in range(3):\n        forward()\n    turn_right()', 'n = 1\nforward(n)\nn += 1'],
+  1: [['forward()'], ['forward()']],
+  7: [['turn_right()'], ['turnRight()']],
+  13: [['turn_left()'], ['turnLeft()']],
+  19: [['forward(); turn_left(); forward()'], ['forward(); turnLeft(); forward();']],
+  25: [['forward(3)'], ['forward(3)']],
+  33: [['turn_right(); forward(); turn_right()'], ['turnRight(); forward(); turnRight();']],
+  41: [['for i in range(4): forward(2); turn_left()'], ['for (let i = 0; i < 4; i++) { forward(2); turnLeft(); }']],
+  53: [['for i in range(3): forward(); turn_left(); forward(); turn_right()'], ['for (let i = 0; i < 3; i++) { forward(); turnLeft(); forward(); turnRight(); }']],
+  63: [['for i in range(2): forward(3); turn_right()'], ['for (let i = 0; i < 2; i++) { forward(3); turnRight(); }']],
+  73: [['for i in range(2):\n    for j in range(3):\n        forward()\n    turn_right()', 'n = 1\nforward(n)\nn += 1'],
     ['for (let i = 0; i < 2; i++) {\n  for (let j = 0; j < 3; j++) {\n    forward();\n  }\n  turnRight();\n}', 'let n = 1;\nforward(n);\nn += 1;']],
-  87: ['Une fonction donne un nom à un motif : écris-le une fois, appelle-le plusieurs fois.',
-    ['def bosse():\n    turn_left()\n    forward()\nbosse()\nbosse()'],
+  87: [['def bosse():\n    turn_left()\n    forward()\nbosse()\nbosse()'],
     ['function bosse() {\n  turnLeft();\n  forward();\n}\nbosse();\nbosse();']],
-  101: ['Trois mondes, un seul programme ! while répète tant que c’est vrai ; if / else choisit.',
-    ['while not wall():\n    forward()', 'if wall():\n    turn_left()\nelse:\n    forward()'],
+  101: [['while not wall():\n    forward()', 'if wall():\n    turn_left()\nelse:\n    forward()'],
     ['while (!wall()) {\n  forward();\n}', 'if (wall()) {\n  turnLeft();\n} else {\n  forward();\n}']],
 };
 
-function helpFor(level, lang) {
+export function helpFor(level, lang, ui) {
   const n = commandNames(lang);
   const py = lang === 'py';
+  const h = (k, v) => tf(ui, `maze.help.${k}`, v);
   const has = (f) => CURRICULUM[level - 1].skills.includes(f);
-  const out = [[`${n.forward}()`, 'avance d’une case']];
-  if (has('turnR')) out.push([`${n.right}()`, 'tourne à droite']);
-  if (has('turnL')) out.push([`${n.left}()`, 'tourne à gauche']);
-  if (has('long')) out.push([`${n.forward}(3)`, 'avance de 3 cases']);
+  const out = [[`${n.forward}()`, h('forward')]];
+  if (has('turnR')) out.push([`${n.right}()`, h('right')]);
+  if (has('turnL')) out.push([`${n.left}()`, h('left')]);
+  if (has('long')) out.push([`${n.forward}(3)`, h('long')]);
   if (level <= 72) {
-    if (has('square')) out.push([py ? 'for i in range(4): …' : 'for (let i = 0; i < 4; i++) …', 'répète 4 fois']);
-    out.push(['a; b', 'plusieurs commandes sur une ligne']);
+    if (has('square')) out.push([py ? 'for i in range(4): …' : 'for (let i = 0; i < 4; i++) …', h('square')]);
+    out.push(['a; b', h('multi')]);
     return out;
   }
-  const under = py ? 'les lignes décalées en dessous' : 'les lignes entre { et }';
-  out.push([py ? 'for i in range(4):' : 'for (let i = 0; i < 4; i++) {', `répète 4 fois ${under}`]);
-  if (has('vars')) out.push([py ? 'n = 1' : 'let n = 1;', 'une variable'], [py ? 'n += 1' : 'n += 1;', 'la variable grandit de 1']);
-  if (has('fn')) out.push([py ? 'def motif():' : 'function motif() {', `une fonction : ${under}`]);
-  if (has('param')) out.push([py ? 'def cote(n):' : 'function cote(n) {', 'une fonction à paramètre']);
+  const under = h(py ? 'underPy' : 'underJs');
+  out.push([py ? 'for i in range(4):' : 'for (let i = 0; i < 4; i++) {', h('loop', { under })]);
+  if (has('vars')) out.push([py ? 'n = 1' : 'let n = 1;', h('var')], [py ? 'n += 1' : 'n += 1;', h('varInc')]);
+  if (has('fn')) out.push([py ? 'def motif():' : 'function motif() {', h('fn', { under })]);
+  if (has('param')) out.push([py ? 'def cote(n):' : 'function cote(n) {', h('param')]);
   if (has('while')) {
-    out.push([py ? 'while not wall():' : 'while (!wall()) {', 'tant que la voie est libre'],
-      [py ? 'while not goal():' : 'while (!goal()) {', 'jusqu’à l’étoile']);
+    out.push([py ? 'while not wall():' : 'while (!wall()) {', h('whileWall')],
+      [py ? 'while not goal():' : 'while (!goal()) {', h('whileGoal')]);
   }
-  if (has('ifelse')) out.push([py ? 'if wall():' : 'if (wall()) {', 'si un mur est devant…'], [py ? 'else:' : '} else {', '… sinon']);
-  out.push(['1 ligne', 'une seule instruction par ligne'], ['Ctrl + Entrée', 'lance le programme']);
+  if (has('ifelse')) out.push([py ? 'if wall():' : 'if (wall()) {', h('ifWall')], [py ? 'else:' : '} else {', h('else')]);
+  out.push([h('oneLine'), h('oneLineWhat')], [h('runKeys'), h('runWhat')]);
   return out;
 }
 
-const FAIL = {
-  limit: 'ton héros a fait plus de 500 actions : une boucle ne s’arrête peut-être jamais.',
-  steps: 'ce programme tourne sans fin : une boucle ne s’arrête jamais ?',
-  depth: 'trop de fonctions appelées les unes dans les autres.',
-  value: 'ce nombre est trop grand (ou négatif).',
-  undefined: 'ce nom n’est pas encore défini.',
-};
-function failText(res) {
+const FAIL = ['limit', 'steps', 'depth', 'value', 'undefined'];
+export function failText(res, ui) {
   if (res.error) {
-    const m = FAIL[res.error.code] ?? 'le programme s’est arrêté.';
-    return res.error.line ? `Ligne ${res.error.line} : ${m}` : m[0].toUpperCase() + m.slice(1);
+    const msg = t(ui, `maze.fail.${FAIL.includes(res.error.code) ? res.error.code : 'stopped'}`);
+    return res.error.line ? tf(ui, 'maze.fail.at', { n: res.error.line, msg, low: msg[0].toLowerCase() + msg.slice(1) }) : msg;
   }
-  if (res.events.at(-1)?.k === 'bump') return 'Aïe ! Il y a un mur devant.';
-  return 'Le programme est fini, mais le héros n’est pas sur l’étoile.';
+  return t(ui, res.events.at(-1)?.k === 'bump' ? 'maze.fail.bump' : 'maze.fail.notGoal');
 }
 
 function frame(maze) {
@@ -119,9 +111,11 @@ const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export function startMaze(root, state, target, handlers) {
   root.replaceChildren();
+  const ui = () => handlers.getState().settings.language;
+  const T = (key, vars) => tf(ui(), key, vars);
   const bar = el('div', 'bar');
   const back = el('button', 'back round', '←');
-  back.setAttribute('aria-label', 'Retour');
+  back.setAttribute('aria-label', T('maze.ui.back'));
   const score = el('div', 'pill score');
   const meter = el('div', 'meter');
   meter.setAttribute('role', 'progressbar');
@@ -136,13 +130,13 @@ export function startMaze(root, state, target, handlers) {
   const term = el('div', 'term');
   const head = el('div', 'term-head');
   const title = el('span', 'term-title');
-  const helpBtn = el('button', 'term-btn', 'Aide');
+  const helpBtn = el('button', 'term-btn', T('maze.ui.help'));
   helpBtn.type = 'button';
   helpBtn.setAttribute('aria-expanded', 'false');
   const resetBtn = el('button', 'term-btn', '↺');
-  resetBtn.append(el('span', 'term-btn-text', ' Recommencer'));
+  resetBtn.append(el('span', 'term-btn-text', ` ${T('maze.ui.reset')}`));
   resetBtn.type = 'button';
-  resetBtn.setAttribute('aria-label', 'Recommencer le niveau');
+  resetBtn.setAttribute('aria-label', T('maze.ui.resetAria'));
   head.append(title, helpBtn, resetBtn);
   const news = el('div', 'term-new');
   const help = el('div', 'term-help');
@@ -165,7 +159,7 @@ export function startMaze(root, state, target, handlers) {
   Object.assign(input, { type: 'text', spellcheck: false, autocomplete: 'off', enterKeyHint: 'send' });
   input.setAttribute('autocapitalize', 'off');
   input.setAttribute('autocorrect', 'off');
-  input.setAttribute('aria-label', 'Terminal');
+  input.setAttribute('aria-label', T('maze.ui.terminal'));
   field.append(ghost, input);
   line.append(prompt, field);
   const hintBox = el('div', 'term-hint');
@@ -177,14 +171,14 @@ export function startMaze(root, state, target, handlers) {
   Object.assign(ed, { spellcheck: false, autocomplete: 'off', wrap: 'off' });
   ed.setAttribute('autocapitalize', 'off');
   ed.setAttribute('autocorrect', 'off');
-  ed.setAttribute('aria-label', 'Programme');
+  ed.setAttribute('aria-label', T('maze.ui.program'));
   ed.setAttribute('aria-describedby', 'maze-ed-tip');
   edBox.append(gutter, ed);
   const edBar = el('div', 'ed-bar');
   const count = el('span', 'ed-count');
-  const tip = el('span', 'ed-tip', 'Échap puis Tab pour sortir');
+  const tip = el('span', 'ed-tip', T('maze.ui.edTip'));
   tip.id = 'maze-ed-tip';
-  const runBtn = el('button', 'ed-run', '▶ Lancer');
+  const runBtn = el('button', 'ed-run', T('maze.ui.run'));
   runBtn.type = 'button';
   runBtn.setAttribute('aria-keyshortcuts', 'Control+Enter Meta+Enter');
   edBar.append(count, tip, runBtn);
@@ -278,7 +272,7 @@ export function startMaze(root, state, target, handlers) {
   function draw() {
     const { x0, x1, y0, y1 } = frame(maze);
     const svg = svgEl('svg', { class: 'maze-svg', viewBox: `${x0 * C} ${y0 * C} ${(x1 - x0 + 1) * C} ${(y1 - y0 + 1) * C}`, role: 'img' });
-    svg.setAttribute('aria-label', `Labyrinthe du tour ${level}`);
+    svg.setAttribute('aria-label', T('maze.ui.board', { level }));
     svg.append(svgEl('rect', { x: x0 * C, y: y0 * C, width: (x1 - x0 + 1) * C, height: (y1 - y0 + 1) * C, rx: 4, class: 'mz-floor' }));
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
@@ -327,7 +321,7 @@ export function startMaze(root, state, target, handlers) {
     m.classList.remove('ok', 'ko');
     if (state) m.classList.add(state);
     m.lastChild.textContent = state === 'ok' ? '✓' : state === 'ko' ? '✗' : '◌';
-    m.setAttribute('aria-label', `Monde ${i + 1} : ${state === 'ok' ? 'réussi' : state === 'ko' ? 'raté' : 'pas encore testé'}`);
+    m.setAttribute('aria-label', T(state === 'ok' ? 'maze.ui.worldOk' : state === 'ko' ? 'maze.ui.worldKo' : 'maze.ui.worldTodo', { n: i + 1 }));
   }
 
   const counted = () => level === s.progress.maze.level && (level < MAX_LEVEL || s.progress.maze.correct < answersPerLevel(s.settings.age, 'maze'));
@@ -345,20 +339,20 @@ export function startMaze(root, state, target, handlers) {
     prog = spec.mode === 'program';
     if (prog !== wasProg || prog) log.replaceChildren();
     screen.classList.toggle('maze-prog', prog);
-    title.textContent = `Tour ${level} · Exercice ${ex + 1}/3 · ${mazeLevelName(level, s.settings.language)}`;
+    title.textContent = T('maze.ui.title', { level, ex: ex + 1, name: mazeLevelName(level, ui()) });
     title.title = title.textContent;
 
     news.replaceChildren();
-    const intro = skillIntro(level) && ex === 0 ? NEWS[level] : null;
+    const intro = skillIntro(level, ui()) && ex === 0 ? NEWS[level] : null;
     news.hidden = !intro;
     if (intro) {
-      const [text, py, js] = intro;
-      news.append(el('b', '', 'Nouveau : '), el('span', '', text));
+      const [py, js] = intro;
+      news.append(el('b', '', T('maze.ui.new')), el('span', '', T(`maze.news.${level}`)));
       for (const code of lang === 'py' ? py : js) news.append(el('code', code.includes('\n') ? 'blk' : '', code));
     }
-    help.replaceChildren(el('b', '', 'Commandes'));
+    help.replaceChildren(el('b', '', T('maze.ui.commands')));
     const dl = el('ul');
-    for (const [code, what] of helpFor(level, lang)) {
+    for (const [code, what] of helpFor(level, lang, ui())) {
       const li = el('li');
       li.append(el('code', '', code), el('span', '', ` ${what}`));
       dl.append(li);
@@ -366,7 +360,7 @@ export function startMaze(root, state, target, handlers) {
     help.append(dl);
 
     if (prog) {
-      hintBox.textContent = `💡 ${spec.hint}`;
+      hintBox.textContent = `💡 ${hintFor(CURRICULUM[level - 1].focus, ui())}`;
       marks = spec.worlds.length > 1 ? spec.worlds.map((w) => {
         const m = el('div', 'mz-thumb');
         m.setAttribute('role', 'img');
@@ -380,16 +374,14 @@ export function startMaze(root, state, target, handlers) {
       edChanged();
       term.replaceChildren(head, news, hintBox, help, thumbs, edBox, edBar, log);
       showWorld(0);
-      note(spec.worlds.length > 1
-        ? 'Un seul programme pour les trois mondes. Écris-le, puis ▶ Lancer.'
-        : 'Écris ton programme, puis appuie sur ▶ Lancer.', 'info');
+      note(T(spec.worlds.length > 1 ? 'maze.ui.progMulti' : 'maze.ui.progOne'), 'info');
     } else {
       marks = [];
       term.replaceChildren(head, news, help, log, line);
       showWorld(0);
       ghostText = level <= 12 ? `${names.forward}()` : '';
       updateGhost();
-      note(`Tour ${level}, exercice ${ex + 1} : guide ton héros jusqu’à l’étoile.`, 'info');
+      note(T('maze.ui.replStart', { level, ex: ex + 1 }), 'info');
     }
     paint();
   }
@@ -400,8 +392,8 @@ export function startMaze(root, state, target, handlers) {
     const pct = Math.round((100 * Math.min(done, total)) / total);
     fill.style.width = `${pct}%`;
     meter.setAttribute('aria-valuenow', String(pct));
-    meter.setAttribute('aria-label', `Tour ${level}, ${done} exercice${done > 1 ? 's' : ''} sur ${total}`);
-    lvlTag.textContent = `Niveau ${level} · ${Math.min(done, total)}/${total}`;
+    meter.setAttribute('aria-label', tn(ui(), 'maze.ui.meter', done, { level, total }));
+    lvlTag.textContent = T('maze.ui.lvlTag', { level, done: Math.min(done, total), total });
   }
 
   function add(node) {
@@ -445,7 +437,7 @@ export function startMaze(root, state, target, handlers) {
     drafts.delete(draftKey());
     correct();
     play('correctAnswer');
-    note('Bravo, tu as trouvé l’étoile !', 'win');
+    note(T('maze.ui.win'), 'win');
     await dance(t);
     if (t !== token) return;
     place(pos.x, pos.y);
@@ -478,7 +470,7 @@ export function startMaze(root, state, target, handlers) {
     const r = parse(src, lang);
     if (!r.ok) {
       row.classList.add('bad');
-      const { message, hint } = formatError(r.error, handlers.getState().settings.language);
+      const { message, hint } = formatError(r.error, ui());
       note(message, 'err');
       if (hint) note(hint, 'tip');
       if (r.error.code !== 'empty') wrong();
@@ -487,7 +479,7 @@ export function startMaze(root, state, target, handlers) {
     const res = execute(r.prog, world);
     if (res.error) {
       row.classList.add('bad');
-      note('Cette boucle est trop longue, essaie plus court.', 'err');
+      note(T('maze.ui.loopTooLong'), 'err');
       return;
     }
     if (!res.events.some((ev) => ev.k === 'bump')) row.append(el('span', 'term-ok', ' ✓'));
@@ -496,7 +488,7 @@ export function startMaze(root, state, target, handlers) {
       if (t !== token) return;
       if (ev.k === 'goal') return win(t);
       if (ev.k === 'bump') {
-        note('Aïe ! Il y a un mur devant.', 'err');
+        note(T('maze.fail.bump'), 'err');
         wrong();
       }
       await animate(ev, t);
@@ -520,7 +512,7 @@ export function startMaze(root, state, target, handlers) {
     gutter.textContent = Array.from({ length: n }, (_, i) => i + 1).join('\n');
     gutter.scrollTop = ed.scrollTop;
     const used = codeLines(), budget = spec.budget[lang];
-    count.textContent = `Lignes : ${used} / ${budget}`;
+    count.textContent = T('maze.ui.lines', { used, budget });
     count.classList.toggle('over', used > budget);
     if (ed.value) drafts.set(draftKey(), ed.value); else drafts.delete(draftKey());
   }
@@ -538,7 +530,7 @@ export function startMaze(root, state, target, handlers) {
     const r = parseProgram(ed.value, lang);
     if (!r.ok) {
       showWorld(0);
-      const { message, hint } = formatError(r.error, handlers.getState().settings.language);
+      const { message, hint } = formatError(r.error, ui());
       note(message, 'err');
       if (hint) note(hint, 'tip');
       if (r.error.code !== 'empty') wrong();
@@ -547,7 +539,7 @@ export function startMaze(root, state, target, handlers) {
     const n = spec.worlds.length;
     for (let i = 0; i < n; i++) {
       showWorld(i);
-      if (n > 1) note(`Monde ${i + 1}…`, 'info');
+      if (n > 1) note(T('maze.ui.worldRun', { n: i + 1 }), 'info');
       const res = executeProgram(r.program, world);
       const endless = res.error?.code === 'limit' || res.error?.code === 'steps';
       for (const ev of endless ? res.events.slice(0, SHOWN_ON_LIMIT) : res.events) {
@@ -557,7 +549,7 @@ export function startMaze(root, state, target, handlers) {
       }
       if (!res.world.done) {
         mark(i, 'ko');
-        note((n > 1 ? `Monde ${i + 1} : ` : '') + failText(res), 'err');
+        note(n > 1 ? T('maze.ui.worldFail', { n: i + 1, msg: failText(res, ui()) }) : failText(res, ui()), 'err');
         wrong();
         await wait(reduced() ? 0 : 800, t);
         if (t !== token) return;
@@ -576,7 +568,7 @@ export function startMaze(root, state, target, handlers) {
     }
     const budget = spec.budget[lang];
     if (r.lines > budget) {
-      note(`Ça marche ! Peux-tu l’écrire en ${budget} lignes ?`, 'tip');
+      note(T('maze.ui.shorter', { budget }), 'tip');
       await wait(reduced() ? 0 : 800, t);
       if (t !== token) return;
       showWorld(0);
@@ -668,7 +660,7 @@ export function startMaze(root, state, target, handlers) {
     cancel();
     marks.forEach((_, i) => mark(i, null));
     showWorld(0);
-    note(prog ? 'Le héros revient au départ. Ton programme est gardé.' : 'On recommence ce niveau.', 'info');
+    note(T(prog ? 'maze.ui.resetProg' : 'maze.ui.resetRepl'), 'info');
     focusField();
   };
   back.onclick = () => {

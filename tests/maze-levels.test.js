@@ -39,7 +39,6 @@ test('levelSpec: forme, déterminisme, makeMaze = monde 0', () => {
     assert.equal(s.exercise, e);
     assert.equal(s.mode, l <= 72 ? 'repl' : 'program');
     assert.equal(s.worlds.length, l >= 101 ? 3 : 1);
-    assert.ok(s.hint.length > 5);
     assert.ok(s.reference.py && s.reference.js);
     assert.deepEqual(levelSpec(l, e), s);
     assert.deepEqual(makeMaze(l, e), s.worlds[0]);
