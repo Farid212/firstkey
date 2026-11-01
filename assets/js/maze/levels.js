@@ -2,7 +2,7 @@ import { LEVELS } from './levels-data.js';
 import { CURRICULUM } from './curriculum.js';
 import { decodeSpec } from './levels-format.js';
 
-export { HINTS } from './levels-format.js';
+export { HINTS, hintFor } from './levels-format.js';
 
 const cache = new Map();
 export function levelSpec(level, exercise = 0) {

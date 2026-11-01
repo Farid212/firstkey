@@ -4,6 +4,7 @@ import { discoverExercise } from './discover.js';
 import { discover2Exercise } from './discover2.js';
 import { createTyper } from './typer.js';
 import { createPenalty } from './penalty.js';
+import { t, tf, tn } from './i18n.js';
 import { getArt } from './rewards/art/index.js';
 import { CREATURES } from './rewards/creatures.js';
 
@@ -44,7 +45,7 @@ export function startDiscover(root, state, target, handlers) {
   root.replaceChildren();
   const bar = el('div', 'bar');
   const back = el('button', 'back round', '←');
-  back.setAttribute('aria-label', 'Retour');
+  back.setAttribute('aria-label', t(state.settings.language, 'back'));
   back.tabIndex = -1;
   const score = el('div', 'pill score');
   const meter = el('div', 'meter');
@@ -126,8 +127,8 @@ export function startDiscover(root, state, target, handlers) {
     const pct = Math.round((100 * Math.min(done, total)) / total);
     fill.style.width = `${pct}%`;
     meter.setAttribute('aria-valuenow', String(pct));
-    meter.setAttribute('aria-label', `Niveau ${level}, ${done} exercice${done > 1 ? 's' : ''} sur ${total}`);
-    lvlTag.textContent = `Niveau ${level} · ${Math.min(done, total)}/${total}`;
+    meter.setAttribute('aria-label', tn(s.settings.language, 'discover.meterAria', done, { level, total }));
+    lvlTag.textContent = tf(s.settings.language, 'discover.levelTag', { level, done: Math.min(done, total), total });
   }
 
   const restart = (node, cls) => {

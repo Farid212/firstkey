@@ -152,7 +152,7 @@ test('leveldown joue stickman et n\'attribue rien', async () => {
     t.fire('leveldown', { blockId: 'letters', oldLevel: 3, newLevel: 2 });
     assert.equal(t.runs, 1);
     assert.equal(t.order[0], 'stickman');
-    assert.deepEqual(calls, [{ oldLevel: 3, newLevel: 2 }]);
+    assert.deepEqual(calls, [{ oldLevel: 3, newLevel: 2, lang: 'fr' }]);
     assert.equal(t.state.rewards, before);
     await t.drain();
   } finally {

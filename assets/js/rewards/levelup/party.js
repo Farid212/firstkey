@@ -1,3 +1,4 @@
+import { tf, t } from '../../i18n.js';
 import { ease, track, clamp } from '../anim.js';
 import { svgEl, showCard } from '../fx.js';
 import { SFX } from '../audio.js';
@@ -6,9 +7,9 @@ import { bandScene, particles, COLS } from './stickman.js';
 const DUR = 4.2;
 const BALLOON = ['#ff4d6d', '#ffd23f', '#3bceac', '#4361ee', '#b15cff', '#ff9f1c'];
 
-export function party(fx, { newLevel } = {}) {
+export function party(fx, { newLevel, lang } = {}) {
   const label = newLevel != null ? String(newLevel) : null;
-  if (fx.reduced) return showCard(fx, null, SFX.fanfare, label ? `Niveau ${label}` : 'Bravo !');
+  if (fx.reduced) return showCard(fx, null, SFX.fanfare, label ? tf(lang, 'level', { n: label }) : t(lang, 'bravo'));
   return fx.run(async (g) => {
     const S = bandScene(fx, g);
     const parts = particles(S.scene);

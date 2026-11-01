@@ -1,4 +1,4 @@
-import { CHAPTERS, chapterColor } from '../chapters.js';
+import { CHAPTERS, chapterColor, chapterName, chapterShort } from '../chapters.js';
 import { svgEl } from './fx.js';
 import { celebrateCard } from './badge-art.js';
 
@@ -8,13 +8,14 @@ const find = (chapterId) => {
   return chapter && { chapter, color: chapterColor(blockId, Number(i)) };
 };
 
-export function stickerSvg(chapterId, locked) {
+export function stickerSvg(chapterId, locked, lang) {
   const svg = svgEl('svg', { viewBox: '0 0 100 100', role: 'img' });
   const f = find(chapterId);
   if (!f) return svg;
   const { chapter, color } = f;
   const edge = locked ? '#b9b9c6' : color;
-  svg.setAttribute('aria-label', chapter.short);
+  const short = chapterShort(chapter, lang);
+  svg.setAttribute('aria-label', short);
   svg.append(
     svgEl('circle', { cx: 50, cy: 46, r: 40, fill: locked ? '#f0f0f4' : '#fff', stroke: edge, 'stroke-width': 7 }),
     svgEl('circle', { cx: 50, cy: 46, r: 32, fill: 'none', stroke: edge, 'stroke-width': 1.5, 'stroke-dasharray': '3 4', opacity: 0.6 }),
@@ -31,11 +32,13 @@ export function stickerSvg(chapterId, locked) {
   }
   svg.append(svgEl('path', { d: 'M4 72 L96 72 L91 81 L96 90 L4 90 L9 81 Z', fill: locked ? '#9a9aab' : color }));
   const label = svgEl('text', { x: 50, y: 81.5, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: '#fff', 'font-weight': 800,
-    'font-family': 'system-ui,sans-serif', 'font-size': Math.min(11, 160 / Math.max(6, chapter.short.length)).toFixed(1) });
-  label.textContent = chapter.short;
+    'font-family': 'system-ui,sans-serif', 'font-size': Math.min(11, 160 / Math.max(6, [...short].length)).toFixed(1) });
+  label.textContent = short;
   svg.append(label);
   return svg;
 }
 
-export const celebrateSticker = (fx, { chapterId }) =>
-  celebrateCard(fx, () => stickerSvg(chapterId, false), find(chapterId)?.chapter.name ?? '');
+export const celebrateSticker = (fx, { chapterId, lang }) => {
+  const f = find(chapterId);
+  return celebrateCard(fx, () => stickerSvg(chapterId, false, lang), f ? chapterName(f.chapter, lang) : '');
+};

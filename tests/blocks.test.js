@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BLOCKS, CATEGORIES } from '../assets/js/blocks.js';
+import { BLOCKS, CATEGORIES, blockLabel, categoryName } from '../assets/js/blocks.js';
 import { defaultState, loadState } from '../assets/js/store.js';
 import { pickBlock } from '../assets/js/progress.js';
 import { BADGES } from '../assets/js/rewards/badges.js';
@@ -8,6 +8,7 @@ import { categoryGames, visibleCategories } from '../assets/js/ui-home.js';
 
 const SOON = ['logic', 'draw', 'music', 'bugs', 'pixel', 'trainer', 'guess', 'hangman', 'vault', 'caesar', 'cookie', 'rps', 'transform'];
 const OLD = ['letters', 'words', 'math', 'maze', 'js', 'python'];
+const fr = (b) => ({ ...b, label: blockLabel(b, 'fr') });
 const fake = (raw) => ({ getItem: () => JSON.stringify(raw), setItem() {} });
 
 test('métadonnées: catégorie valide, groupe seulement dans Programmer, ids uniques', () => {
@@ -21,8 +22,8 @@ test('métadonnées: catégorie valide, groupe seulement dans Programmer, ids un
   assert.deepEqual(BLOCKS.filter((b) => !b.playable).map((b) => b.id).sort(), [...SOON].sort());
   assert.deepEqual(BLOCKS.filter((b) => b.playable).map((b) => b.id).sort(), [...OLD, 'discover', 'discover2'].sort());
   assert.equal(BLOCKS.find((b) => b.id === 'maze').mix, false);
-  assert.deepEqual(BLOCKS.find((b) => b.id === 'discover'), { id: 'discover', minAge: 8, label: 'Découvre le JavaScript', playable: true, mix: false, category: 'code', group: 'js' });
-  assert.deepEqual(BLOCKS.find((b) => b.id === 'discover2'), { id: 'discover2', minAge: 9, label: 'JavaScript, aller plus loin', playable: true, mix: false, category: 'code', group: 'js' });
+  assert.deepEqual(fr(BLOCKS.find((b) => b.id === 'discover')), { id: 'discover', minAge: 8, label: 'Découvre le JavaScript', playable: true, mix: false, category: 'code', group: 'js' });
+  assert.deepEqual(fr(BLOCKS.find((b) => b.id === 'discover2')), { id: 'discover2', minAge: 9, label: 'JavaScript, aller plus loin', playable: true, mix: false, category: 'code', group: 'js' });
   assert.deepEqual(BLOCKS.filter((b) => b.group === 'js').map((b) => b.id), ['discover', 'discover2', 'js', 'cookie', 'rps', 'transform']);
 });
 
@@ -66,4 +67,19 @@ test('catégories visibles: au moins un jeu jouable coché; « bientôt » toujo
   assert.deepEqual(visibleCategories(s).map((c) => c.id), ['read']);
   s.settings.blocks = ['js'];
   assert.deepEqual(categoryGames(s, 'code').map((b) => b.id), ['draw', 'music', 'bugs', 'pixel', 'trainer', 'guess', 'hangman', 'vault', 'caesar', 'js', 'cookie', 'rps', 'transform']);
+});
+
+const LANGS = ['fr', 'en', 'ja', 'es'];
+const FR_LABELS = ['Lettres', 'Mots et histoires', 'Calcul', 'Logique et suites', 'Labyrinthe', 'Robot dessinateur', 'Compose une mélodie', 'Chasse aux bugs', 'Pixel art', 'Dresseur de créatures', 'Quiz Python', 'Devine le nombre', 'Pendu', 'Coffre-fort', 'Message secret', 'Découvre le JavaScript', 'JavaScript, aller plus loin', 'Quiz JavaScript', 'Cookie clicker', 'Pierre-feuille-ciseaux', 'Machine à transformer'];
+
+test('noms des blocs et catégories: quatre langues, français inchangé', () => {
+  assert.deepEqual(BLOCKS.map((b) => blockLabel(b, 'fr')), FR_LABELS);
+  assert.deepEqual(CATEGORIES.map((c) => categoryName(c, 'fr')), ['Lire et écrire', 'Nombres et logique', 'Programmer']);
+  for (const x of [...BLOCKS.map((b) => b.label), ...CATEGORIES.map((c) => c.name)]) {
+    assert.deepEqual(Object.keys(x).sort(), [...LANGS].sort());
+    for (const l of LANGS) assert.ok(typeof x[l] === 'string' && x[l].trim(), `${x.fr} ${l}`);
+  }
+  assert.equal(blockLabel(BLOCKS.find((b) => b.id === 'maze'), 'en'), 'Maze');
+  assert.equal(blockLabel(BLOCKS.find((b) => b.id === 'maze'), 'de'), 'Maze');
+  assert.equal(categoryName(CATEGORIES[2], 'es'), 'Programar');
 });

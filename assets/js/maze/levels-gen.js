@@ -2,7 +2,6 @@ import { CURRICULUM } from './curriculum.js';
 import { SEGMENTS, FINAL_ONLY, carve, walkCells, solutionPath, compressedLength, sizeOf, mulberry32, int, pick, shuffle } from './gen.js';
 import { parse, parseProgram } from './lang.js';
 import { createWorld, execute, executeProgram } from './world.js';
-import { HINTS } from './levels-format.js';
 
 const MAX_ATTEMPTS = 3000;
 const PREFIXABLE = ['straight', 'turnR', 'turnL', 'L', 'Z', 'long', 'U', 'detour', 'square', 'stairs'];
@@ -381,7 +380,7 @@ function generate(level, ex) {
   const q = !below ? (len > 1 ? ex / (len * 3 - 1) : ex / 2) : level === last ? 0 : 1 / (last - level + 2);
   const c = from[Math.round(q * (from.length - 1))];
   for (const w of c.worlds) taken.add(sig(w));
-  return { level, exercise: ex, ...c, hint: HINTS[focus] };
+  return { level, exercise: ex, ...c };
 }
 
 export function generateSpec(level, exercise = 0) {

@@ -1,3 +1,9 @@
+import ui from './i18n/ui.js';
+import game from './i18n/game.js';
+import rewards from './i18n/rewards.js';
+import maze from './i18n/maze.js';
+import mazeUi from './i18n/maze-ui.js';
+
 export const LANG_LIST = [
   { id: 'fr', flag: '🇫🇷', name: 'Français' },
   { id: 'en', flag: '🇬🇧', name: 'English' },
@@ -5,73 +11,30 @@ export const LANG_LIST = [
   { id: 'es', flag: '🇪🇸', name: 'Español' },
 ];
 
-const STRINGS = {
-  fr: {
-    hello: 'Coucou !',
-    whoAreYou: 'Tu es qui ?',
-    child: 'Un enfant !',
-    adult: 'Un grand',
-    whatAge: 'Quel âge as-tu ?',
-    parentTitle: 'Bienvenue !',
-    parentBody: 'First Key est né d’une envie simple : apprendre les lettres, les mots et le calcul, puis les premiers pas du code, en jouant. Il s’adresse aux enfants de 2 à 14 ans. Il leur fait découvrir le clavier, la lecture et la logique, et leur donne confiance en eux. Le niveau monte tout seul, à leur rythme et selon leur âge.',
-    letsGo: 'C’est parti !',
-    setAge: 'Âge',
-    setUppercase: 'Majuscules',
-    setRewardAnimations: 'Animations de récompense',
-    setRewardSounds: 'Sons de récompense',
-    setLanguage: 'Langue',
-    setCodeLanguage: 'Langage de programmation',
-  },
-  en: {
-    hello: 'Hi there!',
-    whoAreYou: 'Who are you?',
-    child: 'A kid!',
-    adult: 'A grown-up',
-    whatAge: 'How old are you?',
-    parentTitle: 'Welcome!',
-    parentBody: 'First Key was made with a simple wish: to help children learn letters, words and maths, then their very first steps in code, through play. It is for kids aged 2 to 14. It teaches them the keyboard, reading and logic, and builds their confidence. The level rises on its own, at their pace and for their age.',
-    letsGo: 'Let’s go!',
-    setAge: 'Age',
-    setUppercase: 'Uppercase letters',
-    setRewardAnimations: 'Reward animations',
-    setRewardSounds: 'Reward sounds',
-    setLanguage: 'Language',
-    setCodeLanguage: 'Programming language',
-  },
-  ja: {
-    hello: 'こんにちは！',
-    whoAreYou: 'きみは だれ？',
-    child: 'こども！',
-    adult: 'おとな',
-    whatAge: 'なんさい？',
-    parentTitle: 'ようこそ！',
-    parentBody: 'First Key は、遊びながら文字や単語、計算、そしてプログラミングの第一歩を学べるように作られました。対象は2歳から14歳のお子さまです。キーボード、読む力、論理的な考え方が身につき、自信にもつながります。レベルはお子さまのペースと年齢に合わせて、自然に上がっていきます。',
-    letsGo: 'はじめよう！',
-    setAge: '年齢',
-    setUppercase: '大文字',
-    setRewardAnimations: 'ごほうびアニメーション',
-    setRewardSounds: 'ごほうびの音',
-    setLanguage: '言語',
-    setCodeLanguage: 'プログラミング言語',
-  },
-  es: {
-    hello: '¡Hola!',
-    whoAreYou: '¿Quién eres?',
-    child: '¡Un niño!',
-    adult: 'Un adulto',
-    whatAge: '¿Cuántos años tienes?',
-    parentTitle: '¡Bienvenido!',
-    parentBody: 'First Key nació de un deseo sencillo: aprender las letras, las palabras y el cálculo, y luego los primeros pasos del código, jugando. Es para niños de 2 a 14 años. Les enseña el teclado, la lectura y la lógica, y les da confianza en sí mismos. El nivel sube solo, a su ritmo y según su edad.',
-    letsGo: '¡Vamos!',
-    setAge: 'Edad',
-    setUppercase: 'Letras mayúsculas',
-    setRewardAnimations: 'Animaciones de premio',
-    setRewardSounds: 'Sonidos de premio',
-    setLanguage: 'Idioma',
-    setCodeLanguage: 'Lenguaje de programación',
-  },
-};
+export const DICTIONARIES = [ui, game, rewards, maze, mazeUi];
+
+const STRINGS = Object.fromEntries(LANG_LIST.map(({ id }) => [id, Object.assign({}, ...DICTIONARIES.map((d) => d[id]))]));
 
 export function t(lang, key) {
-  return (STRINGS[lang] || STRINGS.en)[key] ?? STRINGS.en[key];
+  for (const l of [lang, 'en', 'fr']) {
+    const table = Object.hasOwn(STRINGS, l) ? STRINGS[l] : undefined;
+    if (table && Object.hasOwn(table, key)) return table[key];
+  }
+  return key;
 }
+
+export function tf(lang, key, vars = {}) {
+  return t(lang, key).replace(/\{(\w+)\}/g, (m, name) => (name in vars ? String(vars[name]) : m));
+}
+
+export function tn(lang, key, n, vars = {}) {
+  const form = new Intl.PluralRules(lang).select(n);
+  const k = `${key}.${form}`;
+  return tf(lang, !Object.hasOwn(STRINGS[lang] ?? {}, k) ? `${key}.other` : k, { n, ...vars });
+}
+
+export function pick(table, lang) {
+  return table[lang] ?? table.en ?? table.fr;
+}
+
+export const byLang = (fr, en, ja, es) => ({ fr, en, ja, es });

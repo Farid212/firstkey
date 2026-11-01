@@ -46,7 +46,7 @@ test('pickLevelup choisit une des deux variantes', async () => {
 test('les 24 créatures ont un art et des noms dans les 3 langues', () => {
   assert.deepEqual(Object.keys(ART).sort(), CREATURES.map((c) => c.id).sort());
   for (const c of CREATURES) {
-    for (const l of ['fr', 'en', 'ja']) assert.ok(c.names[l], `${c.id} ${l}`);
+    for (const l of ['fr', 'en', 'ja', 'es']) assert.ok(c.names[l], `${c.id} ${l}`);
     assert.deepEqual(validateSound(ART[c.id].cry), [], c.id);
   }
 });
