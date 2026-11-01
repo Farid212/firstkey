@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { answersPerLevel, recordCorrect, jumpTo, pickBlock } from '../assets/js/progress.js';
+import { answersPerLevel, recordCorrect, jumpTo, pickBlock, strikeLimit, starsLostOnDrop, recordDrop } from '../assets/js/progress.js';
 import { defaultState } from '../assets/js/store.js';
 import { MAX_LEVEL } from '../assets/js/blocks.js';
 
@@ -117,4 +117,48 @@ test('maze: un niveau par tour de 3 exercices réussis, jamais tiré au hasard',
   assert.equal(pickBlock(s), null);
   s.settings.blocks = ['maze', 'letters'];
   for (let i = 0; i < 20; i++) assert.equal(pickBlock(s, () => i / 20), 'letters');
+});
+
+test('strikeLimit', () => {
+  assert.equal(strikeLimit(2), Infinity);
+  assert.equal(strikeLimit(6), Infinity);
+  assert.equal(strikeLimit(7), 2);
+  assert.equal(strikeLimit(9), 2);
+  assert.equal(strikeLimit(10), 1);
+  assert.equal(strikeLimit(14), 1);
+});
+
+test('starsLostOnDrop', () => {
+  assert.equal(starsLostOnDrop(8, 'letters', 10), 225);
+  assert.equal(starsLostOnDrop(8, 'maze', 4), 9);
+  assert.equal(starsLostOnDrop(8, 'letters', 1), 0);
+});
+
+test('recordDrop descend d un niveau et retire les étoiles', () => {
+  const s = st8();
+  s.progress.letters = { level: 10, correct: 7 };
+  s.score = 1000;
+  const r = recordDrop(s, 'letters');
+  assert.equal(r.dropped, true);
+  assert.equal(r.from, 10);
+  assert.equal(r.to, 9);
+  assert.deepEqual(r.state.progress.letters, { level: 9, correct: 0 });
+  assert.equal(r.state.score, 775);
+  assert.equal(r.state.progress.words.level, s.progress.words.level);
+  assert.equal(s.progress.letters.level, 10);
+});
+
+test('recordDrop au niveau 1 ne change rien', () => {
+  const s = st8();
+  s.score = 50;
+  const r = recordDrop(s, 'letters');
+  assert.equal(r.dropped, false);
+  assert.deepEqual(r.state, s);
+});
+
+test('recordDrop ne passe pas sous zéro', () => {
+  const s = st8();
+  s.progress.letters = { level: 5, correct: 0 };
+  s.score = 3;
+  assert.equal(recordDrop(s, 'letters').state.score, 0);
 });
