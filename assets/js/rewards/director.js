@@ -23,7 +23,7 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
   const badge = (badgeId) => celebrateBadge(fx, { badgeId, style: badgeStyle(settings().age), lang: lang() });
   const sticker = (chapterId) => celebrateSticker(fx, { chapterId, lang: lang() });
   const save = (rewards) => onChange({ ...getState(), rewards });
-  const levelup = (ctx, variant = pickLevelup(rng)) => LEVELUPS[variant](fx, ctx);
+  const levelup = (ctx, variant = pickLevelup(rng)) => LEVELUPS[variant](fx, { ...ctx, lang: lang() });
 
   async function pump() {
     if (playing) return;
@@ -57,7 +57,7 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
     gap = nextGap(rng);
     const pick = pickReward(getState().rewards, memory, rng);
     const ctx = { letter: rect ? { display, rect } : null, lang: lang() };
-    if (play(() => (pick.creatureId ? runAct(getArt(pick.creatureId), fx, ctx) : party(fx)), 'random')) {
+    if (play(() => (pick.creatureId ? runAct(getArt(pick.creatureId), fx, ctx) : party(fx, { lang: lang() })), 'random')) {
       memory = { lastFamily: pick.family, lastCreatureId: pick.creatureId ?? memory.lastCreatureId };
     }
   }

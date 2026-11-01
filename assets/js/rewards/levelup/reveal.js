@@ -1,3 +1,4 @@
+import { t, pick } from '../../i18n.js';
 import { track, clamp } from '../anim.js';
 import { svgEl, showCard } from '../fx.js';
 import { SFX } from '../audio.js';
@@ -5,14 +6,13 @@ import { CREATURES } from '../creatures.js';
 import { getArt } from '../art/index.js';
 import { bandScene, particles } from './stickman.js';
 
-const NEW = { fr: 'nouveau !', en: 'new!', ja: 'あたらしい！' };
 const DUR = 4.6;
 
 export function reveal(fx, { creatureId, lang }) {
   const art = getArt(creatureId);
   const names = CREATURES.find((c) => c.id === creatureId)?.names;
-  const name = names?.[lang] ?? names?.fr ?? creatureId;
-  const fresh = NEW[lang] ?? NEW.fr;
+  const name = names ? pick(names, lang) : creatureId;
+  const fresh = t(lang, 'new');
   if (fx.reduced) return showCard(fx, art.draw, art.cry, `${name} · ${fresh}`);
   return fx.run(async (g) => {
     const S = bandScene(fx, g);

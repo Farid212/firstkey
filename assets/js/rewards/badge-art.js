@@ -1,3 +1,4 @@
+import { pick } from '../i18n.js';
 import { track, clamp } from './anim.js';
 import { svgEl, showCard } from './fx.js';
 import { SFX } from './audio.js';
@@ -247,7 +248,7 @@ export function badgeSvg(id, style, locked) {
 }
 
 const DUR = 3.4;
-const nameOf = (id, lang) => { const n = BADGES.find((b) => b.id === id)?.names; return n?.[lang] ?? n?.fr ?? id; };
+const nameOf = (id, lang) => { const n = BADGES.find((b) => b.id === id)?.names; return n ? pick(n, lang) : id; };
 
 export const celebrateBadge = (fx, { badgeId, style, lang }) => celebrateCard(fx, () => badgeSvg(badgeId, style, false), nameOf(badgeId, lang));
 

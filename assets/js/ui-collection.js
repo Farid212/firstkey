@@ -6,7 +6,7 @@ import { markSeen } from './rewards/engine.js';
 import { stickerSvg } from './rewards/sticker-art.js';
 import { CHAPTERS, chapterShort } from './chapters.js';
 import { BLOCKS, blockLabel } from './blocks.js';
-import { t, tf } from './i18n.js';
+import { t, tf, pick } from './i18n.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -47,7 +47,7 @@ export function renderCollection(root, state, handlers) {
   page.append(bar);
 
   const section = (title) => { const h = el('h2', null, title); const g = el('div', 'cards'); page.append(h, g); return g; };
-  const tag = () => el('span', 'new', 'nouveau !');
+  const tag = () => el('span', 'new', t(lang, 'new'));
 
   for (const [kind, title] of [['animal', t(lang, 'col.animals')], ['character', t(lang, 'col.characters')]]) {
     const grid = section(title);
@@ -57,9 +57,9 @@ export function renderCollection(root, state, handlers) {
       const art = getArt(c.id).draw();
       if (!unlocked) art.querySelector(':scope > circle')?.remove();
       pic.append(art);
-      card.append(pic, el('span', 'name', unlocked ? (c.names[lang] ?? c.names.fr) : t(lang, 'col.hidden')));
+      card.append(pic, el('span', 'name', unlocked ? pick(c.names, lang) : t(lang, 'col.hidden')));
       if (unlocked) {
-        card.setAttribute('aria-label', c.names[lang] ?? c.names.fr);
+        card.setAttribute('aria-label', pick(c.names, lang));
         card.onclick = () => handlers.onReplay(c.id);
         if (isNew) card.append(tag());
       }
@@ -74,7 +74,7 @@ export function renderCollection(root, state, handlers) {
     const card = el('div', 'card badge' + (locked ? ' locked-badge' : ''));
     const pic = el('div', 'pic');
     pic.append(badgeSvg(b.id, style, locked));
-    card.append(pic, el('span', 'name', (locked ? '🔒 ' : '') + (b.names[lang] ?? b.names.fr)));
+    card.append(pic, el('span', 'name', (locked ? '🔒 ' : '') + pick(b.names, lang)));
     if (!locked && !rewards.badges.seen.includes(b.id)) card.append(tag());
     grid.append(card);
   }
