@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { answersPerLevel, recordCorrect, jumpTo, pickBlock, strikeLimit, starsLostOnDrop, recordDrop } from '../assets/js/progress.js';
+import { answersPerLevel, recordCorrect, jumpTo, pickBlock, strikeLimit, recordLoss } from '../assets/js/progress.js';
 import { defaultState } from '../assets/js/store.js';
 import { MAX_LEVEL } from '../assets/js/blocks.js';
 
@@ -128,37 +128,48 @@ test('strikeLimit', () => {
   assert.equal(strikeLimit(14), 1);
 });
 
-test('starsLostOnDrop', () => {
-  assert.equal(starsLostOnDrop(8, 'letters', 10), 225);
-  assert.equal(starsLostOnDrop(8, 'maze', 4), 9);
-  assert.equal(starsLostOnDrop(8, 'letters', 1), 0);
+test('recordLoss retire un point au niveau 1', () => {
+  const s = st8();
+  s.progress.letters = { level: 1, correct: 24 };
+  s.score = 100;
+  const r = recordLoss(s, 'letters', 1);
+  assert.equal(r.lost, true);
+  assert.equal(r.state.progress.letters.correct, 23);
+  assert.equal(r.state.progress.letters.level, 1);
+  assert.equal(r.state.score, 99);
+  assert.equal(s.progress.letters.correct, 24);
 });
 
-test('recordDrop descend d un niveau et retire les étoiles', () => {
+test('recordLoss garde le niveau et retire le niveau joué en étoiles', () => {
   const s = st8();
   s.progress.letters = { level: 10, correct: 7 };
   s.score = 1000;
-  const r = recordDrop(s, 'letters');
-  assert.equal(r.dropped, true);
-  assert.equal(r.from, 10);
-  assert.equal(r.to, 9);
-  assert.deepEqual(r.state.progress.letters, { level: 9, correct: 0 });
-  assert.equal(r.state.score, 775);
+  const r = recordLoss(s, 'letters', 10);
+  assert.equal(r.lost, true);
+  assert.deepEqual(r.state.progress.letters, { level: 10, correct: 6 });
+  assert.equal(r.state.score, 990);
   assert.equal(r.state.progress.words.level, s.progress.words.level);
-  assert.equal(s.progress.letters.level, 10);
 });
 
-test('recordDrop au niveau 1 ne change rien', () => {
+test('recordLoss à zéro ne change rien', () => {
   const s = st8();
   s.score = 50;
-  const r = recordDrop(s, 'letters');
-  assert.equal(r.dropped, false);
+  const r = recordLoss(s, 'letters', 1);
+  assert.equal(r.lost, false);
   assert.deepEqual(r.state, s);
 });
 
-test('recordDrop ne passe pas sous zéro', () => {
+test('recordLoss ne passe pas sous zéro étoile', () => {
   const s = st8();
-  s.progress.letters = { level: 5, correct: 0 };
+  s.progress.letters = { level: 10, correct: 5 };
   s.score = 3;
-  assert.equal(recordDrop(s, 'letters').state.score, 0);
+  assert.equal(recordLoss(s, 'letters', 10).state.score, 0);
+});
+
+test('recordLoss ignore un niveau joué différent du niveau enregistré', () => {
+  const s = st8();
+  s.progress.letters = { level: 5, correct: 4 };
+  const r = recordLoss(s, 'letters', 2);
+  assert.equal(r.lost, false);
+  assert.deepEqual(r.state, s);
 });

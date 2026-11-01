@@ -1,7 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { startDirector } from '../assets/js/rewards/director.js';
-import { LEVELUPS } from '../assets/js/rewards/levelup/index.js';
 import { defaultRewards } from '../assets/js/rewards/model.js';
 
 const who = (stack) => ['sticker-art', 'celebrateBadge', 'reveal', 'stickman', 'party'].find((k) => stack.includes(k)) ?? '?';
@@ -142,29 +141,11 @@ test('autocollant: animations coupées -> état seulement; aperçu sticker:<id>'
   t.d.stop();
 });
 
-test('leveldown joue stickman et n\'attribue rien', async () => {
+test('plus aucun handler firstkey:leveldown', async () => {
   const t = setup();
-  const before = t.state.rewards;
-  const original = LEVELUPS.stickman;
-  const calls = [];
-  LEVELUPS.stickman = (fx, ctx) => { calls.push(ctx); return original(fx, ctx); };
-  try {
-    t.fire('leveldown', { blockId: 'letters', oldLevel: 3, newLevel: 2 });
-    assert.equal(t.runs, 1);
-    assert.equal(t.order[0], 'stickman');
-    assert.deepEqual(calls, [{ oldLevel: 3, newLevel: 2, lang: 'fr' }]);
-    assert.equal(t.state.rewards, before);
-    await t.drain();
-  } finally {
-    LEVELUPS.stickman = original;
-    t.d.stop();
-  }
-});
-
-test('leveldown muet si rewardAnimations est faux', () => {
-  const t = setup();
-  t.state.settings.rewardAnimations = false;
-  t.fire('leveldown', { blockId: 'letters', oldLevel: 5, newLevel: 4 });
+  const before = t.state;
+  t.fire('leveldown', { blockId: 'letters', oldLevel: 3, newLevel: 2 });
   assert.equal(t.runs, 0);
+  assert.equal(t.state, before);
   t.d.stop();
 });

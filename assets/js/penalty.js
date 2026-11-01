@@ -1,36 +1,28 @@
-import { strikeLimit, recordDrop } from './progress.js';
+import { strikeLimit, recordLoss } from './progress.js';
 
-const defaultEmit = (type, detail) => document.dispatchEvent(new CustomEvent(type, { detail }));
-
-export function createPenalty(emit = defaultEmit) {
+export function createPenalty() {
   let strikes = 0;
   let lastBlock = null;
-  let cooled = false;
   return {
     wrong({ state, blockId, level, onChange }) {
-      if (cooled) return null;
       if (blockId !== lastBlock) strikes = 0;
       lastBlock = blockId;
-      if (level !== state.progress[blockId].level || level <= 1) {
+      const p = state.progress[blockId];
+      if (level !== p.level || p.correct <= 0) {
         strikes = 0;
-        return null;
+        return false;
       }
       strikes += 1;
-      if (strikes < strikeLimit(state.settings.age)) return null;
+      if (strikes < strikeLimit(state.settings.age)) return false;
       strikes = 0;
-      cooled = true;
-      const { state: next, from, to } = recordDrop(state, blockId);
-      onChange(next);
-      emit('firstkey:leveldown', { blockId, oldLevel: from, newLevel: to });
-      return to;
+      onChange(recordLoss(state, blockId, level).state);
+      return true;
     },
     correct() {
       strikes = 0;
-      cooled = false;
     },
     reset() {
       strikes = 0;
-      cooled = false;
     },
   };
 }

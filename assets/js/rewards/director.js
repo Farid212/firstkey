@@ -74,10 +74,6 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
     }
   }
 
-  function onLevelDown({ oldLevel, newLevel }) {
-    play(() => levelup({ oldLevel, newLevel }, 'stickman'), 'queue');
-  }
-
   function onPreview({ id }) {
     if (id.startsWith('badge:')) return playBadge(id.slice(6));
     if (id.startsWith('sticker:')) return playSticker(id.slice(8));
@@ -89,7 +85,6 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
     'firstkey:wrong': () => save(applyWrong(getState().rewards)),
     'firstkey:correct': onCorrect,
     'firstkey:levelup': onLevelUp,
-    'firstkey:leveldown': onLevelDown,
     'firstkey:preview': onPreview,
   };
   const wrapped = Object.entries(handlers).map(([type, h]) => [type, (e) => {

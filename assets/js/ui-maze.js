@@ -420,14 +420,7 @@ export function startMaze(root, state, target, handlers) {
     document.dispatchEvent(new CustomEvent('firstkey:wrong', { detail: { blockId: 'maze', level } }));
     s = handlers.getState();
     play('wrongAnswer');
-    const to = penalty.wrong({ state: s, blockId: 'maze', level, onChange: handlers.onChange });
-    if (to === null) return;
-    s = handlers.getState();
-    if (fixed === level) fixed = to;
-    cancel();
-    log.replaceChildren();
-    load();
-    focusField();
+    if (penalty.wrong({ state: s, blockId: 'maze', level, onChange: handlers.onChange })) s = handlers.getState();
   }
 
   async function win(t) {
