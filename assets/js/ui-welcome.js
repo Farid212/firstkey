@@ -18,16 +18,19 @@ const hidden = (e) => {
   return e;
 };
 
+export function applyChange(state, fn) {
+  const s = structuredClone(state);
+  fn(s);
+  return s;
+}
+
 export function renderWelcome(root, getState, handlers) {
   let step = 'who';
-  const apply = (fn) => {
-    const s = structuredClone(getState());
-    fn(s);
-    handlers.onChange(s);
-  };
+  const apply = (fn) => handlers.onChange(applyChange(getState(), fn));
   const change = (fn) => {
+    const lang = getState().settings.language;
     apply(fn);
-    draw();
+    if (getState().settings.language !== lang) draw();
   };
   const finish = (fn) => {
     apply((s) => {
