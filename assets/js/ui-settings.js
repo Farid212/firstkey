@@ -101,12 +101,19 @@ export function openSettings(root, state, handlers) {
   input.focus();
 
   function show(cur) {
+    const lang = cur.settings.language;
     box.replaceChildren(el('h1', '', t(lang, 'settingsTitle')));
     const change = (fn) => {
       const s = structuredClone(cur);
       fn(s);
+      const switched = s.settings.language !== lang;
       cur = s;
       handlers.onChange(s);
+      if (switched) {
+        show(cur);
+        document.getElementById('set-lang')?.focus();
+        return;
+      }
       disarm();
     };
 

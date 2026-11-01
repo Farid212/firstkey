@@ -18,6 +18,7 @@ let state = loadState();
 const onChange = (s) => {
   state = s;
   saveState(s);
+  syncLang();
 };
 
 const audio = createAudio();

@@ -12,7 +12,11 @@ export const DICTIONARIES = [ui];
 const STRINGS = Object.fromEntries(LANG_LIST.map(({ id }) => [id, Object.assign({}, ...DICTIONARIES.map((d) => d[id]))]));
 
 export function t(lang, key) {
-  return STRINGS[lang]?.[key] ?? STRINGS.en[key] ?? STRINGS.fr[key] ?? key;
+  for (const l of [lang, 'en', 'fr']) {
+    const table = Object.hasOwn(STRINGS, l) ? STRINGS[l] : undefined;
+    if (table && Object.hasOwn(table, key)) return table[key];
+  }
+  return key;
 }
 
 export function tf(lang, key, vars = {}) {
@@ -22,7 +26,7 @@ export function tf(lang, key, vars = {}) {
 export function tn(lang, key, n, vars = {}) {
   const form = new Intl.PluralRules(lang).select(n);
   const k = `${key}.${form}`;
-  return tf(lang, STRINGS[lang]?.[k] === undefined ? `${key}.other` : k, { n, ...vars });
+  return tf(lang, !Object.hasOwn(STRINGS[lang] ?? {}, k) ? `${key}.other` : k, { n, ...vars });
 }
 
 export function pick(table, lang) {

@@ -68,3 +68,10 @@ test('parité de toutes les clés entre les langues', () => {
     }
   }
 });
+
+test('t: clés héritées d\'Object.prototype renvoient la clé', () => {
+  assert.equal(t('en', 'constructor'), 'constructor');
+  assert.equal(t('fr', 'toString'), 'toString');
+  assert.equal(tf('en', 'constructor', { n: 1 }), 'constructor');
+  assert.equal(t('constructor', 'hello'), t('en', 'hello'));
+});
