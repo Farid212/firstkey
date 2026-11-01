@@ -5,6 +5,7 @@ import { startMaze } from './ui-maze.js';
 import { startDiscover } from './ui-discover.js';
 import { renderCollection } from './ui-collection.js';
 import { openSettings } from './ui-settings.js';
+import { renderWelcome } from './ui-welcome.js';
 import { createAudio } from './rewards/audio.js';
 import { createFx } from './rewards/fx.js';
 import { startDirector } from './rewards/director.js';
@@ -47,4 +48,8 @@ function game(target) {
 }
 
 gear.onclick = () => { director.clear(); openSettings(root, state, { onChange, onClose: () => home() }); };
-home();
+if (state.settings.welcomed) home();
+else {
+  gear.hidden = true;
+  renderWelcome(root, () => state, { onChange, onDone: () => home() });
+}
