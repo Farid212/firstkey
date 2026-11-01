@@ -32,3 +32,5 @@ export function tn(lang, key, n, vars = {}) {
 export function pick(table, lang) {
   return table[lang] ?? table.en ?? table.fr;
 }
+
+export const byLang = (fr, en, ja, es) => ({ fr, en, ja, es });

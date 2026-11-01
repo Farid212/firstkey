@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { chapterName, chapterShort } from '../assets/js/chapters.js';
 import { discoverExercise, DISCOVER_CHAPTERS, RULES_BY_CHAPTER, CATEGORICAL_RULES } from '../assets/js/discover.js';
 import { EXERCISES } from '../assets/js/data/discover-js.js';
 import { buildDiscover } from '../scripts/build-discover.mjs';
@@ -22,7 +23,7 @@ test('les 12 chapitres couvrent exactement 1..114, noms courts ≤ 18', () => {
   for (const [i, c] of DISCOVER_CHAPTERS.entries()) {
     assert.equal(c.id, `discover:${i}`);
     assert.equal(c.from, next);
-    assert.ok(c.to >= c.from && c.name && c.icon && c.short.length <= 18, c.name);
+    assert.ok(c.to >= c.from && chapterName(c, 'fr') && c.icon && chapterShort(c, 'fr').length <= 18, chapterName(c, 'fr'));
     next = c.to + 1;
   }
   assert.equal(next, 115);
@@ -100,8 +101,8 @@ test('difficulté non décroissante dans un chapitre (tolérance 50 %)', () => {
   for (const c of DISCOVER_CHAPTERS) {
     const d = [];
     for (let l = c.from; l <= c.to; l++) d.push([0, 1, 2].reduce((s, e) => s + difficulty(discoverExercise(l, e).question.code), 0) / 3);
-    d.forEach((v, i) => assert.ok(v >= 0.5 * Math.max(...d.slice(0, i + 1)), `${c.name}, niveau ${c.from + i}: ${v.toFixed(0)}`));
-    assert.ok(d.at(-1) >= d[0], `${c.name}: le dernier niveau est plus facile que le premier`);
+    d.forEach((v, i) => assert.ok(v >= 0.5 * Math.max(...d.slice(0, i + 1)), `${chapterName(c, 'fr')}, niveau ${c.from + i}: ${v.toFixed(0)}`));
+    assert.ok(d.at(-1) >= d[0], `${chapterName(c, 'fr')}: le dernier niveau est plus facile que le premier`);
   }
 });
 

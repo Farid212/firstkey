@@ -1,7 +1,7 @@
 import { recordCorrect, answersPerLevel } from './progress.js';
 import { MAX_LEVEL } from './blocks.js';
 import { levelSpec } from './maze/levels.js';
-import { CURRICULUM, skillIntro } from './maze/curriculum.js';
+import { CURRICULUM, skillIntro, mazeLevelName } from './maze/curriculum.js';
 import { parse, parseProgram, commandNames } from './maze/lang.js';
 import { createWorld, execute, executeProgram } from './maze/world.js';
 import { getArt } from './rewards/art/index.js';
@@ -344,8 +344,7 @@ export function startMaze(root, state, target, handlers) {
     prog = spec.mode === 'program';
     if (prog !== wasProg || prog) log.replaceChildren();
     screen.classList.toggle('maze-prog', prog);
-    const row = CURRICULUM[level - 1];
-    title.textContent = `Tour ${level} · Exercice ${ex + 1}/3 · ${row.name}`;
+    title.textContent = `Tour ${level} · Exercice ${ex + 1}/3 · ${mazeLevelName(level, s.settings.language)}`;
     title.title = title.textContent;
 
     news.replaceChildren();

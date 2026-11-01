@@ -1,3 +1,4 @@
+import { byLang as L, pick } from './i18n.js';
 import { CURRICULUM } from './maze/curriculum.js';
 import { DISCOVER_CHAPTERS } from './discover.js';
 import { DISCOVER2_CHAPTERS } from './discover2.js';
@@ -12,49 +13,64 @@ function build(blockId, rows) {
 }
 
 const MAZE_NAMES = {
-  straight: ['Tout droit', 'Tout droit', '➡️'], turnR: ['Virage à droite', 'Virage à droite', '↪️'],
-  turnL: ['Virage à gauche', 'Virage à gauche', '↩️'], L: ['Les L et les Z', 'Les L et les Z', '🔀'],
-  long: ['Longues branches', 'Longues branches', '📏'], U: ['U et détours', 'U et détours', '🔄'],
-  square: ['Les boucles', 'Les boucles', '🔁'], stairs: ['Escaliers', 'Escaliers', '🪜'],
-  spiral: ['Spirales et zigzags', 'Spirales', '🌀'], nested: ['Boucles et variables', 'Boucles imbriquées', '🧮'],
-  fn: ['Les fonctions', 'Fonctions', '🧩'], while: ['Programmes généraux', 'Programmes', '🏆'],
+  straight: [L('Tout droit', 'Straight ahead', 'まっすぐ', 'Todo recto'), L('Tout droit', 'Straight ahead', 'まっすぐ', 'Todo recto'), '➡️'],
+  turnR: [L('Virage à droite', 'Right turn', 'みぎにまがる', 'Giro a la derecha'), L('Virage à droite', 'Right turn', 'みぎにまがる', 'A la derecha'), '↪️'],
+  turnL: [L('Virage à gauche', 'Left turn', 'ひだりにまがる', 'Giro a la izquierda'), L('Virage à gauche', 'Left turn', 'ひだりにまがる', 'A la izquierda'), '↩️'],
+  L: [L('Les L et les Z', 'L and Z paths', 'L と Z のみち', 'Las L y las Z'), L('Les L et les Z', 'L and Z', 'L と Z', 'L y Z'), '🔀'],
+  long: [L('Longues branches', 'Long stretches', 'ながいみち', 'Tramos largos'), L('Longues branches', 'Long stretches', 'ながいみち', 'Tramos largos'), '📏'],
+  U: [L('U et détours', 'U-turns and detours', 'U ターンとまわりみち', 'U y desvíos'), L('U et détours', 'U and detours', 'U ターン', 'U y desvíos'), '🔄'],
+  square: [L('Les boucles', 'Loops', 'くりかえし', 'Los bucles'), L('Les boucles', 'Loops', 'くりかえし', 'Bucles'), '🔁'],
+  stairs: [L('Escaliers', 'Stairs', 'かいだん', 'Escaleras'), L('Escaliers', 'Stairs', 'かいだん', 'Escaleras'), '🪜'],
+  spiral: [L('Spirales et zigzags', 'Spirals and zigzags', 'うずまきとジグザグ', 'Espirales y zigzags'), L('Spirales', 'Spirals', 'うずまき', 'Espirales'), '🌀'],
+  nested: [L('Boucles et variables', 'Loops and variables', 'くりかえしとへんすう', 'Bucles y variables'), L('Boucles imbriquées', 'Nested loops', 'いれこループ', 'Bucle en bucle'), '🧮'],
+  fn: [L('Les fonctions', 'Functions', 'かんすう', 'Las funciones'), L('Fonctions', 'Functions', 'かんすう', 'Funciones'), '🧩'],
+  while: [L('Programmes généraux', 'General programs', 'なんでもプログラム', 'Programas generales'), L('Programmes', 'Programs', 'プログラム', 'Programas'), '🏆'],
 };
-const mazeRows = CURRICULUM.filter((c) => c.isNew).map((c) => {
-  const [name, short, icon] = MAZE_NAMES[c.focus] ?? [c.name.replace(/ \d+$/, ''), c.name.replace(/ \d+$/, '').slice(0, 18), '🧭'];
-  return [c.level, name, short, icon];
-});
+const mazeRows = CURRICULUM.filter((c) => c.isNew).map((c) => [c.level, ...(MAZE_NAMES[c.focus] ?? [c.name, c.name, '🧭'])]);
 
-const QUIZ_PY = [
-  [1, 'Afficher et calculer', 'Afficher', '🖨️'], [6, 'Les variables', 'Variables', '📦'], [9, 'Les textes', 'Textes', '🔤'],
-  [15, 'Calculs et priorités', 'Calculs', '➗'], [22, 'Si / sinon', 'Si / sinon', '🔀'], [34, 'Les boucles', 'Boucles', '🔁'],
-  [40, 'Les listes', 'Listes', '📋'], [49, 'Les fonctions', 'Fonctions', '🧩'],
-  [58, 'Premières lignes', 'Premières lignes', '⌨️'], [82, 'Si et boucles', 'Si et boucles', '🔂'],
-  [93, 'Retape les listes', 'Listes', '🗒️'], [103, 'Fonctions et plus', 'Fonctions et plus', '🚀'],
+const QUIZ_NAMES = [
+  [L('Afficher et calculer', 'Print and calculate', 'ひょうじとけいさん', 'Mostrar y calcular'), L('Afficher', 'Print', 'ひょうじ', 'Mostrar'), '🖨️'],
+  [L('Les variables', 'Variables', 'へんすう', 'Las variables'), L('Variables', 'Variables', 'へんすう', 'Variables'), '📦'],
+  [L('Les textes', 'Text', 'もじれつ', 'Los textos'), L('Textes', 'Text', 'もじれつ', 'Textos'), '🔤'],
+  [L('Calculs et priorités', 'Calculations and order', 'けいさんのじゅんばん', 'Cálculos y prioridades'), L('Calculs', 'Calculations', 'けいさん', 'Cálculos'), '➗'],
+  [L('Si / sinon', 'If / else', 'もし / そうでなければ', 'Si / si no'), L('Si / sinon', 'If / else', 'もし…なら', 'Si / si no'), '🔀'],
+  [L('Les boucles', 'Loops', 'くりかえし', 'Los bucles'), L('Boucles', 'Loops', 'くりかえし', 'Bucles'), '🔁'],
+  [L('Les listes', 'Lists', 'リスト', 'Las listas'), L('Listes', 'Lists', 'リスト', 'Listas'), '📋'],
+  [L('Les fonctions', 'Functions', 'かんすう', 'Las funciones'), L('Fonctions', 'Functions', 'かんすう', 'Funciones'), '🧩'],
+  [L('Premières lignes', 'First lines', 'はじめてのコード', 'Primeras líneas'), L('Premières lignes', 'First lines', 'はじめてのコード', 'Primer código'), '⌨️'],
+  [L('Si et boucles', 'Ifs and loops', 'もしとくりかえし', 'Si y bucles'), L('Si et boucles', 'Ifs and loops', 'もしとくりかえし', 'Si y bucles'), '🔂'],
+  [L('Retape les listes', 'Type lists again', 'リストをうちなおす', 'Reescribe las listas'), L('Listes', 'Lists', 'リスト', 'Listas'), '🗒️'],
+  [L('Fonctions et plus', 'Functions and more', 'かんすうとそのさき', 'Funciones y más'), L('Fonctions et plus', 'More functions', 'かんすう＋', 'Funciones y +'), '🚀'],
 ];
-const QUIZ_JS = [
-  [1, 'Afficher et calculer', 'Afficher', '🖨️'], [6, 'Les variables', 'Variables', '📦'], [10, 'Les textes', 'Textes', '🔤'],
-  [16, 'Calculs et priorités', 'Calculs', '➗'], [23, 'Si / sinon', 'Si / sinon', '🔀'], [31, 'Les boucles', 'Boucles', '🔁'],
-  [38, 'Les listes', 'Listes', '📋'], [48, 'Les fonctions', 'Fonctions', '🧩'],
-  [58, 'Premières lignes', 'Premières lignes', '⌨️'], [80, 'Si et boucles', 'Si et boucles', '🔂'],
-  [91, 'Retape les listes', 'Listes', '🗒️'], [101, 'Fonctions et plus', 'Fonctions et plus', '🚀'],
-];
+const quiz = (starts) => starts.map((from, i) => [from, ...QUIZ_NAMES[i]]);
+const QUIZ_PY = quiz([1, 6, 9, 15, 22, 34, 40, 49, 58, 82, 93, 103]);
+const QUIZ_JS = quiz([1, 6, 10, 16, 23, 31, 38, 48, 58, 80, 91, 101]);
 
 export const CHAPTERS = {
   letters: build('letters', [
-    [1, 'Premières lettres', 'Premières lettres', '🔤'], [17, 'Plus de lettres', 'Plus de lettres', '🔡'],
-    [35, 'Encore plus de lettres', 'Encore plus', '🧱'], [53, 'Presque tout', 'Presque tout', '🌟'],
-    [69, "Tout l'alphabet", "Tout l'alphabet", '🔠'], [85, 'Les chiffres arrivent', 'Les chiffres', '🔢'],
-    [104, 'Le grand final', 'Le grand final', '🏆'],
+    [1, L('Premières lettres', 'First letters', 'はじめのもじ', 'Primeras letras'), L('Premières lettres', 'First letters', 'はじめのもじ', 'Primeras'), '🔤'],
+    [17, L('Plus de lettres', 'More letters', 'もっともじ', 'Más letras'), L('Plus de lettres', 'More letters', 'もっともじ', 'Más letras'), '🔡'],
+    [35, L('Encore plus de lettres', 'Even more letters', 'もっともっともじ', 'Aún más letras'), L('Encore plus', 'Even more', 'もっともっと', 'Aún más'), '🧱'],
+    [53, L('Presque tout', 'Almost all', 'あとすこし', 'Casi todas'), L('Presque tout', 'Almost all', 'あとすこし', 'Casi todas'), '🌟'],
+    [69, L("Tout l'alphabet", 'The whole alphabet', 'ぜんぶのもじ', 'Todo el alfabeto'), L("Tout l'alphabet", 'Whole alphabet', 'ぜんぶのもじ', 'Todo el abc'), '🔠'],
+    [85, L('Les chiffres arrivent', 'Here come the numbers', 'すうじがくるよ', 'Llegan los números'), L('Les chiffres', 'Numbers', 'すうじ', 'Los números'), '🔢'],
+    [104, L('Le grand final', 'The grand finale', 'さいごのしあげ', 'El gran final'), L('Le grand final', 'Grand finale', 'しあげ', 'El gran final'), '🏆'],
   ]),
   words: build('words', [
-    [1, 'Mots minuscules', 'Mots minuscules', '🐜'], [15, 'Mots courts', 'Mots courts', '🐱'],
-    [35, 'Mots de tous les jours', 'Tous les jours', '🏠'], [55, 'Mots plus longs', 'Mots plus longs', '🐘'],
-    [73, 'Mots géants', 'Mots géants', '🦒'], [89, 'Premières phrases', 'Phrases', '💬'],
-    [103, 'Phrases et histoires', 'Histoires', '📖'],
+    [1, L('Mots minuscules', 'Tiny words', 'ちいさなことば', 'Palabras diminutas'), L('Mots minuscules', 'Tiny words', 'ちいさなことば', 'Diminutas'), '🐜'],
+    [15, L('Mots courts', 'Short words', 'みじかいことば', 'Palabras cortas'), L('Mots courts', 'Short words', 'みじかいことば', 'Cortas'), '🐱'],
+    [35, L('Mots de tous les jours', 'Everyday words', 'まいにちのことば', 'Palabras de cada día'), L('Tous les jours', 'Everyday', 'まいにち', 'Cada día'), '🏠'],
+    [55, L('Mots plus longs', 'Longer words', 'ながいことば', 'Palabras más largas'), L('Mots plus longs', 'Longer words', 'ながいことば', 'Más largas'), '🐘'],
+    [73, L('Mots géants', 'Giant words', 'おおきなことば', 'Palabras gigantes'), L('Mots géants', 'Giant words', 'おおきなことば', 'Gigantes'), '🦒'],
+    [89, L('Premières phrases', 'First sentences', 'はじめてのぶん', 'Primeras frases'), L('Phrases', 'Sentences', 'ぶん', 'Frases'), '💬'],
+    [103, L('Phrases et histoires', 'Sentences and stories', 'ぶんとおはなし', 'Frases e historias'), L('Histoires', 'Stories', 'おはなし', 'Historias'), '📖'],
   ]),
   math: build('math', [
-    [1, 'Additions', 'Additions', '➕'], [25, 'Soustractions', 'Soustractions', '➖'], [45, 'Multiplications', 'Multiplications', '✖️'],
-    [75, 'Divisions', 'Divisions', '➗'], [95, 'Le grand mélange', 'Grand mélange', '🎲'],
+    [1, L('Additions', 'Addition', 'たしざん', 'Sumas'), L('Additions', 'Addition', 'たしざん', 'Sumas'), '➕'],
+    [25, L('Soustractions', 'Subtraction', 'ひきざん', 'Restas'), L('Soustractions', 'Subtraction', 'ひきざん', 'Restas'), '➖'],
+    [45, L('Multiplications', 'Multiplication', 'かけざん', 'Multiplicaciones'), L('Multiplications', 'Multiplication', 'かけざん', 'Multiplicar'), '✖️'],
+    [75, L('Divisions', 'Division', 'わりざん', 'Divisiones'), L('Divisions', 'Division', 'わりざん', 'Divisiones'), '➗'],
+    [95, L('Le grand mélange', 'The big mix', 'ぜんぶまぜまぜ', 'La gran mezcla'), L('Grand mélange', 'Big mix', 'まぜまぜ', 'Gran mezcla'), '🎲'],
   ]),
   maze: build('maze', mazeRows),
   python: build('python', QUIZ_PY),
@@ -77,3 +93,6 @@ export const chapterProgress = (blockId, chapter, level) => ({
 });
 
 export const chapterColor = (blockId, index) => PALETTE[((index % PALETTE.length) + PALETTE.length) % PALETTE.length];
+
+export const chapterName = (chapter, lang) => pick(chapter.name, lang);
+export const chapterShort = (chapter, lang) => pick(chapter.short, lang);

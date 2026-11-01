@@ -1,4 +1,4 @@
-import { BLOCKS } from './blocks.js';
+import { BLOCKS, blockLabel } from './blocks.js';
 import { makeGate, checkGate } from './gate.js';
 import { jumpTo } from './progress.js';
 import { resetState } from './store.js';
@@ -129,13 +129,13 @@ export function openSettings(root, state, handlers) {
       c.onchange = () => change((s) => {
         s.settings.blocks = BLOCKS.map((x) => x.id).filter((id) => (id === b.id ? c.checked : s.settings.blocks.includes(id)));
       });
-      fs.append(row('set-b-' + b.id, b.label, c));
+      fs.append(row('set-b-' + b.id, blockLabel(b, lang), c));
     }
     box.append(fs);
 
     const jb = el('select', 'num');
     for (const b of BLOCKS.filter((x) => x.playable)) {
-      const o = el('option', '', b.label);
+      const o = el('option', '', blockLabel(b, lang));
       o.value = b.id;
       jb.append(o);
     }
