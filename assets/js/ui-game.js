@@ -1,5 +1,5 @@
 import { pickBlock, recordCorrect, answersPerLevel } from './progress.js';
-import { makeQuestion, answerKind } from './questions.js';
+import { makeQuestion, makeQuestionAvoiding, answerKind } from './questions.js';
 import { createTyper } from './typer.js';
 import { createPenalty } from './penalty.js';
 import { t, tf } from './i18n.js';
@@ -47,11 +47,11 @@ export function startGame(root, state, target, handlers) {
   let fixed = target.level;
   const penalty = createPenalty();
 
-  function next() {
+  function next(previousDisplay) {
     blockId = target.blockId === 'random' ? pickBlock(s) : target.blockId;
     if (!blockId) return exit();
     level = fixed ?? s.progress[blockId].level;
-    question = makeQuestion(blockId, level, s.settings);
+    question = previousDisplay === undefined ? makeQuestion(blockId, level, s.settings) : makeQuestionAvoiding(blockId, level, s.settings, previousDisplay);
     const q = question;
     typer = q.kind === 'choice' ? null : createTyper(q.accepts);
     hint.textContent = q.hint ?? '';
@@ -104,9 +104,8 @@ export function startGame(root, state, target, handlers) {
     const r = penalty.wrong({ state: s, blockId, level, onChange: handlers.onChange });
     if (r === null) return;
     s = handlers.getState();
-    if (!r.changed) return paint();
-    if (fixed === level) fixed = r.level;
-    next();
+    if (r.changed && fixed === level) fixed = r.level;
+    next(question.display);
   }
 
   function correct() {

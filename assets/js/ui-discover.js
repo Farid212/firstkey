@@ -146,8 +146,7 @@ export function startDiscover(root, state, target, handlers) {
     const r = penalty.wrong({ state: s, blockId: ID, level, onChange: handlers.onChange });
     if (r === null) return;
     s = handlers.getState();
-    if (!r.changed) return paint();
-    if (fixed === level) fixed = r.level;
+    if (r.changed && fixed === level) fixed = r.level;
     load();
   }
 
