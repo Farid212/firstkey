@@ -40,6 +40,12 @@ export function makeQuestion(blockId, level, settings, rng = Math.random) {
   return toQuestion(pick(pool, rng), lang, settings);
 }
 
+export function makeQuestionAvoiding(blockId, level, settings, previousDisplay, rng = Math.random) {
+  let q = makeQuestion(blockId, level, settings, rng);
+  for (let i = 1; i < 8 && q.display === previousDisplay; i++) q = makeQuestion(blockId, level, settings, rng);
+  return q;
+}
+
 export function toQuestion(item, lang, settings) {
   if (lang === 'ja') return { ...item };
   const display = settings.uppercase ? item.toUpperCase() : item;

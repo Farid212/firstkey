@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeQuestion, toQuestion, answerKind } from '../assets/js/questions.js';
+import { makeQuestion, makeQuestionAvoiding, toQuestion, answerKind } from '../assets/js/questions.js';
 import { LETTERS } from '../assets/js/data/letters.js';
 import { WORDS } from '../assets/js/data/words.js';
 import { MAX_LEVEL, BLOCKS } from '../assets/js/blocks.js';
@@ -147,4 +147,33 @@ test('answerKind: lettre, mot, phrase', () => {
   assert.equal(answerKind('words', 'chat'), 'word');
   assert.equal(answerKind('words', 'le chat dort'), 'sentence');
   assert.equal(answerKind('math', '1'), 'letter');
+});
+
+const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
+
+test('makeQuestionAvoiding: letters niveau 1, ne répète jamais la lettre précédente', () => {
+  for (const r of [0, 0.4, 0.5, 0.99]) {
+    const prev = makeQuestion('letters', 1, S('fr'), fixed(r)).display;
+    for (let k = 0; k < 20; k++) {
+      const q = makeQuestionAvoiding('letters', 1, S('fr'), prev, Math.random);
+      assert.notEqual(q.display, prev);
+    }
+  }
+});
+
+test('makeQuestionAvoiding: retire avec le rng injecté jusqu\'à une display différente', () => {
+  const q = makeQuestionAvoiding('letters', 1, S('fr'), 'A', seq(0, 0, 0, 0.99));
+  assert.notEqual(q.display, 'A');
+});
+
+test('makeQuestionAvoiding: pool à une seule possibilité, s\'arrête et rend une question', () => {
+  const q = makeQuestionAvoiding('letters', 1, S('fr'), 'A', fixed(0));
+  assert.equal(q.display, 'A');
+});
+
+test('makeQuestionAvoiding: mots et maths, display différente de la précédente', () => {
+  const w = makeQuestion('words', 1, S('fr'), fixed(0)).display;
+  assert.notEqual(makeQuestionAvoiding('words', 1, S('fr'), w, Math.random).display, w);
+  const m = makeQuestion('math', 1, S('fr'), fixed(0));
+  assert.notEqual(makeQuestionAvoiding('math', 1, S('fr'), m.display, Math.random).display, m.display);
 });

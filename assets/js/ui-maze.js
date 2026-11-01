@@ -423,8 +423,7 @@ export function startMaze(root, state, target, handlers) {
     const r = penalty.wrong({ state: s, blockId: 'maze', level, onChange: handlers.onChange });
     if (r === null) return;
     s = handlers.getState();
-    if (!r.changed) return paint();
-    if (fixed === level) fixed = r.level;
+    if (r.changed && fixed === level) fixed = r.level;
     cancel();
     log.replaceChildren();
     load();
