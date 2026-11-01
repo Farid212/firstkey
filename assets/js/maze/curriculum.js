@@ -2,8 +2,8 @@ import { byLang as L, pick } from '../i18n.js';
 
 const BLOCKS = [
   [1, 6, 'straight', L('Couloir droit', 'Straight corridor', 'まっすぐのみち', 'Pasillo recto'), L('Avancer tout droit avec forward()', 'Go straight ahead with forward()', 'forward() で まっすぐ すすむ', 'Avanzar recto con forward()')],
-  [7, 12, 'turnR', L('Virage à droite', 'Right turn', 'みぎにまがる', 'Giro a la derecha'), L('Tourner à droite', 'Turn right', 'みぎに まわる', 'Girar a la derecha')],
-  [13, 18, 'turnL', L('Virage à gauche', 'Left turn', 'ひだりにまがる', 'Giro a la izquierda'), L('Tourner à gauche', 'Turn left', 'ひだりに まわる', 'Girar a la izquierda')],
+  [7, 12, 'turnR', L('Virage à droite', 'Right turn', 'みぎにまがる', 'Giro a la derecha'), L('Tourner à droite', 'Turn right', 'みぎに まがる', 'Girar a la derecha')],
+  [13, 18, 'turnL', L('Virage à gauche', 'Left turn', 'ひだりにまがる', 'Giro a la izquierda'), L('Tourner à gauche', 'Turn left', 'ひだりに まがる', 'Girar a la izquierda')],
   [19, 21, 'L', L('Chemin en L', 'L-shaped path', 'L のみち', 'Camino en L'), L('Les chemins en L et en Z', 'L-shaped and Z-shaped paths', 'L の みちと Z の みち', 'Los caminos en L y en Z')],
   [22, 24, 'Z', L('Chemin en Z', 'Z-shaped path', 'Z のみち', 'Camino en Z'), null],
   [25, 32, 'long', L('Longues branches', 'Long stretches', 'ながいみち', 'Tramos largos'), L('Avancer de plusieurs cases d’un coup : forward(3)', 'Move several squares at once: forward(3)', 'いっきに なんマスも すすむ：forward(3)', 'Avanzar varias casillas de golpe: forward(3)')],

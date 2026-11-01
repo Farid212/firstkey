@@ -2,7 +2,7 @@ import { byLang as L, pick } from '../i18n.js';
 
 export const HINTS = {
   straight: L('Compte les cases jusqu’à l’étoile.', 'Count the squares up to the star.', 'ほしまで マスを かぞえてね。', 'Cuenta las casillas hasta la estrella.'),
-  turnR: L('Tourne à droite au bon moment.', 'Turn right at the right moment.', 'いい ところで みぎに まわろう。', 'Gira a la derecha en el momento justo.'),
+  turnR: L('Tourne à droite au bon moment.', 'Turn right at the right moment.', 'いい ところで みぎに まがろう。', 'Gira a la derecha en el momento justo.'),
   turnL: L('Regarde de quel côté tourne le chemin.', 'Look which way the path turns.', 'みちが どっちに まがるか みてね。', 'Mira hacia qué lado gira el camino.'),
   L: L('Un chemin en L : un virage entre deux couloirs.', 'An L-shaped path: one turn between two corridors.', 'L の みち：2つの ろうかの あいだに まがりかどが 1つ。', 'Un camino en L: un giro entre dos pasillos.'),
   Z: L('Un chemin en Z : deux virages de sens opposés.', 'A Z-shaped path: two turns in opposite directions.', 'Z の みち：はんたいむきに 2かい まがる。', 'Un camino en Z: dos giros en sentidos opuestos.'),
@@ -15,11 +15,11 @@ export const HINTS = {
   spiral: L('Une boucle par longueur de côté.', 'One loop for each side length.', 'へんの ながさ ごとに くりかえしを 1つ。', 'Un bucle por cada longitud de lado.'),
   zigzag: L('Le zigzag répète un motif : mets-le dans une boucle.', 'The zigzag repeats a pattern: put it in a loop.', 'ジグザグは もようの くりかえし：くりかえしに いれよう。', 'El zigzag repite un patrón: mételo en un bucle.'),
   nested: L('Essaie une boucle dans une boucle.', 'Try a loop inside a loop.', 'くりかえしの なかに くりかえしを いれてみて。', 'Prueba un bucle dentro de un bucle.'),
-  vars: L('Une variable peut grandir à chaque tour : n += 1.', 'A variable can grow each time around: n += 1.', 'へんすうは まわるたびに ふやせるよ：n += 1', 'Una variable puede crecer en cada vuelta: n += 1.'),
-  fn: L('Donne un nom au motif qui se répète avec une fonction.', 'Give the repeating pattern a name with a function.', 'くりかえす もように かんすうで なまえを つけよう。', 'Ponle nombre al patrón que se repite con una función.'),
+  vars: L('Une variable peut grandir à chaque tour : n += 1.', 'A variable can grow each time around: n += 1.', 'へんすうは くりかえす たびに ふやせるよ：n += 1', 'Una variable puede crecer en cada vuelta: n += 1.'),
+  fn: L('Donne un nom au motif qui se répète avec une fonction.', 'Give the repeating pattern a name with a function.', 'くりかえす もように かんすうで なまえを つけよう。', 'Con una función, ponle nombre al patrón que se repite.'),
   param: L('Une fonction avec un paramètre fait des motifs de tailles différentes.', 'A function with a parameter makes patterns of different sizes.', 'ひきすうつきの かんすうで いろいろな おおきさの もようが かけるよ。', 'Una función con parámetro hace patrones de distintos tamaños.'),
   while: L('Tu ne connais pas les longueurs : avance tant qu’il n’y a pas de mur.', 'You don’t know the lengths: move forward as long as there is no wall.', 'ながさは わからないね：かべが ない あいだ すすもう。', 'No conoces las longitudes: avanza mientras no haya muro.'),
-  ifelse: L('Si un mur est devant, tourne ; sinon, avance.', 'If there is a wall ahead, turn; otherwise, move forward.', 'まえに かべが あったら まわる。なければ すすむ。', 'Si hay un muro delante, gira; si no, avanza.'),
+  ifelse: L('Si un mur est devant, tourne ; sinon, avance.', 'If there is a wall ahead, turn; otherwise, move forward.', 'まえに かべが あったら まがる。なければ すすむ。', 'Si hay un muro delante, gira; si no, avanza.'),
   general: L('Un seul programme doit marcher dans les trois mondes.', 'One single program must work in all three worlds.', '1つの プログラムで 3つの せかい ぜんぶ クリアしよう。', 'Un solo programa debe funcionar en los tres mundos.'),
 };
 

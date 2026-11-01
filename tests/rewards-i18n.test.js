@@ -11,8 +11,8 @@ const LANGS = ['fr', 'en', 'ja', 'es'];
 
 const OLD = {
   first_step: ['Premier pas', 'First step', 'はじめのいっぽ'],
-  streak_10: ['Série de 10', '10 in a row', '10かれんぞく'],
-  streak_25: ['Série de 25', '25 in a row', '25かれんぞく'],
+  streak_10: ['Série de 10', '10 in a row', '10かい れんぞく'],
+  streak_25: ['Série de 25', '25 in a row', '25かい れんぞく'],
   first_level: ['Premier niveau', 'First level', 'はじめてのレベル'],
   level_10: ['Niveau 10', 'Level 10', 'レベル10'],
   level_25: ['Niveau 25', 'Level 25', 'レベル25'],

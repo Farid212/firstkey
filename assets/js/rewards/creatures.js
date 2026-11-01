@@ -26,7 +26,7 @@ export const CREATURES = [
   c('monkey', A, 'Singe', 'Monkey', 'さる', 'Mono'),
   c('mermaid', C, 'Sirène', 'Mermaid', 'にんぎょ', 'Sirena'),
   c('penguin', A, 'Pingouin', 'Penguin', 'ペンギン', 'Pingüino'),
-  c('chef', C, 'Cuisinier', 'Chef', 'コック', 'Cocinero'),
+  c('chef', C, 'Cuisinier', 'Chef', 'コック', 'Chef'),
   c('hen', A, 'Poule', 'Hen', 'にわとり', 'Gallina'),
   c('astronaut', C, 'Astronaute', 'Astronaut', 'うちゅうひこうし', 'Astronauta'),
 ];
