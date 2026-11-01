@@ -120,7 +120,7 @@ const C3 = [
       return i === 0 ? `${q(w)} + ${a} + ${b}` : i === 1 ? `${q(w)} + (${a} + ${b})` : r() < 0.5 ? `${q(w)} + (${a} + ${b})` : `${a} + ${b} + ${q(w)}`; })),
 ];
 
-const lengthWord = (r, i) => q(pick(WORDS.filter((w) => w.length === [3, 4, 5, 6][i] || i === 3), r));
+const lengthWord = (r, i) => q(pick((r.variant && i === 3 ? [...WORDS, ...LONG] : WORDS).filter((w) => w.length === [3, 4, 5, 6][i] || i === 3), r));
 const C4 = [
   F('length', '.length', byEx((r, e, i) => `${lengthWord(r, i)}.length`, (r) => `${q(word(r))}.length`,
     (r) => `${q(pick(LONG, r))}.length`)),
@@ -346,10 +346,11 @@ function fit(code) {
 }
 
 export const printable = (o) => /^[\x21-\x7e]([\x20-\x7e]{0,12}[\x21-\x7e])?$/.test(o);
-function makeExercise(fam, level, ex, used) {
+function makeExercise(fam, level, ex, used, variant, prevOut) {
   for (let attempt = 0; attempt < 2000; attempt++) {
-    const r = mulberry32(level * 7919 + ex * 104729 + attempt * 15485863 + 2026);
+    const r = mulberry32(level * 7919 + ex * 104729 + attempt * 15485863 + 2026 + variant * 49979687);
     r.perm = shuffle([0, 1, 2], r);
+    r.variant = variant;
     const pair = fam.pair && ex === 2;
     const codes = pair
       ? shuffle([[0, 0], [0, 1], [1, 0], [1, 1]], r).map(([a, b]) => `(${fam.gen(r, ex, a)}) + " " + (${fam.gen(r, ex, b)})`)
@@ -357,6 +358,7 @@ function makeExercise(fam, level, ex, used) {
     const rule = pair ? 'cmpPair' : fam.rule;
     if (new Set(codes).size < 4 || used.has(codes[3])) continue;
     const outs = codes.map(runJs);
+    if (outs[3] === prevOut) continue;
     if (!outs.every(printable)) continue;
     const ex3 = new Set(outs.slice(0, 3));
     if (ex3.size < 2) continue;
@@ -370,19 +372,22 @@ function makeExercise(fam, level, ex, used) {
   throw new Error(`niveau ${level}.${ex} (${fam.rule}): aucun exercice valide`);
 }
 
-export function buildDiscover() {
+export function buildDiscover(variant = 0) {
   const levels = FAMILIES.flat();
   if (levels.length !== 114) throw new Error(`${levels.length} niveaux au lieu de 114`);
-  const used = new Set();
-  return levels.flatMap((fam, k) => [0, 1, 2].map((ex) => makeExercise(fam, k + 1, ex, used)));
+  const base = variant ? buildDiscover(0) : [];
+  const used = new Set(base.map((row) => row[8]));
+  return levels.flatMap((fam, k) => [0, 1, 2].map((ex) => makeExercise(fam, k + 1, ex, used, variant, base[k * 3 + ex]?.[9])));
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const rows = buildDiscover();
-  const text = `export const EXERCISES = [
+  for (const [variant, file] of [[0, 'discover-js.js'], [1, 'discover-js-b.js']]) {
+    const rows = buildDiscover(variant);
+    const text = `export const EXERCISES = [
 ${rows.map((r) => JSON.stringify(r)).join(',\n')},
 ];
 `;
-  writeFileSync(new URL('../assets/js/data/discover-js.js', import.meta.url), text);
-  console.log(`discover-js.js: ${rows.length} exercices, ${(Buffer.byteLength(text) / 1024).toFixed(1)} Ko`);
+    writeFileSync(new URL(`../assets/js/data/${file}`, import.meta.url), text);
+    console.log(`${file}: ${rows.length} exercices, ${(Buffer.byteLength(text) / 1024).toFixed(1)} Ko`);
+  }
 }

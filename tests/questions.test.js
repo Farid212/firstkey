@@ -169,6 +169,9 @@ test('makeQuestionAvoiding: retire avec le rng injecté jusqu\'à une display di
 test('makeQuestionAvoiding: pool à une seule possibilité, s\'arrête et rend une question', () => {
   const q = makeQuestionAvoiding('letters', 1, S('fr'), 'A', fixed(0));
   assert.equal(q.display, 'A');
+  let calls = 0;
+  makeQuestionAvoiding('letters', 1, S('fr'), 'A', () => { calls++; return 0; });
+  assert.ok(calls > 0 && calls <= 128 * 4, `${calls} tirages`);
 });
 
 test('makeQuestionAvoiding: mots et maths, display différente de la précédente', () => {

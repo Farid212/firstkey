@@ -1,4 +1,6 @@
 import { EXERCISES } from './data/discover-js.js';
+import { EXERCISES as EXERCISES_B } from './data/discover-js-b.js';
+import { VARIANTS } from './variants.js';
 import { byLang as L } from './i18n.js';
 
 const MAX = 114;
@@ -38,10 +40,11 @@ export const RULES_BY_CHAPTER = [
 export const CATEGORICAL_RULES = ['lt', 'gt', 'ltgtEq', 'leGe', 'eq', 'neq', 'eqStr', 'cmpExpr', 'cmpVar', 'eqType',
   'ifElse', 'ifVar', 'ifStr', 'ifNoElse', 'elseIf'];
 
-export function discoverExercise(level, exercise = 0) {
+export function discoverExercise(level, exercise = 0, variant = 0) {
   const l = Math.min(MAX, Math.max(1, Math.floor(level) || 1));
   const e = Math.min(2, Math.max(0, Math.floor(exercise) || 0));
-  const [rule, hint, ...v] = EXERCISES[(l - 1) * 3 + e];
+  const n = Math.min(VARIANTS - 1, Math.max(0, Math.floor(variant) || 0));
+  const [rule, hint, ...v] = [EXERCISES, EXERCISES_B][n][(l - 1) * 3 + e];
   const pair = (i) => ({ code: v[2 * i], out: v[2 * i + 1] });
   return { examples: [pair(0), pair(1), pair(2)], question: pair(3), rule, ...(hint ? { hintCode: hint } : {}) };
 }

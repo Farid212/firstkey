@@ -1,4 +1,5 @@
 import { CURRICULUM } from './curriculum.js';
+import { VARIANTS } from '../variants.js';
 import { SEGMENTS, FINAL_ONLY, carve, walkCells, solutionPath, compressedLength, sizeOf, mulberry32, int, pick, shuffle } from './gen.js';
 import { parse, parseProgram } from './lang.js';
 import { createWorld, execute, executeProgram } from './world.js';
@@ -140,9 +141,9 @@ function pathShape(maze) {
   return shapeTags(turns, lens);
 }
 
-function buildRepl(level, ex, rng) {
+function buildRepl(level, ex, rng, variant = 0) {
   let pieces;
-  if (level <= 6) pieces = [{ tag: 'straight', lines: [[[1, 1, 2, 2, 3, 3][level - 1] + ex]] }];
+  if (level <= 6) pieces = [{ tag: 'straight', lines: [[[1, 1, 2, 2, 3, 3][level - 1] + ex + variant]] }];
   else if (level >= 41) pieces = loopPieces(level, ex, rng);
   else {
     const need = shuffle(needTags(level, ex, rng), rng).sort((a, b) => FINAL_ONLY.includes(a) - FINAL_ONLY.includes(b));
@@ -328,18 +329,18 @@ function buildGeneral(level, ex, rng) {
 
 const sig = (m) => JSON.stringify([m.walls, m.start, m.goal]);
 export const difficulty = (spec) => spec.worlds.reduce((s, w) => s + w.par, 0);
-const specs = [];
-const taken = new Set();
+const states = [];
 
 const POOL = 16;
-const caps = new Map();
-function poolOf(level, ex, prev, size = POOL) {
+export const solvedBy = (ref, worlds, level) => ['py', 'js'].some((lang) => worlds.every((w) => (level <= 72 ? runRepl : runProgram)(ref[lang], lang, createWorld(w)).world.done));
+function poolOf(level, ex, prev, size, { taken, variant, old }) {
   const build = level <= 72 ? buildRepl : level <= 100 ? buildProgram : buildGeneral;
   const pool = [];
   for (let attempt = 0; attempt < Math.max(MAX_ATTEMPTS, 40 * size) && pool.length < size; attempt++) {
-    const rng = mulberry32(level * 7919 + ex * 15485863 + attempt * 104729 + 12345);
-    const c = build(level, ex, rng);
+    const rng = mulberry32(level * 7919 + ex * 15485863 + attempt * 104729 + 12345 + variant * 32452843);
+    const c = build(level, ex, rng, variant);
     if (!c || !tourOk(level, ex, c.tags)) continue;
+    if (prev && old && solvedBy(old.reference, c.worlds, level)) continue;
     if (ex && prev && difficulty(c) < difficulty(prev[ex - 1])) continue;
     if (prev && (c.worlds.some((w) => taken.has(sig(w))) || prev.some((p) => p.reference.py === c.reference.py))) continue;
     if (pool.some((p) => p.reference.py === c.reference.py && sig(p.worlds[0]) === sig(c.worlds[0]))) continue;
@@ -349,7 +350,9 @@ function poolOf(level, ex, prev, size = POOL) {
   return pool.sort((a, b) => difficulty(a) - difficulty(b));
 }
 
-function generate(level, ex) {
+function generate(level, ex, st) {
+  const { specs, taken, caps } = st;
+  st.old = st.variant ? generateSpec(level, ex, 0) : null;
   const prev = specs.slice(specs.length - ex);
   const focus = row(level).focus;
   const first = CURRICULUM.findIndex((r) => r.focus === focus) + 1;
@@ -359,10 +362,10 @@ function generate(level, ex) {
   const start = level === last && level > first ? specs[(first - 1) * 3 + ex] : null;
   const fits = (p) => (!below || difficulty(p) >= difficulty(below)) && (!start || difficulty(p) > difficulty(start));
   const capped = (size) => {
-    const pool = poolOf(level, ex, prev, size);
+    const pool = poolOf(level, ex, prev, size, st);
     if (!pool.length || ex === 2) return pool;
     if (!caps.has(level)) {
-      const ds = [...new Set(poolOf(level, 2, null, 6 * POOL).map(difficulty))];
+      const ds = [...new Set(poolOf(level, 2, null, 6 * POOL, st).map(difficulty))];
       caps.set(level, ds.at(-2) ?? ds.at(-1) ?? difficulty(pool[0]));
     }
     const ok = pool.filter((p) => difficulty(p) <= caps.get(level));
@@ -370,6 +373,10 @@ function generate(level, ex) {
     return ok;
   };
   let pool = capped(POOL);
+  if (!pool.length && st.old) {
+    st.old = null;
+    pool = capped(POOL);
+  }
   for (const size of [6 * POOL, 30 * POOL]) {
     if (pool.some(fits)) break;
     pool = capped(size);
@@ -383,9 +390,12 @@ function generate(level, ex) {
   return { level, exercise: ex, ...c };
 }
 
-export function generateSpec(level, exercise = 0) {
+export function generateSpec(level, exercise = 0, variant = 0) {
   const l = Math.min(CURRICULUM.length, Math.max(1, Math.floor(level) || 1));
   const e = Math.min(2, Math.max(0, Math.floor(exercise) || 0));
-  while (specs.length <= (l - 1) * 3 + e) specs.push(generate(Math.floor(specs.length / 3) + 1, specs.length % 3));
+  const v = Math.min(VARIANTS - 1, Math.max(0, Math.floor(variant) || 0));
+  const st = states[v] ??= { specs: [], taken: new Set(), caps: new Map(), variant: v };
+  const { specs } = st;
+  while (specs.length <= (l - 1) * 3 + e) specs.push(generate(Math.floor(specs.length / 3) + 1, specs.length % 3, st));
   return structuredClone(specs[(l - 1) * 3 + e]);
 }

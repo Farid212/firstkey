@@ -7,9 +7,14 @@ import { discover2Exercise, DISCOVER2_CHAPTERS, RULES_BY_CHAPTER2 } from '../ass
 import { RULES_BY_CHAPTER } from '../assets/js/discover.js';
 import { EXERCISES } from '../assets/js/data/discover2-js.js';
 import { EXERCISES as DISCOVER1 } from '../assets/js/data/discover-js.js';
+import { EXERCISES as EXERCISES_B } from '../assets/js/data/discover2-js-b.js';
+import { EXERCISES as DISCOVER1_B } from '../assets/js/data/discover-js-b.js';
 import { buildDiscover2, run2, fewSymbols } from '../scripts/build-discover2.mjs';
+import { VARIANTS } from '../assets/js/variants.js';
+import { createHash } from 'node:crypto';
 
-const ALL = Array.from({ length: 114 }, (_, i) => i + 1).flatMap((l) => [0, 1, 2].map((e) => [l, e, discover2Exercise(l, e)]));
+const V = Array.from({ length: VARIANTS }, (_, v) => v);
+const ALL = V.flatMap((v) => Array.from({ length: 114 }, (_, i) => i + 1).flatMap((l) => [0, 1, 2].map((e) => [l, e, discover2Exercise(l, e, v), v])));
 const chapterIndex = (level) => DISCOVER2_CHAPTERS.findIndex((c) => level >= c.from && level <= c.to);
 const lines = (x) => [...x.examples, x.question];
 const ASYNC = ALL.filter(([l]) => chapterIndex(l) === 11);
@@ -29,6 +34,7 @@ test('les 12 chapitres couvrent exactement 1..114, noms courts ≤ 18', () => {
 
 test('données à jour: regénérer donne exactement le même fichier', async () => {
   assert.deepEqual(await buildDiscover2(), EXERCISES, 'données périmées, relance npm run build:discover2');
+  assert.deepEqual(await buildDiscover2(1), EXERCISES_B, 'variante 1 périmée, relance npm run build:discover2');
 });
 
 test('chaque sortie est celle du vrai JavaScript (même évaluateur, même mini-DOM)', async () => {
@@ -38,7 +44,7 @@ test('chaque sortie est celle du vrai JavaScript (même évaluateur, même mini-
 });
 
 test('asynchrone: 20 exécutions sous charge, toujours le même ordre', async () => {
-  assert.equal(ASYNC.length, 27);
+  assert.equal(ASYNC.length, 27 * VARIANTS);
   const busy = (ms) => { const t = Date.now(); while (Date.now() - t < ms) { } };
   for (let k = 0; k < 20; k++) {
     const hog = setInterval(() => busy(15), 1);
@@ -66,7 +72,7 @@ test('réponses faciles à taper: au plus 4 accolades, crochets ou guillemets; j
 
 test('switch: sans break, la question enchaîne plusieurs case (pas un mot à choisir au hasard)', () => {
   const nb = ALL.filter(([, , x]) => x.rule === 'swNoBreak');
-  assert.equal(nb.length, 3);
+  assert.equal(nb.length, 3 * VARIANTS);
   for (const [l, e, x] of nb) {
     assert.ok(x.question.out.includes(' '), `${l}.${e}: une seule sortie`);
     assert.equal(x.examples[0].code.split('break').length, 3, `${l}.${e}: 1er exemple avec tous les break`);
@@ -100,8 +106,8 @@ test('vrai/faux seulement par paires: les 4 combinaisons, la question est la seu
 
 test('les 342 questions sont distinctes entre elles et de celles de « Découvre le JavaScript »', () => {
   const key = (x) => `${x.page ?? ''}\n${x.question.code}`;
-  assert.equal(new Set(ALL.map(([, , x]) => key(x))).size, 342);
-  const old = new Set(DISCOVER1.map((row) => row[8]));
+  assert.equal(new Set(ALL.map(([, , x]) => key(x))).size, 342 * VARIANTS);
+  const old = new Set([...DISCOVER1, ...DISCOVER1_B].map((row) => row[8]));
   for (const [l, e, x] of ALL) assert.ok(x.page || !old.has(x.question.code), `${l}.${e}: déjà dans Découvre`);
 });
 
@@ -121,9 +127,9 @@ test('règles: déjà vues (ce jeu, chapitre courant ou précédent), et chaque 
 const OPS = /===|!==|<=|>=|\+=|-=|\*=|\+\+|--|=>|[-+*/<>=]|\.\w+|\[|\bif\b|\bfor\b|\bwhile\b|\bswitch\b|\bcase\b|\bfunction\b|\breturn\b/g;
 const difficulty = (code) => code.length + 3 * (code.match(OPS) ?? []).length;
 test('difficulté non décroissante dans un chapitre (tolérance 50 %)', () => {
-  for (const c of DISCOVER2_CHAPTERS) {
+  for (const v of V) for (const c of DISCOVER2_CHAPTERS) {
     const d = [];
-    for (let l = c.from; l <= c.to; l++) d.push([0, 1, 2].reduce((s, e) => s + difficulty(discover2Exercise(l, e).question.code), 0) / 3);
+    for (let l = c.from; l <= c.to; l++) d.push([0, 1, 2].reduce((s, e) => s + difficulty(discover2Exercise(l, e, v).question.code), 0) / 3);
     d.forEach((v, i) => assert.ok(v >= 0.5 * Math.max(...d.slice(0, i + 1)), `${chapterName(c, 'fr')}, niveau ${c.from + i}: ${v.toFixed(0)}`));
     assert.ok(d.at(-1) >= d[0], `${chapterName(c, 'fr')}: le dernier niveau est plus facile que le premier`);
   }
@@ -156,4 +162,23 @@ test('discover2Exercise: bornes, copie, page en texte', () => {
   assert.equal(discover2Exercise(1, 0).page, undefined);
   const dom = DISCOVER2_CHAPTERS[9].from;
   assert.match(discover2Exercise(dom, 0).page, /^<[a-z]/);
+});
+
+test('variante 1: pour chaque exercice, une autre question que la variante 0', () => {
+  const key = (x) => `${x.page ?? ''}\n${x.question.code}`;
+  for (let l = 1; l <= 114; l++) for (const e of [0, 1, 2]) {
+    assert.notEqual(key(discover2Exercise(l, e, 1)), key(discover2Exercise(l, e, 0)), `${l}.${e}`);
+    assert.notEqual(discover2Exercise(l, e, 1).question.out, discover2Exercise(l, e, 0).question.out, `${l}.${e}: même réponse`);
+  }
+});
+
+test('variante 0 figée: discover2-js.js inchangé', () => {
+  const hash = createHash('sha256').update(readFileSync(new URL('../assets/js/data/discover2-js.js', import.meta.url))).digest('hex');
+  assert.equal(hash, 'ac5ecf6b8946ff9df82b29f5ef1a7d884888dbb2e9c8b997c0110f5d50231e61');
+});
+
+test('discover2Exercise: variante hors bornes ramenée dans 0..VARIANTS-1', () => {
+  assert.deepEqual(discover2Exercise(10, 1, -3), discover2Exercise(10, 1, 0));
+  assert.deepEqual(discover2Exercise(10, 1, 9), discover2Exercise(10, 1, 1));
+  assert.deepEqual(discover2Exercise(10, 1), discover2Exercise(10, 1, 0));
 });
