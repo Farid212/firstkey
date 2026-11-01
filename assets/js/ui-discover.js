@@ -2,6 +2,7 @@ import { recordCorrect, answersPerLevel } from './progress.js';
 import { MAX_LEVEL } from './blocks.js';
 import { discoverExercise } from './discover.js';
 import { discover2Exercise } from './discover2.js';
+import { nextVariant } from './variants.js';
 import { createTyper } from './typer.js';
 import { createPenalty } from './penalty.js';
 import { t, tf, tn } from './i18n.js';
@@ -72,6 +73,7 @@ export function startDiscover(root, state, target, handlers) {
   let fixed = target.level;
   const penalty = createPenalty();
   let local = 0;
+  const lastVariant = new Map();
   let level, ex, item, typer, slots, qrow, misses;
   let token = 0;
   let timer;
@@ -93,7 +95,7 @@ export function startDiscover(root, state, target, handlers) {
     level = fixed ?? s.progress[ID].level;
     local %= 3;
     ex = counted() ? Math.min(2, s.progress[ID].correct) : local;
-    item = exercise(level, ex);
+    item = exercise(level, ex, nextVariant(lastVariant, `${level}:${ex}`));
     typer = createTyper([item.question.out], { caseSensitive: true });
     misses = 0;
     con.classList.remove('dc-hint', 'win');

@@ -1,5 +1,6 @@
 import { recordCorrect, answersPerLevel } from './progress.js';
 import { MAX_LEVEL } from './blocks.js';
+import { nextVariant } from './variants.js';
 import { levelSpec, hintFor } from './maze/levels.js';
 import { CURRICULUM, skillIntro, mazeLevelName } from './maze/curriculum.js';
 import { parse, parseProgram, commandNames } from './maze/lang.js';
@@ -199,6 +200,8 @@ export function startMaze(root, state, target, handlers) {
   let fixed = target.level;
   const penalty = createPenalty();
   let local = 0;
+  const lastVariant = new Map();
+  let variant = 0;
   let level, ex, spec, prog, maze, world, hero, arrow;
   let marks = [];
   let angle = 0;
@@ -325,13 +328,14 @@ export function startMaze(root, state, target, handlers) {
   }
 
   const counted = () => level === s.progress.maze.level && (level < MAX_LEVEL || s.progress.maze.correct < answersPerLevel(s.settings.age, 'maze'));
-  const draftKey = () => `${level}:${ex}:${lang}`;
+  const draftKey = () => `${level}:${ex}:${variant}:${lang}`;
 
   function load() {
     level = fixed ?? s.progress.maze.level;
     local %= 3;
     ex = counted() ? Math.min(2, s.progress.maze.correct) : local;
-    spec = levelSpec(level, ex);
+    variant = nextVariant(lastVariant, `${level}:${ex}`);
+    spec = levelSpec(level, ex, variant);
     creature = CREATURES[s.rewards.unlocked - 1] ?? CREATURES[0];
     resetBtn.disabled = false;
     runBtn.disabled = false;
