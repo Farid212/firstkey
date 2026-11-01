@@ -236,7 +236,7 @@ export default {
   }),
   ja: flat({
     line: '{n}ぎょうめ：{msg}',
-    frag: { tok: '「{v}」', end: 'ぎょうの おわり', theLoop: 'ループ', varEx: 'へんすうの なまえ（たとえば i）', varPy: 'へんすうの なまえ（for i in range(4): の i）', var: 'へんすうの なまえ', fnName: 'かんすうの なまえ', ofLoop: 'ループ', ofIf: 'if', ofElse: 'else', ofFn: 'かんすう' },
+    frag: { tok: '「{v}」', end: 'ぎょうの おわり', theLoop: 'くりかえし', varEx: 'へんすうの なまえ（たとえば i）', varPy: 'へんすうの なまえ（for i in range(4): の i）', var: 'へんすうの なまえ', fnName: 'かんすうの なまえ', ofLoop: 'くりかえし', ofIf: 'if', ofElse: 'else', ofFn: 'かんすう' },
     err: {
       char: 'この もじは わからないよ：「{ch}」',
       number: '{what} には 1から99までの かずを いれてね。',

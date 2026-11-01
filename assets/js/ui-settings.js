@@ -102,6 +102,7 @@ export function openSettings(root, state, handlers) {
 
   function show(cur) {
     const lang = cur.settings.language;
+    back.setAttribute('aria-label', t(lang, 'back'));
     box.replaceChildren(el('h1', '', t(lang, 'settingsTitle')));
     const change = (fn) => {
       const s = structuredClone(cur);

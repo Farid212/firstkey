@@ -1,5 +1,6 @@
 import { CREATURES } from '../creatures.js';
 import { SFX } from '../audio.js';
+import { pick } from '../../i18n.js';
 import { svgEl, showCard } from '../fx.js';
 import { ART as STICKMAN } from './stickman.js';
 import { ART as ANIMALS_A } from './animals-a.js';
@@ -12,7 +13,8 @@ import { ART as CHARS_C } from './characters-c.js';
 export const ART = { ...STICKMAN, ...ANIMALS_A, ...ANIMALS_B, ...ANIMALS_C, ...CHARS_A, ...CHARS_B, ...CHARS_C };
 
 function fallback(id) {
-  const name = CREATURES.find((c) => c.id === id)?.names.fr ?? id;
+  const creature = CREATURES.find((c) => c.id === id);
+  const name = creature ? pick(creature.names, 'en') : id;
   const hue = [...id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 360, 7);
   const draw = () => {
     const svg = svgEl('svg', { viewBox: '0 0 100 100' });

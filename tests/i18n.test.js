@@ -32,19 +32,19 @@ test('t: clé inconnue renvoie la clé', () => {
 });
 
 test('tf remplace les variables', () => {
-  assert.equal(tf('fr', 'levelCount.other', { n: 3 }), '3 niveaux');
+  assert.equal(tf('fr', 'home.chapCount.other', { n: 3, done: 1 }), '1 / 3 niveaux');
   assert.equal(tf('en', 'cle_inconnue_{n}', { n: 3 }), 'cle_inconnue_3');
 });
 
 test('tn choisit la forme plurielle', () => {
-  assert.equal(tn('fr', 'levelCount', 1), '1 niveau');
-  assert.equal(tn('fr', 'levelCount', 2), '2 niveaux');
-  assert.equal(tn('en', 'levelCount', 1), '1 level');
-  assert.equal(tn('en', 'levelCount', 5), '5 levels');
-  assert.equal(tn('es', 'levelCount', 1), '1 nivel');
-  assert.equal(tn('es', 'levelCount', 5), '5 niveles');
-  assert.equal(tn('ja', 'levelCount', 1), tf('ja', 'levelCount.other', { n: 1 }));
-  assert.equal(tn('ja', 'levelCount', 1), '1 レベル');
+  assert.equal(tn('fr', 'home.chapCount', 1, { done: 0 }), '0 / 1 niveau');
+  assert.equal(tn('fr', 'home.chapCount', 2, { done: 0 }), '0 / 2 niveaux');
+  assert.equal(tn('en', 'home.chapCount', 1, { done: 0 }), '0 / 1 level');
+  assert.equal(tn('en', 'home.chapCount', 5, { done: 0 }), '0 / 5 levels');
+  assert.equal(tn('es', 'home.chapCount', 1, { done: 0 }), '0 / 1 nivel');
+  assert.equal(tn('es', 'home.chapCount', 5, { done: 0 }), '0 / 5 niveles');
+  assert.equal(tn('ja', 'home.chapCount', 1, { done: 0 }), tf('ja', 'home.chapCount.other', { n: 1, done: 0 }));
+  assert.equal(tn('ja', 'home.chapCount', 1, { done: 0 }), '0 / 1 レベル');
 });
 
 test('pick: repli en puis fr', () => {

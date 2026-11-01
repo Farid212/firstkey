@@ -28,8 +28,6 @@ export default {
     resetZero: 'Recommencer à zéro',
     resetSure: 'Sûr ? Clique encore pour tout effacer',
     back: 'Retour',
-    'levelCount.one': '{n} niveau',
-    'levelCount.other': '{n} niveaux',
   },
   en: {
     hello: 'Hi there!',
@@ -60,8 +58,6 @@ export default {
     resetZero: 'Start over',
     resetSure: 'Sure? Click again to erase everything',
     back: 'Back',
-    'levelCount.one': '{n} level',
-    'levelCount.other': '{n} levels',
   },
   ja: {
     hello: 'こんにちは！',
@@ -92,7 +88,6 @@ export default {
     resetZero: '最初からやり直す',
     resetSure: '本当によいですか？もう一度押すとすべて消えます',
     back: 'もどる',
-    'levelCount.other': '{n} レベル',
   },
   es: {
     hello: '¡Hola!',
@@ -123,7 +118,5 @@ export default {
     resetZero: 'Empezar de cero',
     resetSure: '¿Seguro? Haz clic otra vez para borrarlo todo',
     back: 'Atrás',
-    'levelCount.one': '{n} nivel',
-    'levelCount.other': '{n} niveles',
   },
 };

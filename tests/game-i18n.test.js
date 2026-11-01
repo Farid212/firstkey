@@ -50,7 +50,9 @@ test('chapCount: fr identique pour tous les chapitres', () => {
 });
 
 test('pluriels par langue', () => {
+  assert.equal(tn('fr', 'points', 0), '0 point');
   assert.equal(tn('fr', 'points', 1), '1 point');
+  assert.equal(tn('fr', 'points', 2), '2 points');
   assert.equal(tn('en', 'points', 1), '1 point');
   assert.equal(tn('en', 'points', 2), '2 points');
   assert.equal(tn('es', 'points', 1), '1 punto');
