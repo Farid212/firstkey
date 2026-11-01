@@ -1,10 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { startDirector } from '../assets/js/rewards/director.js';
-import { LEVELUPS } from '../assets/js/rewards/levelup/index.js';
 import { defaultRewards } from '../assets/js/rewards/model.js';
 
-const who = (stack) => ['sticker-art', 'celebrateBadge', 'reveal', 'stickman', 'party'].find((k) => stack.includes(k)) ?? '?';
+const who = (stack) => ['sticker-art', 'celebrateBadge', 'reveal', 'stickman', 'party', 'leveldown'].find((k) => stack.includes(k)) ?? '?';
 
 function setup() {
   let state = { progress: {}, settings: { language: 'fr', age: 4, rewardAnimations: true, rewardSounds: true }, rewards: defaultRewards() };
@@ -12,9 +11,10 @@ function setup() {
   let runs = 0;
   const audio = { unlock() {}, play() {}, setEnabled() {} };
   const order = [];
+  const jobs = [];
   const fx = {
     reduced: false, audio, size: () => ({ w: 800, h: 600 }),
-    run: () => { runs++; order.push(who(new Error().stack)); return new Promise((r) => pending.push(r)); },
+    run: (fn) => { runs++; jobs.push(fn); order.push(who(new Error().stack)); return new Promise((r) => pending.push(r)); },
     wait: async () => {}, tween: async () => {}, cancel() { pending.splice(0).forEach((r) => r()); },
   };
   const doc = new EventTarget();
@@ -25,7 +25,7 @@ function setup() {
   async function drain() {
     for (let i = 0; i < 50 && pending.length; i++) { pending.shift()(); await flush(); }
   }
-  return { d, fire, correct, drain, flush, order, get runs() { return runs; }, get state() { return state; }, set state(v) { state = v; } };
+  return { d, fire, jobs, correct, drain, flush, order, get runs() { return runs; }, get state() { return state; }, set state(v) { state = v; } };
 }
 
 test('récompense aléatoire ignorée pendant une animation, état toujours enregistré', async () => {
@@ -142,23 +142,24 @@ test('autocollant: animations coupées -> état seulement; aperçu sticker:<id>'
   t.d.stop();
 });
 
-test('leveldown joue stickman et n\'attribue rien', async () => {
+test('leveldown joue la scène sobre avec les deux niveaux et n\'attribue rien', async () => {
   const t = setup();
   const before = t.state.rewards;
-  const original = LEVELUPS.stickman;
-  const calls = [];
-  LEVELUPS.stickman = (fx, ctx) => { calls.push(ctx); return original(fx, ctx); };
+  t.fire('leveldown', { blockId: 'letters', oldLevel: 3, newLevel: 2 });
+  assert.equal(t.runs, 1);
+  assert.equal(t.order[0], 'leveldown');
+  assert.equal(t.state.rewards, before);
+  const mk = (tag) => ({ tag, attrs: {}, kids: [], textContent: '', setAttribute(k, v) { this.attrs[k] = String(v); }, append(...k) { this.kids.push(...k); }, remove() {} });
+  const all = (n) => [n, ...n.kids.flatMap(all)];
+  globalThis.document = { createElementNS: (_, tag) => mk(tag) };
   try {
-    t.fire('leveldown', { blockId: 'letters', oldLevel: 3, newLevel: 2 });
-    assert.equal(t.runs, 1);
-    assert.equal(t.order[0], 'stickman');
-    assert.deepEqual(calls, [{ oldLevel: 3, newLevel: 2, lang: 'fr' }]);
-    assert.equal(t.state.rewards, before);
-    await t.drain();
-  } finally {
-    LEVELUPS.stickman = original;
-    t.d.stop();
-  }
+    const g = mk('g');
+    await t.jobs[0](g);
+    const texts = all(g).map((n) => n.textContent).filter(Boolean);
+    assert.deepEqual(texts, ['3', '2']);
+  } finally { delete globalThis.document; }
+  await t.drain();
+  t.d.stop();
 });
 
 test('leveldown muet si rewardAnimations est faux', () => {

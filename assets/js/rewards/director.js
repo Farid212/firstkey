@@ -9,6 +9,7 @@ import { badgeStyle, celebrateBadge } from './badge-art.js';
 import { LEVELUPS, pickLevelup } from './levelup/index.js';
 import { party } from './levelup/party.js';
 import { reveal } from './levelup/reveal.js';
+import { levelDown } from './levelup/leveldown.js';
 
 const MAX_QUEUE = 5;
 
@@ -75,7 +76,7 @@ export function startDirector({ getState, onChange, audio, fx, rng = Math.random
   }
 
   function onLevelDown({ oldLevel, newLevel }) {
-    play(() => levelup({ oldLevel, newLevel }, 'stickman'), 'queue');
+    play(() => levelDown(fx, { oldLevel, newLevel, lang: lang() }), 'queue');
   }
 
   function onPreview({ id }) {
