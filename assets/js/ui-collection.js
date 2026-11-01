@@ -6,6 +6,7 @@ import { markSeen } from './rewards/engine.js';
 import { stickerSvg } from './rewards/sticker-art.js';
 import { CHAPTERS, chapterShort } from './chapters.js';
 import { BLOCKS, blockLabel } from './blocks.js';
+import { t, tf } from './i18n.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -40,15 +41,15 @@ export function renderCollection(root, state, handlers) {
   const counts = collectionCounts(rewards);
   const bar = el('div', 'bar');
   const back = el('button', 'back', '←');
-  back.setAttribute('aria-label', 'Retour');
+  back.setAttribute('aria-label', t(lang, 'back'));
   back.onclick = handlers.onBack;
-  bar.append(back, el('h1', 'col-title', 'Ma collection'), el('span', 'pill', `${counts.have} / ${counts.total} découverts`));
+  bar.append(back, el('h1', 'col-title', t(lang, 'col.title')), el('span', 'pill', tf(lang, 'col.found', counts)));
   page.append(bar);
 
   const section = (title) => { const h = el('h2', null, title); const g = el('div', 'cards'); page.append(h, g); return g; };
   const tag = () => el('span', 'new', 'nouveau !');
 
-  for (const [kind, title] of [['animal', 'Animaux'], ['character', 'Personnages']]) {
+  for (const [kind, title] of [['animal', t(lang, 'col.animals')], ['character', t(lang, 'col.characters')]]) {
     const grid = section(title);
     for (const { c, unlocked, isNew } of creatureCards(rewards, kind)) {
       const card = el(unlocked ? 'button' : 'div', 'card' + (unlocked ? '' : ' locked'));
@@ -56,7 +57,7 @@ export function renderCollection(root, state, handlers) {
       const art = getArt(c.id).draw();
       if (!unlocked) art.querySelector(':scope > circle')?.remove();
       pic.append(art);
-      card.append(pic, el('span', 'name', unlocked ? (c.names[lang] ?? c.names.fr) : '???'));
+      card.append(pic, el('span', 'name', unlocked ? (c.names[lang] ?? c.names.fr) : t(lang, 'col.hidden')));
       if (unlocked) {
         card.setAttribute('aria-label', c.names[lang] ?? c.names.fr);
         card.onclick = () => handlers.onReplay(c.id);
@@ -66,7 +67,7 @@ export function renderCollection(root, state, handlers) {
     }
   }
 
-  const grid = section(`Badges ${counts.badges.have} / ${counts.badges.total}`);
+  const grid = section(tf(lang, 'col.badges', counts.badges));
   const style = badgeStyle(settings.age);
   for (const b of BADGES) {
     const locked = !rewards.badges.earned.includes(b.id);
@@ -78,7 +79,7 @@ export function renderCollection(root, state, handlers) {
     grid.append(card);
   }
 
-  page.append(el('h2', null, `Autocollants ${counts.stickers.have} / ${counts.stickers.total}`));
+  page.append(el('h2', null, tf(lang, 'col.stickers', counts.stickers)));
   for (const b of BLOCKS.filter((x) => x.playable && CHAPTERS[x.id])) {
     page.append(el('h3', null, blockLabel(b, lang)));
     const g = el('div', 'cards');

@@ -6,6 +6,7 @@ import { stickerSvg } from './rewards/sticker-art.js';
 import { getArt } from './rewards/art/index.js';
 import { CREATURES } from './rewards/creatures.js';
 import { svgEl } from './rewards/fx.js';
+import { t, tf, tn } from './i18n.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -34,10 +35,10 @@ export function renderHome(root, state, handlers, focusBlock) {
   for (const ch of 'First Key') title.append(el('span', ch === ' ' ? 'sp' : 'ch', ch));
   title.append(el('span', 'kbd', '⌨️'));
   for (const c of title.children) c.setAttribute('aria-hidden', 'true');
-  home.append(title, el('span', 'pill total', `⭐ ${state.score} points`));
+  home.append(title, el('span', 'pill total', `⭐ ${tn(state.settings.language, 'points', state.score)}`));
 
   const mix = el('button', 'big mix');
-  mix.append(el('span', 'mix-go', '▶ Jouer'), el('span', 'mix-sub', 'tout mélangé'));
+  mix.append(el('span', 'mix-go', t(state.settings.language, 'home.play')), el('span', 'mix-sub', t(state.settings.language, 'home.mixSub')));
   mix.disabled = pickBlock(state) === null;
   mix.onclick = () => handlers.onPlay('random');
   home.append(mix);
@@ -61,7 +62,7 @@ export function renderHome(root, state, handlers, focusBlock) {
     }
     home.append(sec);
   }
-  const col = el('button', 'big collection-btn', `🎒 Ma collection · ${collectionCounts(state.rewards).have} / ${collectionCounts(state.rewards).total}`);
+  const col = el('button', 'big collection-btn', tf(state.settings.language, 'home.collection', collectionCounts(state.rewards)));
   if (hasNew(state.rewards)) col.append(el('span', 'dot'));
   col.onclick = handlers.onOpenCollection;
   home.append(col);
@@ -97,7 +98,7 @@ function gameCard(b, state, handlers, signal, openNow) {
   const card = el('section', `block block-${b.id}` + (b.playable ? '' : ' soon'));
   if (!b.playable) {
     const main = el('button', 'block-main');
-    main.append(el('span', 'icon', ICONS[b.id] ?? '⭐'), el('span', 'name', blockLabel(b, ui)), el('span', 'lvl-now', 'bientôt'));
+    main.append(el('span', 'icon', ICONS[b.id] ?? '⭐'), el('span', 'name', blockLabel(b, ui)), el('span', 'lvl-now', t(ui, 'home.soon')));
     main.disabled = true;
     card.append(main);
     return card;
@@ -114,8 +115,8 @@ function gameCard(b, state, handlers, signal, openNow) {
   head.append(el('span', 'icon', ICONS[b.id] ?? '⭐'), el('span', 'name', blockLabel(b, ui)));
   const go = el('button', 'continue');
   go.dataset.block = b.id;
-  const lang = b.id === 'maze' ? (state.settings.codeLanguage === 'js' ? ' · en JavaScript' : ' · en Python') : '';
-  go.append(el('span', 'go', '▶ Continuer'), el('span', 'go-sub', `${chapterName(cur, ui)} · niveau ${level}${lang}`));
+  const vars = { chapter: chapterName(cur, ui), level, lang: state.settings.codeLanguage === 'js' ? 'JavaScript' : 'Python' };
+  go.append(el('span', 'go', t(ui, 'home.continue')), el('span', 'go-sub', tf(ui, b.id === 'maze' ? 'home.levelNowLang' : 'home.levelNow', vars)));
   go.onclick = () => handlers.onPlay(b.id);
 
   const row = el('ul', 'chaps');
@@ -127,22 +128,22 @@ function gameCard(b, state, handlers, signal, openNow) {
     const st = isDone(ch) ? 'done' : chapterState(b.id, ch, level);
     const { total } = chapterProgress(b.id, ch, level);
     const done = st === 'done' ? total : chapterProgress(b.id, ch, level).done;
-    const t = el('button', `chap ${st}`);
-    t.style.setProperty('--a', chapterColor(b.id, i));
-    t.append(el('span', 'chap-icon', st === 'locked' ? '🔒' : ch.icon), el('span', 'chap-name', chapterShort(ch, ui)),
+    const th = el('button', `chap ${st}`);
+    th.style.setProperty('--a', chapterColor(b.id, i));
+    th.append(el('span', 'chap-icon', st === 'locked' ? '🔒' : ch.icon), el('span', 'chap-name', chapterShort(ch, ui)),
       el('span', 'chap-n', `${st === 'done' ? '✔ ' : ''}${done}/${total}`));
-    const word = { done: 'chapitre terminé', current: 'chapitre en cours', locked: 'chapitre verrouillé' }[st];
-    t.setAttribute('aria-label', `${chapterName(ch, ui)}, ${word}, ${done} niveau${done > 1 ? 'x' : ''} sur ${total}`);
-    t.disabled = st === 'locked';
-    if (!t.disabled) {
-      t.setAttribute('aria-controls', panel.id);
-      t.setAttribute('aria-expanded', 'false');
-      t.onclick = () => show(open === i ? null : i);
+    const word = t(ui, { done: 'home.chapDone', current: 'home.chapCurrent', locked: 'home.chapLocked' }[st]);
+    th.setAttribute('aria-label', tn(ui, 'home.chapAria', done, { name: chapterName(ch, ui), word, total }));
+    th.disabled = st === 'locked';
+    if (!th.disabled) {
+      th.setAttribute('aria-controls', panel.id);
+      th.setAttribute('aria-expanded', 'false');
+      th.onclick = () => show(open === i ? null : i);
     }
     const li = el('li');
-    li.append(t);
+    li.append(th);
     row.append(li);
-    return t;
+    return th;
   });
 
   let draw = () => {};
@@ -179,16 +180,16 @@ function buildPath(panel, b, ch, index, { state, handlers, level, need, lastDone
   const ui = state.settings.language;
   panel.style.setProperty('--a', chapterColor(b.id, index));
   const top = el('div', 'chap-top');
-  top.append(el('span', 'chap-title', `${ch.icon} ${chapterName(ch, ui)}`), el('span', 'chap-count', `${n} / ${total} niveaux`));
+  top.append(el('span', 'chap-title', `${ch.icon} ${chapterName(ch, ui)}`), el('span', 'chap-count', tn(ui, 'home.chapCount', total, { done: n })));
   const box = el('div', 'path');
   panel.append(top, box);
   const curLevel = !done && !lastDone && level >= ch.from && level <= ch.to ? level : null;
   if (curLevel) {
-    const play = el('button', 'path-play', `▶ Jouer le niveau ${curLevel}`);
+    const play = el('button', 'path-play', tf(ui, 'home.playLevel', { level: curLevel }));
     play.onclick = () => handlers.onPlay(b.id);
     panel.append(play);
   } else {
-    panel.append(el('p', 'path-hint', 'Touche une étape verte pour la rejouer.'));
+    panel.append(el('p', 'path-hint', t(ui, 'home.pathHint')));
   }
   const p = state.progress[b.id];
   const creature = CREATURES[state.rewards.unlocked - 1];
@@ -220,8 +221,8 @@ function buildPath(panel, b, ch, index, { state, handlers, level, need, lastDone
       } else if (st === 'cur') {
         btn.style.setProperty('--p', Math.min(1, p.correct / need));
       }
-      const word = st === 'done' ? 'fait, rejouer' : st === 'cur' ? 'en cours' : 'pas encore atteint';
-      btn.setAttribute('aria-label', `Niveau ${lv}, ${word}`);
+      const word = t(ui, st === 'done' ? 'home.stepDone' : st === 'cur' ? 'home.stepCurrent' : 'home.stepTodo');
+      btn.setAttribute('aria-label', tf(ui, 'home.stepAria', { level: lv, word }));
       btn.disabled = st === 'todo';
       if (!btn.disabled) btn.onclick = () => handlers.onPickLevel(b.id, lv);
       if (st === 'cur') btn.append(buddy(creature));
@@ -236,7 +237,7 @@ function buildPath(panel, b, ch, index, { state, handlers, level, need, lastDone
     slot.style.left = `${end.x}px`;
     slot.style.top = `${end.y}px`;
     const art = stickerSvg(ch.id, !earned, ui);
-    art.setAttribute('aria-label', `Autocollant ${chapterShort(ch, ui)}, ${earned ? 'gagné' : 'à gagner au bout du chemin'}`);
+    art.setAttribute('aria-label', tf(ui, 'home.stickerAria', { name: chapterShort(ch, ui), state: t(ui, earned ? 'home.stickerEarned' : 'home.stickerToEarn') }));
     slot.append(art);
     ol.append(slot);
     box.replaceChildren(svg, ol);

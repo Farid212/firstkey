@@ -1,5 +1,6 @@
 import { CODE_JS } from './data/code-js.js';
 import { CODE_PYTHON } from './data/code-python.js';
+import { t } from './i18n.js';
 
 const CODE = { js: CODE_JS, python: CODE_PYTHON };
 const WINDOW = 10;
@@ -22,16 +23,16 @@ export function windowOf(list, level) {
   return list.slice(start, start + WINDOW);
 }
 
-export function makeCodeQuestion(blockId, level, rng = Math.random) {
+export function makeCodeQuestion(blockId, level, rng = Math.random, lang = 'fr') {
   const data = CODE[blockId];
   if (!data) throw new Error(`Bloc de code inconnu : ${blockId}`);
   const typed = level > QUIZ_LAST;
   const list = typed ? data.lines : data.quiz;
   if (!list.length) throw new Error(`Aucun contenu de code pour ${blockId}`);
   const item = pick(windowOf(list, level), rng);
-  if (typed) return { kind: 'typed', display: item, accepts: [item], hint: 'Retape le code', code: true };
+  if (typed) return { kind: 'typed', display: item, accepts: [item], hint: t(lang, 'code.hintTyped'), code: true };
 
   const wrong = shuffle([...new Set(item.wrong)].filter((w) => w !== item.answer), rng).slice(0, level <= 20 ? 2 : 3);
   const choices = shuffle([item.answer, ...wrong], rng);
-  return { kind: 'choice', display: item.code, hint: "Que s'affiche-t-il ?", choices, answerIndex: choices.indexOf(item.answer) };
+  return { kind: 'choice', display: item.code, hint: t(lang, 'code.hintQuiz'), choices, answerIndex: choices.indexOf(item.answer) };
 }

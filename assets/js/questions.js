@@ -20,7 +20,7 @@ function pick(arr, rng) {
 export function makeQuestion(blockId, level, settings, rng = Math.random) {
   const block = BLOCKS.find((b) => b.id === blockId);
   if (!block || !block.playable) throw new Error(`Bloc non jouable : ${blockId}`);
-  if (blockId === 'js' || blockId === 'python') return makeCodeQuestion(blockId, level, rng);
+  if (blockId === 'js' || blockId === 'python') return makeCodeQuestion(blockId, level, rng, settings.language);
   if (blockId === 'math') {
     const m = makeMathQuestion(level, rng);
     return m.mode === 'choice'
