@@ -28,10 +28,8 @@ export function suggest(word, lang) {
 }
 
 class Fail { constructor(error) { this.error = error; } }
-const errorOf = (code, key, params = {}, hint) => ({ code, key: `maze.err.${key}`, params, ...(hint && { hintKey: `maze.err.${hint}` }) });
+const errorOf = (code, key, params = {}, hint) => ({ code, key: `maze.err.${key}`, params, ...(hint && { hintKey: hint.startsWith('maze.') ? hint : `maze.err.${hint}` }) });
 const oops = (...args) => { throw new Fail(errorOf(...args)); };
-const legacy = (code, message, hint) => (hint ? { code, message, hint } : { code, message });
-const fail = (code, message, hint) => { throw new Fail(legacy(code, message, hint)); };
 
 const isDigit = (c) => c >= '0' && c <= '9';
 const isIdStart = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_';
@@ -220,22 +218,11 @@ const RESERVED = new Set([...COMMANDS, ...'wall goal range def function let cons
   ...Object.getOwnPropertyNames(Object.prototype)]);
 const OPS = ['===', '==', '!=', '<=', '>=', '+=', '-=', '*=', '++', '--', '&&', '||'];
 const CROSS = {
-  py: {
-    function: 'En Python, une fonction commence par def : def carre():',
-    let: 'En Python, écris simplement n = 2',
-    '{': 'En Python, pas d\'accolades : termine la ligne par : et décale le bloc.',
-    '}': 'En Python, pas d\'accolades : décale le bloc avec des espaces.',
-    '!': 'En Python, écris not wall()',
-  },
-  js: {
-    def: 'En JavaScript, écris function carre() { … }',
-    not: 'En JavaScript, écris !wall()',
-    elif: 'En JavaScript, écris else if (…) { … }',
-    ':': 'En JavaScript, mets le bloc entre accolades { }',
-  },
+  py: { function: 'function', let: 'let', '{': 'braceOpen', '}': 'braceClose', '!': 'bang' },
+  js: { def: 'def', not: 'not', elif: 'elif', ':': 'colon' },
 };
 
-const cross = (lang, v) => (Object.hasOwn(CROSS[lang], v) ? CROSS[lang][v] : undefined);
+const cross = (lang, v) => (Object.hasOwn(CROSS[lang], v) ? `maze.cross.${lang}.${CROSS[lang][v]}` : undefined);
 
 function lineTokens(text) {
   const raw = tokenize(text);
@@ -254,13 +241,13 @@ function lineTokens(text) {
 }
 
 export function parseProgram(src, lang) {
-  if (typeof src !== 'string' || (lang !== 'py' && lang !== 'js')) return { ok: false, error: { code: 'syntax', message: 'Je ne comprends pas ce programme.' } };
-  if (src.length > MAX_SRC) return { ok: false, error: { code: 'too_long', message: 'Ce programme est trop long.' } };
+  if (typeof src !== 'string' || (lang !== 'py' && lang !== 'js')) return { ok: false, error: errorOf('syntax', 'program') };
+  if (src.length > MAX_SRC) return { ok: false, error: errorOf('too_long', 'programTooLong') };
   const js = lang === 'js';
   const toks = [];
   let p = 0;
   let lexLine = 0;
-  const failAt = (line, code, message, hint) => { const f = new Fail(legacy(code, message, hint)); f.line = line; throw f; };
+  const failAt = (line, ...args) => { const f = new Fail(errorOf(...args)); f.line = line; throw f; };
   try {
     const lines = [];
     src.split('\n').forEach((raw, i) => {
@@ -268,25 +255,25 @@ export function parseProgram(src, lang) {
       const text = cut < 0 ? raw : raw.slice(0, cut);
       if (text.trim()) lines.push({ text, n: i + 1 });
     });
-    if (!lines.length) return { ok: false, error: { code: 'empty', message: 'Écris une commande, par exemple forward()' } };
-    if (lines.length > MAX_LINES) failAt(lines[MAX_LINES].n, 'too_many_lines', `Ton programme a ${lines.length} lignes : ${MAX_LINES} au plus.`);
+    if (!lines.length) return { ok: false, error: errorOf('empty', 'empty') };
+    if (lines.length > MAX_LINES) failAt(lines[MAX_LINES].n, 'too_many_lines', 'tooManyLines', { count: lines.length, max: MAX_LINES });
     let unit = 0;
     let level = 0;
     for (const { text, n } of lines) {
       lexLine = n;
-      if (text.length > MAX_LEN) fail('too_long', `Cette ligne est trop longue (${MAX_LEN} caractères au plus).`);
+      if (text.length > MAX_LEN) oops('too_long', 'tooLong', { max: MAX_LEN });
       if (!js) {
         let k = 0;
         while (text[k] === ' ') k++;
-        if (text[k] === '\t') fail('tab', 'Pour décaler une ligne, utilise la barre d\'espace plutôt que la touche Tab.', 'Mets 4 espaces au début de la ligne.');
-        if (SPACE.test(text[k])) fail('indent', 'Décale cette ligne avec des espaces normaux (barre d\'espace).');
+        if (text[k] === '\t') oops('tab', 'tab', {}, 'tabHint');
+        if (SPACE.test(text[k])) oops('indent', 'oddSpace');
         if (k && !unit) {
-          if (k !== 2 && k !== 4) fail('indent', 'Décale les blocs de 4 espaces (ou 2), toujours de la même façon.');
+          if (k !== 2 && k !== 4) oops('indent', 'indentUnit');
           unit = k;
         }
-        if (unit && k % unit) fail('indent', `Cette ligne n'est pas bien alignée : décale de ${unit} espaces à chaque bloc.`);
+        if (unit && k % unit) oops('indent', 'misaligned', { unit });
         const lv = unit ? k / unit : 0;
-        if (lv > level + 1) fail('indent', 'Cette ligne est trop décalée : un seul cran de plus que la ligne du dessus.');
+        if (lv > level + 1) oops('indent', 'tooIndented');
         for (; level < lv; level++) toks.push({ k: 'ctl', v: '<in>', line: n });
         for (; level > lv; level--) toks.push({ k: 'ctl', v: '<de>', line: n });
       }
@@ -306,76 +293,74 @@ export function parseProgram(src, lang) {
     const peek = () => toks[p];
     const is = (v) => p < toks.length && toks[p].v === v && toks[p].k !== 'num';
     const eat = (v) => (is(v) ? (p++, true) : false);
-    const need = (v, code, msg, hint) => { if (!eat(v)) fail(code, msg, hint); };
-    const syntax = (msg, hint) => fail('syntax', msg, hint);
+    const need = (v, code, key, params) => { if (!eat(v)) oops(code, key, params); };
+    const syntax = (key, params, hint) => oops('syntax', key, params, hint);
     const short = (s) => s.slice(0, 20);
-    const show = () => { const t = peek(); return !t || t.v === '<nl>' ? 'la fin de la ligne' : t.k === 'ctl' ? 'un décalage' : `« ${short(t.v)} »`; };
-    const ident = (what) => { const t = peek(); if (!t || t.k !== 'id') syntax(`Il manque ${what}.`); p++; return t.v; };
+    const tok = (v) => ({ frag: 'tok', v: short(v) });
+    const show = () => { const t = peek(); return !t || t.v === '<nl>' ? { frag: 'end' } : t.k === 'ctl' ? { frag: 'shift' } : tok(t.v); };
+    const ident = (what) => { const t = peek(); if (!t || t.k !== 'id') syntax('missingWhat', { what: { frag: what } }); p++; return t.v; };
     const checkName = (name) => {
-      if (RESERVED.has(name)) fail('reserved', `« ${short(name)} » est un mot réservé du langage : choisis un autre nom.`);
-      if (declared.has(name)) fail('reserved', `${short(name)} est déjà le nom d'une fonction : choisis un autre nom.`);
+      if (RESERVED.has(name)) oops('reserved', 'reservedWord', { w: tok(name) });
+      if (declared.has(name)) oops('reserved', 'fnNameTaken', { name: short(name) });
     };
     const parens = (name) => {
-      if (!eat('(')) fail('missing_paren', `Il manque une parenthèse ( ) après ${name}`, `Écris ${name}()`);
-      need(')', 'missing_paren', `Il manque la parenthèse fermante ) après ${name}`);
+      if (!eat('(')) oops('missing_paren', 'parens', { name }, 'parensHint');
+      need(')', 'missing_paren', 'closeParen', { name });
     };
     const unknown = (word) => {
       const s = suggest(word, lang);
-      fail('unknown_command', `Je ne connais pas "${short(word)}".`, s ? `Tu voulais écrire ${s}() ?` : undefined);
+      oops('unknown_command', 'unknown', s ? { word: short(word), s } : { word: short(word) }, s && 'unknownHint');
     };
+    const giveValue = (name) => ({ ex: `${js ? 'let ' : ''}${short(name)} = 1` });
 
     const atom = (sc) => {
       const t = peek();
       if (t && t.k === 'num') {
         p++;
         const v = t.v.length > 3 ? 1000 : Number(t.v);
-        if (v > 99) fail('too_big', 'Ce nombre est trop grand, essaie avec 99 ou moins.');
+        if (v > 99) oops('too_big', 'tooBig');
         return { k: 'num', v };
       }
       if (t && t.k === 'id' && !RESERVED.has(t.v) && !declared.has(t.v)) {
         if (!sc.vars.has(t.v)) {
-          fail('undefined_name', `Je ne connais pas encore ${short(t.v)}.`, sc.fn
-            ? 'Dans une fonction, on utilise seulement son paramètre et ses propres variables.'
-            : `Donne-lui d'abord une valeur, par exemple ${js ? 'let ' : ''}${short(t.v)} = 1`);
+          oops('undefined_name', 'notYet', { name: short(t.v), ...(!sc.fn && giveValue(t.v)) }, sc.fn ? 'fnOwnVars' : 'giveValue');
         }
         p++;
         return { k: 'var', name: t.v };
       }
-      if (is('(')) fail('bad_expr', 'Pas de parenthèses dans un calcul : écris par exemple n * 2 + 1.');
-      if (is('-')) fail('bad_expr', 'Pas de nombre négatif ici : utilise n -= 1 pour diminuer.');
-      return fail('bad_expr', `Il manque un nombre ou une variable (j'ai trouvé ${show()}).`);
+      if (is('(')) oops('bad_expr', 'noParensCalc');
+      if (is('-')) oops('bad_expr', 'noNegative');
+      return oops('bad_expr', 'numberOrVar', { what: show() });
     };
     const term = (sc) => { let a = atom(sc); while (eat('*')) a = { k: 'bin', op: '*', a, b: atom(sc) }; return a; };
     const expr = (sc) => {
       let a = term(sc);
       for (let op; (op = is('+') ? '+' : is('-') ? '-' : null);) { p++; a = { k: 'bin', op, a, b: term(sc) }; }
-      if (is('/') || is('%')) fail('bad_expr', 'Dans un calcul, on peut seulement utiliser +, - et *.');
+      if (is('/') || is('%')) oops('bad_expr', 'calcOps');
       return a;
     };
     const cond = (sc) => {
-      if (!js && is('!')) syntax('Je ne comprends pas « ! ».', CROSS.py['!']);
-      if (js && is('not')) syntax('Je ne comprends pas « not ».', CROSS.js.not);
+      if (!js && is('!')) syntax('notUnderstood', { what: tok('!') }, cross(lang, '!'));
+      if (js && is('not')) syntax('notUnderstood', { what: tok('not') }, cross(lang, 'not'));
       const neg = eat(js ? '!' : 'not');
       const t = peek();
       if (t && t.k === 'id' && (t.v === 'wall' || t.v === 'goal')) { p++; parens(t.v); return { k: 'sense', name: t.v, neg }; }
-      if (neg) fail('bad_expr', `${js ? '!' : 'not'} se met seulement devant wall() ou goal().`);
+      if (neg) oops('bad_expr', 'negOnlySense', { op: js ? '!' : 'not' });
       const a = expr(sc);
       const op = ['<', '>', '=='].find((o) => is(o));
       if (!op) {
-        if (is('===') || is('=')) fail('bad_expr', 'Pour comparer deux nombres, écris ==.', 'Par exemple n == 3');
-        if (is('<=') || is('>=') || is('!=')) fail('bad_expr', 'Compare avec <, > ou == seulement.');
-        fail('bad_expr', 'Il manque une comparaison, par exemple n < 3, ou bien wall().');
+        if (is('===') || is('=')) oops('bad_expr', 'compareEq', {}, 'compareEqHint');
+        if (is('<=') || is('>=') || is('!=')) oops('bad_expr', 'compareOps');
+        oops('bad_expr', 'compareMissing');
       }
       p++;
       const b = expr(sc);
-      if (['and', 'or', '&&', '||'].some((o) => is(o))) fail('bad_expr', 'Une seule condition à la fois.');
+      if (['and', 'or', '&&', '||'].some((o) => is(o))) oops('bad_expr', 'oneCond');
       return { k: 'cmp', op, a, b };
     };
 
-    const missing = (line) => failAt(line, 'block_missing', 'Il manque le bloc à répéter ou à faire.',
-      js ? 'Écris-le entre accolades { }' : 'Décale les lignes du bloc de 4 espaces sous cette ligne.');
-    const inline = (line, what) => failAt(line, 'inline_block', `Mets le corps ${what} sur les lignes en dessous, ${js ? 'entre { et }' : 'décalé'}.`,
-      js ? 'Termine la ligne par {, écris une instruction par ligne, puis } seule sur la dernière.' : 'Va à la ligne après le :, puis décale de 4 espaces.');
+    const missing = (line) => failAt(line, 'block_missing', 'blockMissing', {}, js ? 'blockMissingJs' : 'blockMissingPy');
+    const inline = (line, what) => failAt(line, 'inline_block', js ? 'inlineJs' : 'inlinePy', { what: { frag: what } }, js ? 'inlineJsHint' : 'inlinePyHint');
     function block(sc, depth, line, what) {
       let b;
       if (js) {
@@ -386,9 +371,9 @@ export function parseProgram(src, lang) {
         }
         if (!is('<nl>') && !is('}')) inline(line, what);
         b = list(sc, depth, '}');
-        if (b.length) need('}', 'syntax', `Il manque une accolade } pour fermer le bloc de la ligne ${line}.`);
+        if (b.length) need('}', 'syntax', 'closeBlock', { n: line });
       } else {
-        need(':', 'syntax', 'Il manque le signe : à la fin de la ligne.');
+        need(':', 'syntax', 'colonEnd');
         if (!is('<nl>')) inline(line, what);
         p++;
         if (!eat('<in>')) missing(line);
@@ -403,45 +388,45 @@ export function parseProgram(src, lang) {
       let v;
       let n;
       if (js) {
-        const hint = 'Écris for (let i = 0; i < 4; i++)';
-        need('(', 'missing_paren', 'Il manque une parenthèse ( après for');
-        need('let', 'syntax', hint);
-        v = ident('le nom de la variable, par exemple i');
+        need('(', 'missing_paren', 'openParen', { name: 'for' });
+        need('let', 'syntax', 'jsFor');
+        v = ident('varEx');
         checkName(v);
-        need('=', 'syntax', hint);
-        if (!peek() || peek().v !== '0') syntax(`La boucle commence à 0 : let ${short(v)} = 0`);
+        need('=', 'syntax', 'jsFor');
+        const sv = { v: short(v) };
+        if (!peek() || peek().v !== '0') syntax('startZeroV', sv);
         p++;
-        need(';', 'syntax', `Il manque un ; après let ${short(v)} = 0`);
-        if (!eat(v)) syntax(`Écris ${short(v)} < 4 après le premier ;`);
-        need('<', 'syntax', `Écris ${short(v)} < 4 après le premier ;`);
+        need(';', 'syntax', 'semiAfterLetV', sv);
+        if (!eat(v)) syntax('lessThan', sv);
+        need('<', 'syntax', 'lessThan', sv);
         n = expr(sc);
-        need(';', 'syntax', 'Il manque un ; avant la fin de for ( )');
-        if (!eat(v) || !eat('++')) syntax(`Écris ${short(v)}++ à la fin`);
-        need(')', 'missing_paren', `Il manque une parenthèse ) après ${short(v)}++`);
+        need(';', 'syntax', 'semiBeforeEnd');
+        if (!eat(v) || !eat('++')) syntax('plusPlus', sv);
+        need(')', 'missing_paren', 'closeAfter', { name: `${short(v)}++` });
       } else {
-        v = ident('le nom de la variable : for i in range(4):');
+        v = ident('varPy');
         checkName(v);
-        need('in', 'syntax', 'Écris for i in range(4):');
-        need('range', 'syntax', 'Écris for i in range(4):');
-        if (!eat('(')) fail('missing_paren', 'Il manque une parenthèse ( après range');
+        need('in', 'syntax', 'pyFor');
+        need('range', 'syntax', 'pyFor');
+        if (!eat('(')) oops('missing_paren', 'openParen', { name: 'range' });
         n = expr(sc);
-        need(')', 'missing_paren', 'Il manque la parenthèse fermante ) de range');
+        need(')', 'missing_paren', 'closeRange');
       }
       sc.vars.add(v);
-      return { t: 'loop', n, v, body: block(sc, depth + 1, line, 'de la boucle'), line };
+      return { t: 'loop', n, v, body: block(sc, depth + 1, line, 'ofLoop'), line };
     }
 
     function stmt(sc, depth) {
       const t = peek();
-      if (t.v === '<in>') fail('indent', 'Cette ligne est décalée sans raison : aligne-la sur la ligne du dessus.');
-      if (t.k !== 'id') syntax(`Je ne comprends pas ${show()}.`, cross(lang, t.v));
+      if (t.v === '<in>') oops('indent', 'strayIndent');
+      if (t.k !== 'id') syntax('notUnderstood', { what: show() }, cross(lang, t.v));
       const { line } = t;
       const nx = toks[p + 1];
       if (nx && nx.k === 'sym' && (nx.v === '=' || nx.v === '+=' || nx.v === '-=')) {
         checkName(t.v);
         if ((nx.v !== '=' || js) && !sc.vars.has(t.v)) {
-          fail('undefined_name', `Je ne connais pas encore ${short(t.v)}.`, sc.fn && main.vars.has(t.v) ? 'Dans une fonction, passe la valeur avec un paramètre.'
-            : nx.v === '=' ? `Écris let ${short(t.v)} = …` : `Donne-lui d'abord une valeur, par exemple ${js ? 'let ' : ''}${short(t.v)} = 1`);
+          const hint = sc.fn && main.vars.has(t.v) ? 'passParam' : nx.v === '=' ? 'writeLet' : 'giveValue';
+          oops('undefined_name', 'notYet', { name: short(t.v), ...(hint === 'giveValue' && giveValue(t.v)) }, hint);
         }
         p += 2;
         const e = expr(sc);
@@ -449,63 +434,63 @@ export function parseProgram(src, lang) {
         return { t: 'set', name: t.v, op: nx.v, e, line };
       }
       if (t.v === 'for' || t.v === 'if' || t.v === 'while') {
-        if (depth >= MAX_DEPTH) fail('too_deep', `Trop de blocs les uns dans les autres : ${MAX_DEPTH} au plus.`, 'Range une partie dans une fonction.');
+        if (depth >= MAX_DEPTH) oops('too_deep', 'tooDeep', { max: MAX_DEPTH }, 'tooDeepHint');
         p++;
         if (t.v === 'for') return loop(sc, depth, line);
-        if (js) need('(', 'missing_paren', `Il manque une parenthèse ( après ${t.v}`);
+        if (js) need('(', 'missing_paren', 'openParen', { name: t.v });
         const c = cond(sc);
-        if (js) need(')', 'missing_paren', `Il manque une parenthèse ) après la condition de ${t.v}`);
-        const body = block(sc, depth + 1, line, t.v === 'while' ? 'de la boucle' : 'du if');
+        if (js) need(')', 'missing_paren', 'closeCond', { name: t.v });
+        const body = block(sc, depth + 1, line, t.v === 'while' ? 'ofLoop' : 'ofIf');
         if (t.v === 'while') return { t: 'while', cond: c, body, line };
         const s = { t: 'if', cond: c, body, line };
         const save = p;
         while (eat('<nl>') || (js && eat(';')));
         const el = peek();
-        if (eat('else')) s.else = block(sc, depth + 1, el.line, 'du else'); else p = save;
+        if (eat('else')) s.else = block(sc, depth + 1, el.line, 'ofElse'); else p = save;
         return s;
       }
       const key = keyOf(t.v);
       if (key) {
         p++;
-        if (!eat('(')) fail('missing_paren', `Il manque une parenthèse ( ) après ${t.v}`, `Écris ${t.v}()`);
+        if (!eat('(')) oops('missing_paren', 'parens', { name: t.v }, 'parensHint');
         let n = { k: 'num', v: 1 };
         if (!is(')')) {
-          if (key !== 'forward') syntax(`${t.v}() s'écrit sans rien entre les parenthèses.`);
+          if (key !== 'forward') syntax('noArgs', { name: t.v });
           n = expr(sc);
         }
-        need(')', 'missing_paren', `Il manque la parenthèse fermante ) après ${t.v}`);
+        need(')', 'missing_paren', 'closeParen', { name: t.v });
         return { t: 'call', name: key, n, line };
       }
-      if (t.v === 'wall' || t.v === 'goal') syntax(`${t.v}() se pose dans un if ou un while.`);
-      if (t.v === 'else') fail('else_alone', 'Ce else n\'a pas de if juste avant.', js ? 'Écris if (…) { … } else { … }' : 'Aligne else: exactement sous son if.');
-      if (t.v === FN) syntax('Écris les fonctions tout en haut du programme, pas dans un bloc.');
-      if (cross(lang, t.v)) syntax(`Je ne comprends pas « ${t.v} ».`, cross(lang, t.v));
-      if (t.v === 'elif') syntax('elif n\'existe pas ici : écris else: puis un if dans le bloc.');
+      if (t.v === 'wall' || t.v === 'goal') syntax('senseAlone', { name: t.v });
+      if (t.v === 'else') oops('else_alone', 'elseAlone', {}, js ? 'elseAloneJs' : 'elseAlonePy');
+      if (t.v === FN) syntax('fnTop');
+      if (cross(lang, t.v)) syntax('notUnderstood', { what: tok(t.v) }, cross(lang, t.v));
+      if (t.v === 'elif') syntax('noElif');
       if (js && t.v === 'let') {
         p++;
-        const name = ident('le nom de la variable');
+        const name = ident('var');
         checkName(name);
-        need('=', 'syntax', `Écris let ${short(name)} = 1`);
+        need('=', 'syntax', 'letOne', { name: short(name) });
         const e = expr(sc);
         sc.vars.add(name);
         return { t: 'set', name, op: '=', e, line };
       }
-      if (nx && ['++', '--', '*='].includes(nx.v)) syntax(`Je ne comprends pas « ${short(t.v)}${nx.v} ».`, `Écris ${short(t.v)} += 1 ou ${short(t.v)} -= 1`);
+      if (nx && ['++', '--', '*='].includes(nx.v)) syntax('notUnderstood', { what: { frag: 'tok', v: short(t.v) + nx.v }, name: short(t.v) }, 'incHint');
       if (nx && nx.v === '(' && Object.hasOwn(funcs, t.v)) {
         p += 2;
         const { param } = funcs[t.v];
         let arg;
         if (param) {
-          if (is(')')) syntax(`${short(t.v)}() attend un nombre entre les parenthèses.`);
+          if (is(')')) syntax('needsArg', { name: short(t.v) });
           arg = expr(sc);
-        } else if (!is(')')) syntax(`${short(t.v)}() s'écrit sans rien entre les parenthèses.`);
-        need(')', 'missing_paren', `Il manque la parenthèse fermante ) après ${short(t.v)}`);
+        } else if (!is(')')) syntax('noArgs', { name: short(t.v) });
+        need(')', 'missing_paren', 'closeParen', { name: short(t.v) });
         return arg ? { t: 'callfn', name: t.v, arg, line } : { t: 'callfn', name: t.v, line };
       }
-      if (t.v === sc.fn) fail('recursion', `La fonction ${short(t.v)} ne peut pas s'appeler elle-même.`, 'Utilise plutôt une boucle.');
+      if (t.v === sc.fn) oops('recursion', 'selfCall', { name: short(t.v) }, 'selfCallHint');
       if (declared.has(t.v)) {
-        if (sc.fn) fail('recursion', `${short(sc.fn)} ne peut appeler que des fonctions écrites avant elle.`, `Déplace ${short(t.v)} au-dessus.`);
-        fail('undefined_name', `La fonction ${short(t.v)} est écrite plus bas.`, 'Écris la fonction avant de l\'appeler.');
+        if (sc.fn) oops('recursion', 'callBefore', { fn: short(sc.fn), name: short(t.v) }, 'callBeforeHint');
+        oops('undefined_name', 'fnBelow', { name: short(t.v) }, 'fnBelowHint');
       }
       return unknown(t.v);
     }
@@ -513,26 +498,27 @@ export function parseProgram(src, lang) {
     function funcDef() {
       const { line } = peek();
       p++;
-      const name = ident('le nom de la fonction');
-      if (COMMANDS.includes(name)) fail('reserved', `${name} est déjà une commande du robot : choisis un autre nom pour ta fonction.`);
-      if (RESERVED.has(name)) fail('reserved', `« ${short(name)} » est un mot réservé du langage : choisis un autre nom.`);
-      if (Object.hasOwn(funcs, name)) fail('duplicate_fn', `Il y a déjà une fonction ${short(name)}.`, 'Donne un autre nom à la deuxième.');
-      if (main.vars.has(name)) fail('reserved', `${short(name)} est déjà le nom d'une variable : choisis un autre nom.`);
-      need('(', 'missing_paren', `Il manque une parenthèse ( après ${short(name)}`);
+      const name = ident('fnName');
+      const sn = { name: short(name) };
+      if (COMMANDS.includes(name)) oops('reserved', 'isCommand', { name });
+      if (RESERVED.has(name)) oops('reserved', 'reservedWord', { w: tok(name) });
+      if (Object.hasOwn(funcs, name)) oops('duplicate_fn', 'dupFn', sn, 'dupFnHint');
+      if (main.vars.has(name)) oops('reserved', 'varNameTaken', sn);
+      need('(', 'missing_paren', 'openParen', sn);
       let param = null;
-      if (peek() && peek().k === 'id') { param = ident('le paramètre'); checkName(param); }
-      if (is(',')) syntax('Une fonction a au plus un paramètre.');
-      need(')', 'missing_paren', `Il manque une parenthèse ) après ${short(name)}(`);
+      if (peek() && peek().k === 'id') { param = ident('param'); checkName(param); }
+      if (is(',')) syntax('oneParam');
+      need(')', 'missing_paren', 'closeAfter', { name: `${short(name)}(` });
       const sc = { vars: new Set(param ? [param] : []), fn: name };
       let body;
       if (js) {
         while (eat('<nl>'));
-        need('{', 'syntax', `Écris function ${short(name)}() { … }`);
-        if (!is('<nl>') && !is('}')) inline(line, 'de la fonction');
+        need('{', 'syntax', 'writeFn', sn);
+        if (!is('<nl>') && !is('}')) inline(line, 'ofFn');
         body = list(sc, 0, '}');
         if (!body.length) missing(line);
-        need('}', 'syntax', `Il manque une accolade } pour fermer la fonction ${short(name)}.`);
-      } else body = block(sc, 0, line, 'de la fonction');
+        need('}', 'syntax', 'closeFn', sn);
+      } else body = block(sc, 0, line, 'ofFn');
       funcs[name] = { param, body };
     }
 
@@ -546,16 +532,16 @@ export function parseProgram(src, lang) {
         const prev = toks[p - 1].v;
         eat(';');
         if (!peek() || is('<nl>') || prev === '<de>') continue;
-        if (is('}')) fail('one_per_line', 'Mets l\'accolade } seule sur sa ligne, sous le bloc.');
-        fail('one_per_line', `Écris une seule instruction par ligne (va à la ligne avant ${show()}).`);
+        if (is('}')) oops('one_per_line', 'braceAlone');
+        oops('one_per_line', 'onePerLine', { what: show() });
       }
     }
 
     const body = list(main, 0, null);
-    if (peek()) syntax(`Je ne comprends pas ${show()}.`, cross(lang, peek().v));
+    if (peek()) syntax('notUnderstood', { what: show() }, cross(lang, peek().v));
     return { ok: true, program: { funcs, body }, lines: lines.length };
   } catch (e) {
-    if (!(e instanceof Fail)) return { ok: false, error: { code: 'syntax', message: 'Je ne comprends pas ce programme.' } };
+    if (!(e instanceof Fail)) return { ok: false, error: errorOf('syntax', 'program') };
     const line = e.line ?? (lexLine || (toks[p] ?? toks.at(-1) ?? { line: 1 }).line);
     return { ok: false, error: { ...e.error, line } };
   }
