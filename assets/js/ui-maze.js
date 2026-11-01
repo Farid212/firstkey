@@ -7,6 +7,7 @@ import { createWorld, execute, executeProgram } from './maze/world.js';
 import { getArt } from './rewards/art/index.js';
 import { CREATURES } from './rewards/creatures.js';
 import { svgEl } from './rewards/fx.js';
+import { createPenalty } from './penalty.js';
 
 const play = (id) => {
   const a = document.getElementById(id);
@@ -201,6 +202,7 @@ export function startMaze(root, state, target, handlers) {
   let creature;
 
   let fixed = target.level;
+  const penalty = createPenalty();
   let local = 0;
   let level, ex, spec, prog, maze, world, hero, arrow;
   let marks = [];
@@ -426,6 +428,13 @@ export function startMaze(root, state, target, handlers) {
     document.dispatchEvent(new CustomEvent('firstkey:wrong', { detail: { blockId: 'maze', level } }));
     s = handlers.getState();
     play('wrongAnswer');
+    const to = penalty.wrong({ state: s, blockId: 'maze', level, onChange: handlers.onChange });
+    if (to === null) return;
+    s = handlers.getState();
+    if (fixed === level) fixed = to;
+    cancel();
+    load();
+    focusField();
   }
 
   async function win(t) {
@@ -447,6 +456,7 @@ export function startMaze(root, state, target, handlers) {
   }
 
   function correct() {
+    penalty.correct();
     const wasCounted = counted();
     const before = wasCounted ? s.progress.maze.correct : local;
     const res = recordCorrect(s, 'maze', level);

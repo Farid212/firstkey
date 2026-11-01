@@ -1,6 +1,7 @@
 import { pickBlock, recordCorrect, answersPerLevel } from './progress.js';
 import { makeQuestion, answerKind } from './questions.js';
 import { createTyper } from './typer.js';
+import { createPenalty } from './penalty.js';
 
 const play = (id) => {
   const a = document.getElementById(id);
@@ -43,6 +44,7 @@ export function startGame(root, state, target, handlers) {
   let s = handlers.getState();
   let blockId, level, question, typer;
   let fixed = target.level;
+  const penalty = createPenalty();
 
   function next() {
     blockId = target.blockId === 'random' ? pickBlock(s) : target.blockId;
@@ -98,9 +100,15 @@ export function startGame(root, state, target, handlers) {
     document.dispatchEvent(new CustomEvent('firstkey:wrong', { detail: { blockId, level } }));
     s = handlers.getState();
     play('wrongAnswer');
+    const to = penalty.wrong({ state: s, blockId, level, onChange: handlers.onChange });
+    if (to === null) return;
+    s = handlers.getState();
+    if (fixed === level) fixed = to;
+    next();
   }
 
   function correct() {
+    penalty.correct();
     const res = recordCorrect(s, blockId, level);
     handlers.onChange(res.state);
     const { x, y, width, height } = shown.getBoundingClientRect();
