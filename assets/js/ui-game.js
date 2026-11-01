@@ -3,13 +3,8 @@ import { makeQuestion, makeQuestionAvoiding, answerKind } from './questions.js';
 import { createTyper } from './typer.js';
 import { createPenalty } from './penalty.js';
 import { t, tf } from './i18n.js';
-
-const play = (id) => {
-  const a = document.getElementById(id);
-  if (!a) return;
-  a.currentTime = 0;
-  a.play().catch(() => {});
-};
+import { play as playSound } from './sound.js';
+import { matchChoice } from './choice-keys.js';
 
 export function startGame(root, state, target, handlers) {
   const div = (cls) => Object.assign(document.createElement('div'), { className: cls });
@@ -46,8 +41,16 @@ export function startGame(root, state, target, handlers) {
   let blockId, level, question, typer;
   let fixed = target.level;
   const penalty = createPenalty();
+  const play = (id) => playSound(id, handlers.getState);
+  let keyBuf = '';
+  let keyTimer = null;
+  const resetKeys = () => {
+    clearTimeout(keyTimer);
+    keyBuf = '';
+  };
 
   function next(previousDisplay) {
+    resetKeys();
     blockId = target.blockId === 'random' ? pickBlock(s) : target.blockId;
     if (!blockId) return exit();
     level = fixed ?? s.progress[blockId].level;
@@ -73,10 +76,13 @@ export function startGame(root, state, target, handlers) {
     }
     choices.replaceChildren(...(q.choices ?? []).map((c, i) => {
       const b = Object.assign(document.createElement('button'), { className: 'choice', type: 'button' });
-      const pos = Object.assign(document.createElement('span'), { className: 'pos', textContent: i + 1 });
       const num = Object.assign(document.createElement('span'), { className: 'num', textContent: c });
-      b.setAttribute('aria-label', tf(s.settings.language, 'game.choiceAria', { pos: i + 1, c }));
-      b.append(pos, num);
+      if (blockId === 'math') b.append(num);
+      else {
+        const pos = Object.assign(document.createElement('span'), { className: 'pos', textContent: i + 1 });
+        b.setAttribute('aria-label', tf(s.settings.language, 'game.choiceAria', { pos: i + 1, c }));
+        b.append(pos, num);
+      }
       b.onclick = () => q === question && choose(i);
       return b;
     }));
@@ -105,7 +111,8 @@ export function startGame(root, state, target, handlers) {
     if (r === null) return;
     s = handlers.getState();
     if (r.changed && fixed === level) fixed = r.level;
-    next(question.display);
+    if (r.changed || question.kind === 'choice') return next(question.display);
+    paint();
   }
 
   function correct() {
@@ -154,6 +161,27 @@ export function startGame(root, state, target, handlers) {
     if (e.metaKey || (e.ctrlKey && !e.altKey)) return;
     if (question.kind === 'choice') {
       const k = /^\d$/.test(e.key) ? e.key : /^(Digit|Numpad)\d$/.test(e.code) ? e.code.at(-1) : '';
+      if (blockId === 'math') {
+        if (!k) return;
+        e.preventDefault();
+        keyBuf += k;
+        clearTimeout(keyTimer);
+        const m = matchChoice(keyBuf, question.choices);
+        if (m.none) {
+          resetKeys();
+          return wrong();
+        }
+        if ('pick' in m) {
+          resetKeys();
+          return choose(m.pick);
+        }
+        keyTimer = setTimeout(() => {
+          const i = question.choices.map(String).indexOf(keyBuf);
+          resetKeys();
+          if (i >= 0) choose(i);
+        }, 800);
+        return;
+      }
       if (k < '1' || k > String(choices.children.length)) return;
       e.preventDefault();
       return choose(k - 1);
@@ -164,11 +192,13 @@ export function startGame(root, state, target, handlers) {
     e.preventDefault();
     if (r === 'wrong') return wrong();
     play('correctAnswer');
+    penalty.correct();
     if (r === 'right') return paint();
     correct();
   }
 
   function exit() {
+    resetKeys();
     document.removeEventListener('keydown', onKey);
     choices.replaceChildren();
     handlers.onExit();

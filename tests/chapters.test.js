@@ -152,3 +152,11 @@ test('accesseurs: langue inconnue retombe sur l’anglais', () => {
   assert.equal(chapterShort(CHAPTERS.math[1], 'ja'), 'ひきざん');
   assert.equal(chapterShort(CHAPTERS.maze[0], 'es'), 'Todo recto');
 });
+
+test('chapitre lettres des chiffres: le japonais ne promet pas de chiffres, les autres langues si', () => {
+  const c = CHAPTERS.letters[5];
+  for (const x of [chapterName(c, 'ja'), chapterShort(c, 'ja')]) assert.doesNotMatch(x, /すうじ|数字|\d/);
+  assert.match(chapterName(c, 'fr'), /chiffres/);
+  assert.match(chapterName(c, 'en'), /numbers/);
+  assert.match(chapterName(c, 'es'), /números/);
+});
