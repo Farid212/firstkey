@@ -53,6 +53,14 @@ export function renderWelcome(root, getState, handlers) {
     w.lang = lang;
     for (const c of CONFETTI) w.append(hidden(el('span', 'wl-conf', c)));
 
+    if (step !== 'who') {
+      const back = el('button', 'wl-back', '←');
+      back.id = 'wl-back';
+      back.setAttribute('aria-label', t(lang, 'back'));
+      back.onclick = () => go('who');
+      w.append(back);
+    }
+
     const flags = el('div', 'wl-flags');
     flags.setAttribute('role', 'group');
     flags.setAttribute('aria-label', t(lang, 'setLanguage'));
