@@ -54,6 +54,33 @@ a little mouse found a big piece of cheese
 in the forest a young fox looks for his best friend the owl`,
 ).sort(byLength);
 
+const ES = list(
+  `un el sol luz pan mar pie ojo oso pez sal uva casa gato perro luna mamá papá bebé agua leche
+flor árbol libro pelota coche pato rana vaca cerdo burro conejo ratón tortuga jirafa elefante lápiz
+manzana plátano fresa naranja cereza limón nube estrella río montaña jardín mariposa pájaro caballo
+niño niña canción corazón`,
+  `
+llueve
+el gato duerme
+tengo una pelota
+el sol brilla
+mamá hace pan
+la luna es redonda
+papá lee un libro
+me gustan las fresas
+el perro corre mucho
+vamos a la escuela
+el pájaro canta en el árbol
+el conejo come una zanahoria
+había una vez un gatito gris
+sale el sol y cantan los pájaros
+la tortuga camina despacio por el jardín
+en primavera las flores crecen en el campo
+un día el ratoncito encontró un trozo de queso
+el barco sale al mar y el viento sopla fuerte
+en el bosque un zorro pequeño busca a su amigo el búho`,
+).sort(byLength);
+
 const JA_WORDS = `あめ ame|いし ishi|いえ ie|うみ umi|かお kao|くち kuchi|はな hana|そら sora|つき tsuki|ほし hoshi
 |やま yama|かわ kawa|ねこ neko|いぬ inu|さる saru|うま uma|とり tori|かめ kame|くま kuma|ふね fune
 |くつ kutsu|かさ kasa|あひる ahiru|さくら sakura|ひかり hikari|さかな sakana|たまご tamago|りんご ringo
@@ -77,4 +104,4 @@ const JA_WORDS = `あめ ame|いし ishi|いえ ie|うみ umi|かお kao|くち 
 const JA = JA_WORDS.split('|').map((p) => kana(...p.trim().split(' ')))
   .sort((a, b) => a.accepts[0].length - b.accepts[0].length);
 
-export const WORDS = { fr: FR, en: EN, ja: JA };
+export const WORDS = { fr: FR, en: EN, es: ES, ja: JA };

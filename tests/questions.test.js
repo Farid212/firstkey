@@ -36,7 +36,7 @@ test('ja: display non vide, accepts non vide, pas de majuscules', () => {
 });
 
 test('words: niveau max plus long que niveau 1', () => {
-  for (const lang of ['fr', 'en', 'ja']) {
+  for (const lang of ['fr', 'en', 'es', 'ja']) {
     const a = makeQuestion('words', 1, S(lang, false), fixed(0.5));
     const b = makeQuestion('words', MAX_LEVEL, S(lang, false), fixed(0.5));
     assert.ok(b.accepts[0].length > a.accepts[0].length, lang);
@@ -62,14 +62,14 @@ test('données: accepts valides et non vides', () => {
   };
   for (const lang of ['fr', 'en']) for (const l of LETTERS[lang]) check([l.toLowerCase()], l);
   for (const e of LETTERS.ja) { assert.ok(e.display); check(e.accepts, e.display); }
-  for (const lang of ['fr', 'en', 'ja'])
+  for (const lang of ['fr', 'en', 'es', 'ja'])
     assert.ok(WORDS[lang].length >= 50, lang);
   for (const e of WORDS.ja) { assert.ok(e.display); check(e.accepts, e.display); }
 });
 
 test('toutes les questions fr/en ont des accepts valides', () => {
-  const ok = /^[a-zàâäçéèêëîïôöùûüÿ0-9 ']+$/;
-  for (const lang of ['fr', 'en'])
+  const ok = /^[a-zàâäçéèêëîïôöùûüÿáíóúñ0-9 ']+$/;
+  for (const lang of ['fr', 'en', 'es'])
     for (const level of [1, 30, 60, 90, MAX_LEVEL])
       for (let k = 0; k < 10; k++) {
         const q = makeQuestion('words', level, S(lang), fixed(k / 10));
@@ -77,6 +77,14 @@ test('toutes les questions fr/en ont des accepts valides', () => {
         for (const a of q.accepts) assert.match(a, ok);
         assert.match(q.accepts.at(-1), /^[a-z0-9 ']+$/);
       }
+});
+
+test('es: ñ dans les lettres, saisie avec ou sans accent', () => {
+  assert.ok(LETTERS.es.includes('ñ'));
+  assert.deepEqual(makeQuestion('letters', MAX_LEVEL, S('es', false), fixed((LETTERS.es.indexOf('ñ') + 0.5) / LETTERS.es.length)).accepts, ['ñ', 'n']);
+  assert.deepEqual(toQuestion('canción', 'es', S('es', false)).accepts, ['canción', 'cancion']);
+  assert.deepEqual(toQuestion('¿qué?', 'es', S('es', false)).accepts, ['qué', 'que']);
+  assert.ok(WORDS.es.includes('canción') || WORDS.es.some((w) => /[ñáéíóú]/.test(w)));
 });
 
 test('bloc inconnu lève une erreur', () => {
@@ -109,11 +117,11 @@ test('math jouable: QCM au niveau 1, réponse tapée au niveau 58', () => {
 });
 
 test('fr/en: aucun mot ne contient de saut de ligne ni de double espace', () => {
-  for (const lang of ['fr', 'en']) for (const w of WORDS[lang]) assert.match(w, /^[^\s]+( [^\s]+)*$/, w);
+  for (const lang of ['fr', 'en', 'es']) for (const w of WORDS[lang]) assert.match(w, /^[^\s]+( [^\s]+)*$/, w);
 });
 
 test('niveau max: la réserve de lettres couvre toute la liste (fr, en, ja)', () => {
-  for (const lang of ['fr', 'en', 'ja']) {
+  for (const lang of ['fr', 'en', 'es', 'ja']) {
     const n = LETTERS[lang].length;
     const seen = new Set();
     for (let k = 0; k < n; k++)
@@ -125,7 +133,7 @@ test('niveau max: la réserve de lettres couvre toute la liste (fr, en, ja)', ()
 test('exhaustif: chaque entrée est tapable au clavier', () => {
   const ok = /^[a-z0-9 ']+$/;
   for (const blockList of [LETTERS, WORDS])
-    for (const lang of ['fr', 'en', 'ja'])
+    for (const lang of ['fr', 'en', 'es', 'ja'])
       for (const item of blockList[lang]) {
         const q = toQuestion(item, lang, S(lang, true));
         assert.ok(q.accepts.length > 0, String(item.display ?? item));

@@ -34,6 +34,7 @@ const KANJI = [
 export const LETTERS = {
   fr: [...az, ...digits],
   en: [...az, ...digits],
+  es: [...az.slice(0, 14), 'ñ', ...az.slice(14), ...digits],
   ja: [
     ...hira.map(([k, r]) => kana(k, r)),
     ...hira.map(([k, r]) => kana(toKata(k), r)),

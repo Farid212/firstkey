@@ -22,6 +22,21 @@ export function recordCorrect(state, blockId, playedLevel) {
   return { state: s, leveledUp };
 }
 
+export const strikeLimit = (age) => (age <= 6 ? Infinity : age <= 9 ? 2 : 1);
+
+export const starsLostOnDrop = (age, blockId, fromLevel) => Math.max(0, fromLevel - 1) * answersPerLevel(age, blockId);
+
+export function recordDrop(state, blockId) {
+  const s = structuredClone(state);
+  const p = s.progress[blockId];
+  const from = p.level;
+  if (from <= 1) return { state: s, dropped: false, from, to: from };
+  s.score = Math.max(0, s.score - starsLostOnDrop(s.settings.age, blockId, from));
+  p.level = from - 1;
+  p.correct = 0;
+  return { state: s, dropped: true, from, to: p.level };
+}
+
 export function jumpTo(state, blockId, level) {
   const s = structuredClone(state);
   s.progress[blockId] = { level: Math.min(MAX_LEVEL, Math.max(1, Math.floor(level) || 1)), correct: 0 };

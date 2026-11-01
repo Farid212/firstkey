@@ -3,6 +3,7 @@ import { MAX_LEVEL } from './blocks.js';
 import { discoverExercise } from './discover.js';
 import { discover2Exercise } from './discover2.js';
 import { createTyper } from './typer.js';
+import { createPenalty } from './penalty.js';
 import { getArt } from './rewards/art/index.js';
 import { CREATURES } from './rewards/creatures.js';
 
@@ -68,6 +69,7 @@ export function startDiscover(root, state, target, handlers) {
 
   let s = handlers.getState();
   let fixed = target.level;
+  const penalty = createPenalty();
   let local = 0;
   let level, ex, item, typer, slots, qrow, misses;
   let token = 0;
@@ -140,9 +142,15 @@ export function startDiscover(root, state, target, handlers) {
     play('wrongAnswer');
     restart(qrow, 'shake');
     if (++misses >= 2) con.classList.add('dc-hint');
+    const to = penalty.wrong({ state: s, blockId: ID, level, onChange: handlers.onChange });
+    if (to === null) return;
+    s = handlers.getState();
+    if (fixed === level) fixed = to;
+    load();
   }
 
   function correct() {
+    penalty.correct();
     const wasCounted = counted();
     const before = wasCounted ? s.progress[ID].correct : local;
     const res = recordCorrect(s, ID, level);

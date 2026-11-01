@@ -1,7 +1,8 @@
 import { BLOCKS } from './blocks.js';
 import { makeGate, checkGate } from './gate.js';
 import { jumpTo } from './progress.js';
-import { defaultState } from './store.js';
+import { resetState } from './store.js';
+import { LANG_LIST, t } from './i18n.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -18,6 +19,55 @@ const row = (id, label, input) => {
   r.append(l, input);
   return r;
 };
+
+export function settingsRows(cur, change, lang) {
+  const age = el('input', 'num');
+  Object.assign(age, { type: 'number', min: 2, max: 14, step: 1, value: cur.settings.age });
+  let shown = cur.settings.age;
+  age.onchange = () => {
+    const n = Number(age.value);
+    if (age.value.trim() === '' || !Number.isInteger(n)) { age.value = shown; return; }
+    shown = Math.min(14, Math.max(2, n));
+    change((s) => { s.settings.age = shown; });
+    age.value = shown;
+  };
+  const rows = [row('set-age', t(lang, 'setAge'), age)];
+
+  const up = el('input');
+  up.type = 'checkbox';
+  up.checked = cur.settings.uppercase;
+  up.onchange = () => change((s) => { s.settings.uppercase = up.checked; });
+  rows.push(row('set-up', t(lang, 'setUppercase'), up));
+
+  for (const [id, key, label] of [['set-fx', 'rewardAnimations', 'setRewardAnimations'], ['set-snd', 'rewardSounds', 'setRewardSounds']]) {
+    const c = el('input');
+    c.type = 'checkbox';
+    c.checked = cur.settings[key];
+    c.onchange = () => change((s) => { s.settings[key] = c.checked; });
+    rows.push(row(id, t(lang, label), c));
+  }
+
+  const sel = el('select', 'num');
+  for (const l of LANG_LIST) {
+    const o = el('option', '', l.name);
+    o.value = l.id;
+    sel.append(o);
+  }
+  sel.value = cur.settings.language;
+  sel.onchange = () => change((s) => { s.settings.language = sel.value; });
+  rows.push(row('set-lang', t(lang, 'setLanguage'), sel));
+
+  const code = el('select', 'num');
+  for (const [v, name] of [['py', 'Python'], ['js', 'JavaScript']]) {
+    const o = el('option', '', name);
+    o.value = v;
+    code.append(o);
+  }
+  code.value = cur.settings.codeLanguage;
+  code.onchange = () => change((s) => { s.settings.codeLanguage = code.value; });
+  rows.push(row('set-code', t(lang, 'setCodeLanguage'), code));
+  return rows;
+}
 
 export function openSettings(root, state, handlers) {
   root.replaceChildren();
@@ -59,49 +109,8 @@ export function openSettings(root, state, handlers) {
       disarm();
     };
 
-    const age = el('input', 'num');
-    Object.assign(age, { type: 'number', min: 2, max: 12, step: 1, value: cur.settings.age });
-    age.onchange = () => {
-      const n = Number(age.value);
-      if (age.value.trim() === '' || !Number.isInteger(n)) { age.value = cur.settings.age; return; }
-      change((s) => { s.settings.age = Math.min(12, Math.max(2, n)); });
-      age.value = cur.settings.age;
-    };
-    box.append(row('set-age', 'Âge', age));
-
-    const up = el('input');
-    up.type = 'checkbox';
-    up.checked = cur.settings.uppercase;
-    up.onchange = () => change((s) => { s.settings.uppercase = up.checked; });
-    box.append(row('set-up', 'Majuscules', up));
-
-    for (const [id, key, label] of [['set-fx', 'rewardAnimations', 'Animations de récompense'], ['set-snd', 'rewardSounds', 'Sons de récompense']]) {
-      const c = el('input');
-      c.type = 'checkbox';
-      c.checked = cur.settings[key];
-      c.onchange = () => change((s) => { s.settings[key] = c.checked; });
-      box.append(row(id, label, c));
-    }
-
-    const lang = el('select', 'num');
-    for (const [v, t] of [['fr', 'Français'], ['en', 'English'], ['ja', '日本語']]) {
-      const o = el('option', '', t);
-      o.value = v;
-      lang.append(o);
-    }
-    lang.value = cur.settings.language;
-    lang.onchange = () => change((s) => { s.settings.language = lang.value; });
-    box.append(row('set-lang', 'Langue', lang));
-
-    const code = el('select', 'num');
-    for (const [v, t] of [['py', 'Python'], ['js', 'JavaScript']]) {
-      const o = el('option', '', t);
-      o.value = v;
-      code.append(o);
-    }
-    code.value = cur.settings.codeLanguage;
-    code.onchange = () => change((s) => { s.settings.codeLanguage = code.value; });
-    box.append(row('set-code', 'Langage de programmation', code));
+    const rows = settingsRows(cur, change, 'fr');
+    box.append(...rows);
 
     const fs = el('fieldset');
     fs.append(el('legend', '', 'Blocs actifs'));
@@ -148,7 +157,7 @@ export function openSettings(root, state, handlers) {
         reset.textContent = 'Sûr ? Clique encore pour tout effacer';
         return;
       }
-      cur = defaultState();
+      cur = resetState(cur);
       handlers.onChange(cur);
       show(cur);
     };
