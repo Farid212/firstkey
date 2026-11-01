@@ -86,9 +86,7 @@ test('Comparer: le 3e exercice de chaque niveau n\'est pas à pile ou face (pair
 });
 
 test('les 342 questions sont deux à deux distinctes', () => {
-  for (const v of V) assert.equal(new Set(ALL.filter((x) => x[3] === v).map(([, , x]) => x.question.code)).size, 342);
-  const old = new Set(ALL.filter((x) => x[3] === 0).map(([, , x]) => x.question.code));
-  assert.deepEqual(ALL.filter(([, , x, v]) => v && old.has(x.question.code)).map(([l, e]) => `${l}.${e}`), ['30.0']);
+  assert.equal(new Set(ALL.map(([, , x]) => x.question.code)).size, 342 * VARIANTS);
 });
 
 test('règles: déjà vues (chapitre courant ou précédent), et chaque chapitre utilise ses règles', () => {
@@ -134,6 +132,7 @@ test('variante 1: pour chaque exercice, d\'autres exemples ou une autre question
   const codes = (x) => JSON.stringify([...x.examples, x.question].map((p) => p.code));
   for (let l = 1; l <= 114; l++) for (const e of [0, 1, 2]) {
     assert.notEqual(codes(discoverExercise(l, e, 1)), codes(discoverExercise(l, e, 0)), `${l}.${e}`);
+    assert.notEqual(discoverExercise(l, e, 1).question.out, discoverExercise(l, e, 0).question.out, `${l}.${e}: même réponse`);
   }
 });
 

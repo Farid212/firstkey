@@ -141,9 +141,9 @@ function pathShape(maze) {
   return shapeTags(turns, lens);
 }
 
-function buildRepl(level, ex, rng) {
+function buildRepl(level, ex, rng, variant = 0) {
   let pieces;
-  if (level <= 6) pieces = [{ tag: 'straight', lines: [[[1, 1, 2, 2, 3, 3][level - 1] + ex]] }];
+  if (level <= 6) pieces = [{ tag: 'straight', lines: [[[1, 1, 2, 2, 3, 3][level - 1] + ex + variant]] }];
   else if (level >= 41) pieces = loopPieces(level, ex, rng);
   else {
     const need = shuffle(needTags(level, ex, rng), rng).sort((a, b) => FINAL_ONLY.includes(a) - FINAL_ONLY.includes(b));
@@ -332,13 +332,15 @@ export const difficulty = (spec) => spec.worlds.reduce((s, w) => s + w.par, 0);
 const states = [];
 
 const POOL = 16;
-function poolOf(level, ex, prev, size, { taken, variant }) {
+export const solvedBy = (ref, worlds, level) => ['py', 'js'].some((lang) => worlds.every((w) => (level <= 72 ? runRepl : runProgram)(ref[lang], lang, createWorld(w)).world.done));
+function poolOf(level, ex, prev, size, { taken, variant, old }) {
   const build = level <= 72 ? buildRepl : level <= 100 ? buildProgram : buildGeneral;
   const pool = [];
   for (let attempt = 0; attempt < Math.max(MAX_ATTEMPTS, 40 * size) && pool.length < size; attempt++) {
     const rng = mulberry32(level * 7919 + ex * 15485863 + attempt * 104729 + 12345 + variant * 32452843);
-    const c = build(level, ex, rng);
+    const c = build(level, ex, rng, variant);
     if (!c || !tourOk(level, ex, c.tags)) continue;
+    if (prev && old && solvedBy(old.reference, c.worlds, level)) continue;
     if (ex && prev && difficulty(c) < difficulty(prev[ex - 1])) continue;
     if (prev && (c.worlds.some((w) => taken.has(sig(w))) || prev.some((p) => p.reference.py === c.reference.py))) continue;
     if (pool.some((p) => p.reference.py === c.reference.py && sig(p.worlds[0]) === sig(c.worlds[0]))) continue;
@@ -350,7 +352,7 @@ function poolOf(level, ex, prev, size, { taken, variant }) {
 
 function generate(level, ex, st) {
   const { specs, taken, caps } = st;
-  if (st.variant) for (const w of generateSpec(level, ex, 0).worlds) taken.add(sig(w));
+  st.old = st.variant ? generateSpec(level, ex, 0) : null;
   const prev = specs.slice(specs.length - ex);
   const focus = row(level).focus;
   const first = CURRICULUM.findIndex((r) => r.focus === focus) + 1;
@@ -371,6 +373,10 @@ function generate(level, ex, st) {
     return ok;
   };
   let pool = capped(POOL);
+  if (!pool.length && st.old) {
+    st.old = null;
+    pool = capped(POOL);
+  }
   for (const size of [6 * POOL, 30 * POOL]) {
     if (pool.some(fits)) break;
     pool = capped(size);

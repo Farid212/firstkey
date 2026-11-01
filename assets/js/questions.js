@@ -42,7 +42,7 @@ export function makeQuestion(blockId, level, settings, rng = Math.random) {
 
 export function makeQuestionAvoiding(blockId, level, settings, previousDisplay, rng = Math.random) {
   let q = makeQuestion(blockId, level, settings, rng);
-  for (let i = 1; i < 8 && q.display === previousDisplay; i++) q = makeQuestion(blockId, level, settings, rng);
+  for (let i = 1; i < 128 && q.display === previousDisplay; i++) q = makeQuestion(blockId, level, settings, rng);
   return q;
 }
 

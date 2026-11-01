@@ -590,7 +590,7 @@ export const fewSymbols = (o) => (o.match(/[{}[\]"']/g) ?? []).length <= 4;
 
 const keyOf = (row) => (row[2] ? `${row[2]}\n${row[9]}` : row[9]);
 
-async function makeExercise(fam, level, ex, used, variant) {
+async function makeExercise(fam, level, ex, used, variant, prev) {
   for (let attempt = 0; attempt < 3000; attempt++) {
     const r = mulberry32(level * 7919 + ex * 104729 + attempt * 15485863 + 2027 + variant * 86028121);
     r.perm = shuffle([0, 1, 2], r);
@@ -601,7 +601,7 @@ async function makeExercise(fam, level, ex, used, variant) {
     if (new Set(codes).size < 4 || used.has(key)) continue;
     let outs;
     try { outs = await Promise.all(codes.map((c) => run2(c, page))); } catch (err) { if (err instanceof NotSimple || fam.mayFail) continue; throw err; }
-    if (!outs.every((o) => printable(o) && fewSymbols(o)) || new Set(outs).size < 4) continue;
+    if (!outs.every((o) => printable(o) && fewSymbols(o)) || new Set(outs).size < 4 || outs[3] === prev?.[10]) continue;
     if (fam.ok && !fam.ok(codes, outs)) continue;
     const hint = [fam.hint].flat().find((h) => codes[3].includes(h) && codes.slice(0, 3).some((c) => c.includes(h)));
     if (!hint) continue;
@@ -617,7 +617,7 @@ export async function buildDiscover2(variant = 0) {
   const base = variant ? await buildDiscover2(0) : [];
   const used = new Set([...(variant ? [...DISCOVER1, ...DISCOVER1_B] : DISCOVER1).map((row) => row[8]), ...base.map(keyOf)]);
   const rows = [];
-  for (const [k, fam] of levels.entries()) for (const ex of [0, 1, 2]) rows.push(await makeExercise(fam, k + 1, ex, used, variant));
+  for (const [k, fam] of levels.entries()) for (const ex of [0, 1, 2]) rows.push(await makeExercise(fam, k + 1, ex, used, variant, base[k * 3 + ex]));
   return rows;
 }
 

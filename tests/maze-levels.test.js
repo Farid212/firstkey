@@ -199,10 +199,18 @@ test('niveau hors bornes ramené dans 1..114; un joueur au niveau 80 a un exerci
   assert.ok(s.budget.py > 1 && s.budget.js > 1);
 });
 
-test('variante 1: pour chaque exercice, un autre labyrinthe que la variante 0', () => {
+test('variante 1: la référence de la variante 0 n\'atteint pas l\'étoile partout, sauf programmes généraux 111-114', () => {
+  const reaches = (src, lang, l, w) => {
+    if (l <= 72) return runLines(src, lang, w).world.done;
+    const p = parseProgram(src, lang);
+    return p.ok && executeProgram(p.program, createWorld(w)).world.done;
+  };
+  const solved = [];
   for (let l = 1; l <= 114; l++) for (const e of [0, 1, 2]) {
-    assert.notEqual(sig(spec(l, e, 1).worlds[0]), sig(spec(l, e, 0).worlds[0]), `niveau ${l}.${e}`);
+    const old = spec(l, e, 0).reference;
+    if (['py', 'js'].some((lang) => spec(l, e, 1).worlds.every((w) => reaches(old[lang], lang, l, w)))) solved.push(`${l}.${e}`);
   }
+  assert.deepEqual(solved, [111, 112, 113, 114].flatMap((l) => [0, 1, 2].map((e) => `${l}.${e}`)));
 });
 
 test('variante 0 figée: levels-data.js inchangé', () => {

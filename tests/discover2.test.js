@@ -168,6 +168,7 @@ test('variante 1: pour chaque exercice, une autre question que la variante 0', (
   const key = (x) => `${x.page ?? ''}\n${x.question.code}`;
   for (let l = 1; l <= 114; l++) for (const e of [0, 1, 2]) {
     assert.notEqual(key(discover2Exercise(l, e, 1)), key(discover2Exercise(l, e, 0)), `${l}.${e}`);
+    assert.notEqual(discover2Exercise(l, e, 1).question.out, discover2Exercise(l, e, 0).question.out, `${l}.${e}: même réponse`);
   }
 });
 
