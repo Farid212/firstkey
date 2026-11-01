@@ -5,8 +5,10 @@ const defaultEmit = (type, detail) => document.dispatchEvent(new CustomEvent(typ
 export function createPenalty(emit = defaultEmit) {
   let strikes = 0;
   let lastBlock = null;
+  let cooled = false;
   return {
     wrong({ state, blockId, level, onChange }) {
+      if (cooled) return null;
       if (blockId !== lastBlock) strikes = 0;
       lastBlock = blockId;
       if (level !== state.progress[blockId].level || level <= 1) {
@@ -16,6 +18,7 @@ export function createPenalty(emit = defaultEmit) {
       strikes += 1;
       if (strikes < strikeLimit(state.settings.age)) return null;
       strikes = 0;
+      cooled = true;
       const { state: next, from, to } = recordDrop(state, blockId);
       onChange(next);
       emit('firstkey:leveldown', { blockId, oldLevel: from, newLevel: to });
@@ -23,9 +26,11 @@ export function createPenalty(emit = defaultEmit) {
     },
     correct() {
       strikes = 0;
+      cooled = false;
     },
     reset() {
       strikes = 0;
+      cooled = false;
     },
   };
 }

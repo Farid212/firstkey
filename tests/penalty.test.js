@@ -92,3 +92,32 @@ test('8 ans : une erreur au niveau 1 remet le compteur à zéro', () => {
   assert.equal(hit(mk(8, 1), 'letters', 1), null);
   assert.equal(hit(mk(8, 2), 'letters', 2), null);
 });
+
+test('11 ans : après une descente, les erreurs suivantes sont ignorées jusqu à une bonne réponse', () => {
+  const { penalty, hit, changes } = setup();
+  assert.equal(hit(mk(11, 5), 'letters', 5), 4);
+  assert.equal(hit(mk(11, 4), 'letters', 4), null);
+  assert.equal(hit(mk(11, 4), 'letters', 4), null);
+  assert.equal(changes.length, 1);
+  penalty.correct();
+  assert.equal(hit(mk(11, 4), 'letters', 4), 3);
+});
+
+test('8 ans : après une descente, wrong renvoie null jusqu à correct', () => {
+  const { penalty, hit } = setup();
+  const s = mk(8, 5);
+  hit(s, 'letters', 5);
+  assert.equal(hit(s, 'letters', 5), 4);
+  assert.equal(hit(mk(8, 4), 'letters', 4), null);
+  assert.equal(hit(mk(8, 4), 'letters', 4), null);
+  penalty.correct();
+  assert.equal(hit(mk(8, 4), 'letters', 4), null);
+  assert.equal(hit(mk(8, 4), 'letters', 4), 3);
+});
+
+test('reset lève le refroidissement', () => {
+  const { penalty, hit } = setup();
+  assert.equal(hit(mk(11, 5), 'letters', 5), 4);
+  penalty.reset();
+  assert.equal(hit(mk(11, 4), 'letters', 4), 3);
+});

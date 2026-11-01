@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { defaultState, loadState, saveState } from '../assets/js/store.js';
+import { defaultState, loadState, saveState, resetState } from '../assets/js/store.js';
 import { MAX_LEVEL } from '../assets/js/blocks.js';
 import { defaultRewards, normalizeRewards } from '../assets/js/rewards/model.js';
 
@@ -191,4 +191,16 @@ test('âge borné à 2-14', () => {
 
 test('langue es acceptée', () => {
   assert.equal(loadSettings({ language: 'es' }).language, 'es');
+});
+
+test('resetState garde la langue, marque l accueil vu et efface la progression', () => {
+  const prev = defaultState();
+  prev.settings.language = 'fr';
+  prev.score = 9;
+  prev.progress.letters.level = 4;
+  const s = resetState(prev);
+  assert.equal(s.settings.language, 'fr');
+  assert.equal(s.settings.welcomed, true);
+  assert.equal(s.score, 0);
+  assert.equal(s.progress.letters.level, 1);
 });

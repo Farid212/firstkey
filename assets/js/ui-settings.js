@@ -1,7 +1,7 @@
 import { BLOCKS } from './blocks.js';
 import { makeGate, checkGate } from './gate.js';
 import { jumpTo } from './progress.js';
-import { defaultState } from './store.js';
+import { resetState } from './store.js';
 import { LANG_LIST, t } from './i18n.js';
 
 const el = (tag, cls, text) => {
@@ -157,7 +157,7 @@ export function openSettings(root, state, handlers) {
         reset.textContent = 'Sûr ? Clique encore pour tout effacer';
         return;
       }
-      cur = defaultState();
+      cur = resetState(cur);
       handlers.onChange(cur);
       show(cur);
     };

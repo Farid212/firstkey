@@ -16,6 +16,13 @@ export function defaultState() {
   };
 }
 
+export function resetState(prev) {
+  const d = defaultState();
+  d.settings.language = prev.settings.language;
+  d.settings.welcomed = true;
+  return d;
+}
+
 const int = (v, min, max, def) => {
   const n = Math.floor(Number(v));
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;

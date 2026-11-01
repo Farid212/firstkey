@@ -433,6 +433,7 @@ export function startMaze(root, state, target, handlers) {
     s = handlers.getState();
     if (fixed === level) fixed = to;
     cancel();
+    log.replaceChildren();
     load();
     focusField();
   }

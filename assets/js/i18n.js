@@ -58,7 +58,7 @@ const STRINGS = {
     hello: '¡Hola!',
     whoAreYou: '¿Quién eres?',
     child: '¡Un niño!',
-    adult: 'Un mayor',
+    adult: 'Un adulto',
     whatAge: '¿Cuántos años tienes?',
     parentTitle: '¡Bienvenido!',
     parentBody: 'First Key nació de un deseo sencillo: aprender las letras, las palabras y el cálculo, y luego los primeros pasos del código, jugando. Es para niños de 2 a 14 años. Les enseña el teclado, la lectura y la lógica, y les da confianza en sí mismos. El nivel sube solo, a su ritmo y según su edad.',
