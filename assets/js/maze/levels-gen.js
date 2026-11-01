@@ -1,4 +1,5 @@
 import { CURRICULUM } from './curriculum.js';
+import { VARIANTS } from '../variants.js';
 import { SEGMENTS, FINAL_ONLY, carve, walkCells, solutionPath, compressedLength, sizeOf, mulberry32, int, pick, shuffle } from './gen.js';
 import { parse, parseProgram } from './lang.js';
 import { createWorld, execute, executeProgram } from './world.js';
@@ -328,16 +329,14 @@ function buildGeneral(level, ex, rng) {
 
 const sig = (m) => JSON.stringify([m.walls, m.start, m.goal]);
 export const difficulty = (spec) => spec.worlds.reduce((s, w) => s + w.par, 0);
-const specs = [];
-const taken = new Set();
+const states = [];
 
 const POOL = 16;
-const caps = new Map();
-function poolOf(level, ex, prev, size = POOL) {
+function poolOf(level, ex, prev, size, { taken, variant }) {
   const build = level <= 72 ? buildRepl : level <= 100 ? buildProgram : buildGeneral;
   const pool = [];
   for (let attempt = 0; attempt < Math.max(MAX_ATTEMPTS, 40 * size) && pool.length < size; attempt++) {
-    const rng = mulberry32(level * 7919 + ex * 15485863 + attempt * 104729 + 12345);
+    const rng = mulberry32(level * 7919 + ex * 15485863 + attempt * 104729 + 12345 + variant * 32452843);
     const c = build(level, ex, rng);
     if (!c || !tourOk(level, ex, c.tags)) continue;
     if (ex && prev && difficulty(c) < difficulty(prev[ex - 1])) continue;
@@ -349,7 +348,9 @@ function poolOf(level, ex, prev, size = POOL) {
   return pool.sort((a, b) => difficulty(a) - difficulty(b));
 }
 
-function generate(level, ex) {
+function generate(level, ex, st) {
+  const { specs, taken, caps } = st;
+  if (st.variant) for (const w of generateSpec(level, ex, 0).worlds) taken.add(sig(w));
   const prev = specs.slice(specs.length - ex);
   const focus = row(level).focus;
   const first = CURRICULUM.findIndex((r) => r.focus === focus) + 1;
@@ -359,10 +360,10 @@ function generate(level, ex) {
   const start = level === last && level > first ? specs[(first - 1) * 3 + ex] : null;
   const fits = (p) => (!below || difficulty(p) >= difficulty(below)) && (!start || difficulty(p) > difficulty(start));
   const capped = (size) => {
-    const pool = poolOf(level, ex, prev, size);
+    const pool = poolOf(level, ex, prev, size, st);
     if (!pool.length || ex === 2) return pool;
     if (!caps.has(level)) {
-      const ds = [...new Set(poolOf(level, 2, null, 6 * POOL).map(difficulty))];
+      const ds = [...new Set(poolOf(level, 2, null, 6 * POOL, st).map(difficulty))];
       caps.set(level, ds.at(-2) ?? ds.at(-1) ?? difficulty(pool[0]));
     }
     const ok = pool.filter((p) => difficulty(p) <= caps.get(level));
@@ -383,9 +384,12 @@ function generate(level, ex) {
   return { level, exercise: ex, ...c };
 }
 
-export function generateSpec(level, exercise = 0) {
+export function generateSpec(level, exercise = 0, variant = 0) {
   const l = Math.min(CURRICULUM.length, Math.max(1, Math.floor(level) || 1));
   const e = Math.min(2, Math.max(0, Math.floor(exercise) || 0));
-  while (specs.length <= (l - 1) * 3 + e) specs.push(generate(Math.floor(specs.length / 3) + 1, specs.length % 3));
+  const v = Math.min(VARIANTS - 1, Math.max(0, Math.floor(variant) || 0));
+  const st = states[v] ??= { specs: [], taken: new Set(), caps: new Map(), variant: v };
+  const { specs } = st;
+  while (specs.length <= (l - 1) * 3 + e) specs.push(generate(Math.floor(specs.length / 3) + 1, specs.length % 3, st));
   return structuredClone(specs[(l - 1) * 3 + e]);
 }

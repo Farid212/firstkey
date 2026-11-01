@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import { mulberry32, int, pick, shuffle } from '../assets/js/maze/gen.js';
 import { q, WORDS, SHORT, LONG, NAMES, SOUNDS, COMP2, COMP3, ints, word, words, arr, F, byEx, printable } from './build-discover.mjs';
 import { EXERCISES as DISCOVER1 } from '../assets/js/data/discover-js.js';
+import { EXERCISES as DISCOVER1_B } from '../assets/js/data/discover-js-b.js';
 
 const say = (x) => `console.log(${x})`;
 const noNeg = (codes, outs) => outs.every((o) => !o.startsWith('-'));
@@ -587,9 +588,11 @@ export async function run2(code, page = '') {
 
 export const fewSymbols = (o) => (o.match(/[{}[\]"']/g) ?? []).length <= 4;
 
-async function makeExercise(fam, level, ex, used) {
+const keyOf = (row) => (row[2] ? `${row[2]}\n${row[9]}` : row[9]);
+
+async function makeExercise(fam, level, ex, used, variant) {
   for (let attempt = 0; attempt < 3000; attempt++) {
-    const r = mulberry32(level * 7919 + ex * 104729 + attempt * 15485863 + 2027);
+    const r = mulberry32(level * 7919 + ex * 104729 + attempt * 15485863 + 2027 + variant * 86028121);
     r.perm = shuffle([0, 1, 2], r);
     r.perm4 = shuffle([0, 1, 2, 3], r);
     const page = fam.page ? fam.page(r, ex) : '';
@@ -608,21 +611,24 @@ async function makeExercise(fam, level, ex, used) {
   throw new Error(`niveau ${level}.${ex} (${fam.rule}): aucun exercice valide`);
 }
 
-export async function buildDiscover2() {
+export async function buildDiscover2(variant = 0) {
   const levels = FAMILIES.flat();
   if (levels.length !== 114) throw new Error(`${levels.length} niveaux au lieu de 114`);
-  const used = new Set(DISCOVER1.map((row) => row[8]));
+  const base = variant ? await buildDiscover2(0) : [];
+  const used = new Set([...(variant ? [...DISCOVER1, ...DISCOVER1_B] : DISCOVER1).map((row) => row[8]), ...base.map(keyOf)]);
   const rows = [];
-  for (const [k, fam] of levels.entries()) for (const ex of [0, 1, 2]) rows.push(await makeExercise(fam, k + 1, ex, used));
+  for (const [k, fam] of levels.entries()) for (const ex of [0, 1, 2]) rows.push(await makeExercise(fam, k + 1, ex, used, variant));
   return rows;
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const rows = await buildDiscover2();
-  const text = `export const EXERCISES = [
+  for (const [variant, file] of [[0, 'discover2-js.js'], [1, 'discover2-js-b.js']]) {
+    const rows = await buildDiscover2(variant);
+    const text = `export const EXERCISES = [
 ${rows.map((r) => JSON.stringify(r)).join(',\n')},
 ];
 `;
-  writeFileSync(new URL('../assets/js/data/discover2-js.js', import.meta.url), text);
-  console.log(`discover2-js.js: ${rows.length} exercices, ${(Buffer.byteLength(text) / 1024).toFixed(1)} Ko`);
+    writeFileSync(new URL(`../assets/js/data/${file}`, import.meta.url), text);
+    console.log(`${file}: ${rows.length} exercices, ${(Buffer.byteLength(text) / 1024).toFixed(1)} Ko`);
+  }
 }
