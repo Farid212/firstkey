@@ -110,7 +110,6 @@ export function openSettings(root, state, handlers) {
     };
 
     const rows = settingsRows(cur, change, 'fr');
-    rows[1].firstChild.textContent = 'Majuscules';
     box.append(...rows);
 
     const fs = el('fieldset');

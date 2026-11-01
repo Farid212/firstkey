@@ -16,7 +16,7 @@ const STRINGS = {
     parentBody: 'First Key est né d’une envie simple : apprendre les lettres, les mots et le calcul, puis les premiers pas du code, en jouant. Il s’adresse aux enfants de 2 à 14 ans. Il leur fait découvrir le clavier, la lecture et la logique, et leur donne confiance en eux. Le niveau monte tout seul, à leur rythme et selon leur âge.',
     letsGo: 'C’est parti !',
     setAge: 'Âge',
-    setUppercase: 'Lettres majuscules',
+    setUppercase: 'Majuscules',
     setRewardAnimations: 'Animations de récompense',
     setRewardSounds: 'Sons de récompense',
     setLanguage: 'Langue',
