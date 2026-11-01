@@ -427,7 +427,8 @@ export function startMaze(root, state, target, handlers) {
     const r = penalty.wrong({ state: s, blockId: 'maze', level, onChange: handlers.onChange });
     if (r === null) return;
     s = handlers.getState();
-    if (r.changed && fixed === level) fixed = r.level;
+    if (!r.changed) return paint();
+    if (fixed === level) fixed = r.level;
     cancel();
     log.replaceChildren();
     load();
@@ -486,7 +487,10 @@ export function startMaze(root, state, target, handlers) {
       note(T('maze.ui.loopTooLong'), 'err');
       return;
     }
-    if (!res.events.some((ev) => ev.k === 'bump')) row.append(el('span', 'term-ok', ' ✓'));
+    if (!res.events.some((ev) => ev.k === 'bump')) {
+      row.append(el('span', 'term-ok', ' ✓'));
+      penalty.correct();
+    }
     world = res.world;
     for (const ev of res.events) {
       if (t !== token) return;

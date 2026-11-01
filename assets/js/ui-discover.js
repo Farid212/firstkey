@@ -148,7 +148,8 @@ export function startDiscover(root, state, target, handlers) {
     const r = penalty.wrong({ state: s, blockId: ID, level, onChange: handlers.onChange });
     if (r === null) return;
     s = handlers.getState();
-    if (r.changed && fixed === level) fixed = r.level;
+    if (!r.changed) return paint();
+    if (fixed === level) fixed = r.level;
     load();
   }
 
@@ -188,6 +189,7 @@ export function startDiscover(root, state, target, handlers) {
     if (r === 'wrong' && /^(Digit|Numpad)\d$/.test(e.code) && !e.shiftKey) r = typer.press(e.code.at(-1));
     if (r === 'ignored') return;
     if (r === 'wrong') return wrong();
+    penalty.correct();
     slots[typer.typed - 1].textContent = item.question.out[typer.typed - 1];
     slots[typer.typed - 1].classList.add('on');
     if (r === 'done') win();

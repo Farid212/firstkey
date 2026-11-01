@@ -114,3 +114,14 @@ test('8 ans : un niveau joué différent remet le compteur à zéro', () => {
   assert.equal(hit(s, 'letters', 2), null);
   assert.equal(hit(s, 'letters', 5), null);
 });
+
+test('8 ans : une touche juste entre deux fautes empêche la perte', () => {
+  const { penalty, hit, changes } = setup();
+  const s = mk(8, 3, 'letters', 5);
+  assert.equal(hit(s, 'letters', 3), null);
+  penalty.correct();
+  assert.equal(hit(s, 'letters', 3), null);
+  assert.equal(changes.length, 0);
+  assert.deepEqual(hit(s, 'letters', 3), { level: 3, changed: false });
+  assert.deepEqual(changes.at(-1).progress.letters, { level: 3, correct: 4 });
+});

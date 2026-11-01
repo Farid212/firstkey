@@ -105,7 +105,8 @@ export function startGame(root, state, target, handlers) {
     if (r === null) return;
     s = handlers.getState();
     if (r.changed && fixed === level) fixed = r.level;
-    next(question.display);
+    if (r.changed || question.kind === 'choice') return next(question.display);
+    paint();
   }
 
   function correct() {
@@ -164,6 +165,7 @@ export function startGame(root, state, target, handlers) {
     e.preventDefault();
     if (r === 'wrong') return wrong();
     play('correctAnswer');
+    penalty.correct();
     if (r === 'right') return paint();
     correct();
   }
