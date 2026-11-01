@@ -222,8 +222,6 @@ const PROGRAM = [
   ['forward()\nforward() é', 'py', 'syntax', 'Ligne 2 : Je ne comprends pas ce caractère : « é »'],
 ];
 
-const UNREACHABLE = ['maze.frag.param', 'maze.frag.shift', 'maze.err.varNameTaken'];
-
 const stripLine = (s) => s.replace(/^Ligne \d+ : /, '');
 const SNIP = /n \* 2 \+ 1|for \(let [^)]*\)|for \( \)|for i in range\(4\):|def carre\(\):|function \w+\(\) \{ … \}|if \(…\) \{ … \} else \{ … \}|else if \(…\) \{ … \}|else:|let \w+ = (?:\d+|…)|\w+ [+-]= \d+|\w+ [<>]=? \d+|\w+ == \d+|\w+\+\+|!wall\(\)|not wall\(\)|[A-Za-z_]+\(\)|==|\b(?:if|while|else|elif|for|range|def|function|let|not|Python|JavaScript|Tab)\b|\b\d+\b/g;
 const snippets = (fr) => {
@@ -277,7 +275,7 @@ test('préfixe de ligne : une seule fois en français aussi', () => {
   }
 });
 
-test('chaque clé du dictionnaire maze est atteinte par une entrée, sauf les branches impossibles', () => {
+test('chaque clé du dictionnaire maze est atteinte par une entrée', () => {
   const used = new Set(['maze.line']);
   const collect = (err) => {
     used.add(err.key);
@@ -286,9 +284,8 @@ test('chaque clé du dictionnaire maze est atteinte par une entrée, sauf les br
   };
   for (const [src, lang] of CASES) collect(parse(src, lang).error);
   for (const [src, lang] of PROGRAM) collect(parseProgram(src, lang).error);
-  const missing = Object.keys(maze.fr).filter((k) => !used.has(k) && !UNREACHABLE.includes(k));
+  const missing = Object.keys(maze.fr).filter((k) => !used.has(k));
   assert.deepEqual(missing, []);
-  for (const k of UNREACHABLE) assert.ok(Object.hasOwn(maze.fr, k), k);
   for (const k of used) assert.ok(Object.hasOwn(maze.fr, k), `clé absente ${k}`);
 });
 

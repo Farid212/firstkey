@@ -297,7 +297,7 @@ export function parseProgram(src, lang) {
     const syntax = (key, params, hint) => oops('syntax', key, params, hint);
     const short = (s) => s.slice(0, 20);
     const tok = (v) => ({ frag: 'tok', v: short(v) });
-    const show = () => { const t = peek(); return !t || t.v === '<nl>' ? { frag: 'end' } : t.k === 'ctl' ? { frag: 'shift' } : tok(t.v); };
+    const show = () => { const t = peek(); return !t || t.v === '<nl>' ? { frag: 'end' } : tok(t.v); };
     const ident = (what) => { const t = peek(); if (!t || t.k !== 'id') syntax('missingWhat', { what: { frag: what } }); p++; return t.v; };
     const checkName = (name) => {
       if (RESERVED.has(name)) oops('reserved', 'reservedWord', { w: tok(name) });
@@ -503,10 +503,9 @@ export function parseProgram(src, lang) {
       if (COMMANDS.includes(name)) oops('reserved', 'isCommand', { name });
       if (RESERVED.has(name)) oops('reserved', 'reservedWord', { w: tok(name) });
       if (Object.hasOwn(funcs, name)) oops('duplicate_fn', 'dupFn', sn, 'dupFnHint');
-      if (main.vars.has(name)) oops('reserved', 'varNameTaken', sn);
       need('(', 'missing_paren', 'openParen', sn);
       let param = null;
-      if (peek() && peek().k === 'id') { param = ident('param'); checkName(param); }
+      if (peek() && peek().k === 'id') { param = toks[p++].v; checkName(param); }
       if (is(',')) syntax('oneParam');
       need(')', 'missing_paren', 'closeAfter', { name: `${short(name)}(` });
       const sc = { vars: new Set(param ? [param] : []), fn: name };
@@ -538,7 +537,6 @@ export function parseProgram(src, lang) {
     }
 
     const body = list(main, 0, null);
-    if (peek()) syntax('notUnderstood', { what: show() }, cross(lang, peek().v));
     return { ok: true, program: { funcs, body }, lines: lines.length };
   } catch (e) {
     if (!(e instanceof Fail)) return { ok: false, error: errorOf('syntax', 'program') };

@@ -4,7 +4,7 @@ const flat = ({ line, err, frag, cross }) => ({ 'maze.line': line, ...prefix('ma
 export default {
   fr: flat({
     line: 'Ligne {n} : {msg}',
-    frag: { tok: '« {v} »', end: 'la fin de la ligne', shift: 'un décalage', theLoop: 'La boucle', varEx: 'le nom de la variable, par exemple i', varPy: 'le nom de la variable : for i in range(4):', var: 'le nom de la variable', fnName: 'le nom de la fonction', param: 'le paramètre', ofLoop: 'de la boucle', ofIf: 'du if', ofElse: 'du else', ofFn: 'de la fonction' },
+    frag: { tok: '« {v} »', end: 'la fin de la ligne', theLoop: 'La boucle', varEx: 'le nom de la variable, par exemple i', varPy: 'le nom de la variable : for i in range(4):', var: 'le nom de la variable', fnName: 'le nom de la fonction', ofLoop: 'de la boucle', ofIf: 'du if', ofElse: 'du else', ofFn: 'de la fonction' },
     err: {
       char: 'Je ne comprends pas ce caractère : « {ch} »',
       number: '{what} attend un nombre entier de 1 à 99.',
@@ -53,7 +53,6 @@ export default {
       missingWhat: 'Il manque {what}.',
       reservedWord: '{w} est un mot réservé du langage : choisis un autre nom.',
       fnNameTaken: '{name} est déjà le nom d\'une fonction : choisis un autre nom.',
-      varNameTaken: '{name} est déjà le nom d\'une variable : choisis un autre nom.',
       isCommand: '{name} est déjà une commande du robot : choisis un autre nom pour ta fonction.',
       notYet: 'Je ne connais pas encore {name}.',
       fnOwnVars: 'Dans une fonction, on utilise seulement son paramètre et ses propres variables.',
@@ -121,7 +120,7 @@ export default {
   }),
   en: flat({
     line: 'Line {n}: {msg}',
-    frag: { tok: '"{v}"', end: 'the end of the line', shift: 'an indent', theLoop: 'The loop', varEx: 'the variable name, for example i', varPy: 'the variable name: for i in range(4):', var: 'the variable name', fnName: 'the function name', param: 'the parameter', ofLoop: 'of the loop', ofIf: 'of the if', ofElse: 'of the else', ofFn: 'of the function' },
+    frag: { tok: '"{v}"', end: 'the end of the line', theLoop: 'The loop', varEx: 'the variable name, for example i', varPy: 'the variable name: for i in range(4):', var: 'the variable name', fnName: 'the function name', ofLoop: 'of the loop', ofIf: 'of the if', ofElse: 'of the else', ofFn: 'of the function' },
     err: {
       char: 'I don\'t understand this character: "{ch}"',
       number: '{what} needs a whole number from 1 to 99.',
@@ -170,7 +169,6 @@ export default {
       missingWhat: 'I need {what}.',
       reservedWord: '{w} is a reserved word of the language: choose another name.',
       fnNameTaken: '{name} is already the name of a function: choose another name.',
-      varNameTaken: '{name} is already the name of a variable: choose another name.',
       isCommand: '{name} is already a robot command: choose another name for your function.',
       notYet: 'I don\'t know {name} yet.',
       fnOwnVars: 'Inside a function, you can only use its parameter and its own variables.',
@@ -238,7 +236,7 @@ export default {
   }),
   ja: flat({
     line: '{n}ぎょうめ：{msg}',
-    frag: { tok: '「{v}」', end: 'ぎょうの おわり', shift: 'ずらした ところ', theLoop: 'ループ', varEx: 'へんすうの なまえ（たとえば i）', varPy: 'へんすうの なまえ（for i in range(4): の i）', var: 'へんすうの なまえ', fnName: 'かんすうの なまえ', param: 'ひきすう', ofLoop: 'ループ', ofIf: 'if', ofElse: 'else', ofFn: 'かんすう' },
+    frag: { tok: '「{v}」', end: 'ぎょうの おわり', theLoop: 'ループ', varEx: 'へんすうの なまえ（たとえば i）', varPy: 'へんすうの なまえ（for i in range(4): の i）', var: 'へんすうの なまえ', fnName: 'かんすうの なまえ', ofLoop: 'ループ', ofIf: 'if', ofElse: 'else', ofFn: 'かんすう' },
     err: {
       char: 'この もじは わからないよ：「{ch}」',
       number: '{what} には 1から99までの かずを いれてね。',
@@ -287,12 +285,11 @@ export default {
       missingWhat: '{what}が ないよ。',
       reservedWord: '{w} は とくべつな ことばだから つかえないよ。べつの なまえに してね。',
       fnNameTaken: '{name} は もう かんすうの なまえだよ。べつの なまえに してね。',
-      varNameTaken: '{name} は もう へんすうの なまえだよ。べつの なまえに してね。',
       isCommand: '{name} は もう ロボットの コマンドだよ。かんすうには べつの なまえを つけてね。',
       notYet: '{name} は まだ しらないよ。',
-      fnOwnVars: 'かんすうの なかでは、その かんすうの ひきすうと へんすうだけ つかえるよ。',
-      giveValue: 'さきに あたいを いれてね。たとえば {ex}',
-      passParam: 'かんすうの なかへは、ひきすうで あたいを わたしてね。',
+      fnOwnVars: 'かんすうの なかでは、かっこの なかの なまえと、その かんすうで つくった へんすうだけ つかえるよ。',
+      giveValue: 'さきに かずを いれてね。たとえば {ex}',
+      passParam: 'かんすうの なかへは、かっこの なかの かずで わたしてね。',
       writeLet: 'let {name} = … と かいてね',
       noParensCalc: 'けいさんの なかに かっこは つかえないよ。たとえば n * 2 + 1 と かいてね。',
       noNegative: 'ここでは マイナスの かずは つかえないよ。へらす ときは n -= 1 を つかってね。',
@@ -335,7 +332,7 @@ export default {
       fnBelowHint: 'かんすうは よびだす まえに かいてね。',
       dupFn: 'かんすう {name} は もう あるよ。',
       dupFnHint: '2つめには べつの なまえを つけてね。',
-      oneParam: 'かんすうの ひきすうは 1つまでだよ。',
+      oneParam: 'かんすうの かっこの なかに かける なまえは 1つまでだよ。',
       writeFn: 'function {name}() { … } と かいてね',
       closeFn: 'かんすう {name} を とじる } が ないよ。',
       braceAlone: '} は ブロックの したに、1ぎょうに それだけで かいてね。',
@@ -355,7 +352,7 @@ export default {
   }),
   es: flat({
     line: 'Línea {n}: {msg}',
-    frag: { tok: '«{v}»', end: 'el final de la línea', shift: 'una sangría', theLoop: 'El bucle', varEx: 'el nombre de la variable, por ejemplo i', varPy: 'el nombre de la variable: for i in range(4):', var: 'el nombre de la variable', fnName: 'el nombre de la función', param: 'el parámetro', ofLoop: 'del bucle', ofIf: 'del if', ofElse: 'del else', ofFn: 'de la función' },
+    frag: { tok: '«{v}»', end: 'el final de la línea', theLoop: 'El bucle', varEx: 'el nombre de la variable, por ejemplo i', varPy: 'el nombre de la variable: for i in range(4):', var: 'el nombre de la variable', fnName: 'el nombre de la función', ofLoop: 'del bucle', ofIf: 'del if', ofElse: 'del else', ofFn: 'de la función' },
     err: {
       char: 'No entiendo este carácter: «{ch}»',
       number: '{what} necesita un número entero del 1 al 99.',
@@ -404,7 +401,6 @@ export default {
       missingWhat: 'Falta {what}.',
       reservedWord: '{w} es una palabra reservada del lenguaje: elige otro nombre.',
       fnNameTaken: '{name} ya es el nombre de una función: elige otro nombre.',
-      varNameTaken: '{name} ya es el nombre de una variable: elige otro nombre.',
       isCommand: '{name} ya es un comando del robot: elige otro nombre para tu función.',
       notYet: 'Todavía no conozco {name}.',
       fnOwnVars: 'Dentro de una función, solo se usan su parámetro y sus propias variables.',
@@ -412,7 +408,7 @@ export default {
       passParam: 'Dentro de una función, pasa el valor con un parámetro.',
       writeLet: 'Escribe let {name} = …',
       noParensCalc: 'No se usan paréntesis en un cálculo: escribe por ejemplo n * 2 + 1.',
-      noNegative: 'Aquí no hay números negativos: usa n -= 1 para restar.',
+      noNegative: 'Aquí no se usan números negativos: usa n -= 1 para restar.',
       numberOrVar: 'Falta un número o una variable (encontré {what}).',
       calcOps: 'En un cálculo, solo puedes usar +, - y *.',
       negOnlySense: '{op} solo va delante de wall() o goal().',
