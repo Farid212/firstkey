@@ -115,7 +115,7 @@ export default {
     'col.badges': 'バッジ {have} / {total}',
     'col.stickers': 'ステッカー {have} / {total}',
     'col.hidden': '???',
-    'code.hintTyped': 'コードをもういちどうとう',
+    'code.hintTyped': 'コードをうちなおそう',
     'code.hintQuiz': 'なにがでるかな？',
   },
   es: {

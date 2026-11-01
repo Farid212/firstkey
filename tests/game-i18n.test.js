@@ -74,7 +74,7 @@ test('pluriels par langue', () => {
 
 test('indices de code dans les quatre langues', () => {
   const quiz = { fr: "Que s'affiche-t-il ?", en: 'What will it show?', ja: 'なにがでるかな？', es: '¿Qué se muestra?' };
-  const typed = { fr: 'Retape le code', en: 'Type the code again', ja: 'コードをもういちどうとう', es: 'Vuelve a escribir el código' };
+  const typed = { fr: 'Retape le code', en: 'Type the code again', ja: 'コードをうちなおそう', es: 'Vuelve a escribir el código' };
   for (const lang of LANGS) {
     assert.equal(makeCodeQuestion('js', 1, Math.random, lang).hint, quiz[lang]);
     assert.equal(makeCodeQuestion('python', MAX_LEVEL, Math.random, lang).hint, typed[lang]);
