@@ -143,10 +143,11 @@ export function startDiscover(root, state, target, handlers) {
     play('wrongAnswer');
     restart(qrow, 'shake');
     if (++misses >= 2) con.classList.add('dc-hint');
-    const to = penalty.wrong({ state: s, blockId: ID, level, onChange: handlers.onChange });
-    if (to === null) return;
+    const r = penalty.wrong({ state: s, blockId: ID, level, onChange: handlers.onChange });
+    if (r === null) return;
     s = handlers.getState();
-    if (fixed === level) fixed = to;
+    if (!r.changed) return paint();
+    if (fixed === level) fixed = r.level;
     load();
   }
 
