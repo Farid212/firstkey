@@ -140,3 +140,22 @@ test('autocollant: animations coupées -> état seulement; aperçu sticker:<id>'
   await t.drain();
   t.d.stop();
 });
+
+test('leveldown joue stickman et n\'attribue rien', async () => {
+  const t = setup();
+  const before = t.state.rewards;
+  t.fire('leveldown', { blockId: 'letters', oldLevel: 5, newLevel: 4 });
+  assert.equal(t.runs, 1);
+  assert.equal(t.order[0], 'stickman');
+  assert.equal(t.state.rewards, before);
+  await t.drain();
+  t.d.stop();
+});
+
+test('leveldown muet si rewardAnimations est faux', () => {
+  const t = setup();
+  t.state.settings.rewardAnimations = false;
+  t.fire('leveldown', { blockId: 'letters', oldLevel: 5, newLevel: 4 });
+  assert.equal(t.runs, 0);
+  t.d.stop();
+});
