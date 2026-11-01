@@ -2,7 +2,7 @@ import { BLOCKS, MAX_LEVEL } from './blocks.js';
 import { defaultRewards, normalizeRewards, stickersFromProgress } from './rewards/model.js';
 
 const KEY = 'firstkey.state.v1';
-const LANGS = ['fr', 'en', 'ja'];
+const LANGS = ['fr', 'en', 'es', 'ja'];
 const CODE_LANGS = ['py', 'js'];
 const OLD_BLOCKS = ['letters', 'words', 'math', 'js', 'python'];
 const ids = BLOCKS.map((b) => b.id);
@@ -10,7 +10,7 @@ const ids = BLOCKS.map((b) => b.id);
 export function defaultState() {
   return {
     score: 0,
-    settings: { age: 4, uppercase: true, language: 'fr', blocks: [...ids], rewardAnimations: true, rewardSounds: true, codeLanguage: 'py' },
+    settings: { age: 4, uppercase: true, language: 'en', welcomed: false, blocks: [...ids], rewardAnimations: true, rewardSounds: true, codeLanguage: 'py' },
     progress: Object.fromEntries(ids.map((id) => [id, { level: 1, correct: 0 }])),
     rewards: defaultRewards(),
   };
@@ -47,7 +47,8 @@ export function loadState(storage) {
   return {
     score: int(raw.score, 0, Number.MAX_SAFE_INTEGER, 0),
     settings: {
-      age: int(s.age, 1, 99, d.settings.age),
+      age: int(s.age, 2, 14, d.settings.age),
+      welcomed: typeof s.welcomed === 'boolean' ? s.welcomed : true,
       uppercase: typeof s.uppercase === 'boolean' ? s.uppercase : d.settings.uppercase,
       language: LANGS.includes(s.language) ? s.language : d.settings.language,
       blocks: Array.isArray(s.blocks) ? addDiscover2(addDiscover(migrateBlocks(s.blocks.filter((b) => ids.includes(b)), p.maze != null), p.discover != null), p.discover2 != null) : d.settings.blocks,

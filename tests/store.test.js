@@ -29,7 +29,7 @@ test('JSON invalide -> défauts', () => {
 test('champs manquants complétés, score conservé', () => {
   const st = loadState(fake(JSON.stringify({ score: 99, progress: { letters: { level: 5, correct: 2 } } })));
   assert.equal(st.score, 99);
-  assert.deepEqual(st.settings, defaultState().settings);
+  assert.deepEqual(st.settings, { ...defaultState().settings, welcomed: true });
   assert.deepEqual(st.progress.words, { level: 1, correct: 0 });
   assert.deepEqual(st.progress.letters, { level: 5, correct: 2 });
 });
@@ -160,4 +160,35 @@ test('migration de discover2 une seule fois: ajouté si tout était coché, déc
   saveState(st, s);
   assert.ok(!loadState(s).settings.blocks.includes('discover2'));
   assert.ok(defaultState().settings.blocks.includes('discover2'));
+});
+
+const loadSettings = (settings) => loadState({ getItem: () => JSON.stringify({ settings }) }).settings;
+
+test('accueil: stockage vide -> welcomed false et langue en', () => {
+  const st = loadState(fake());
+  assert.equal(st.settings.welcomed, false);
+  assert.equal(st.settings.language, 'en');
+  assert.equal(defaultState().settings.welcomed, false);
+  assert.equal(defaultState().settings.language, 'en');
+});
+
+test('accueil: ancien état sans drapeau -> welcomed true, langue gardée', () => {
+  const s = loadSettings({ age: 6, language: 'fr' });
+  assert.equal(s.welcomed, true);
+  assert.equal(s.language, 'fr');
+});
+
+test('accueil: welcomed enregistré conservé', () => {
+  assert.equal(loadSettings({ welcomed: false }).welcomed, false);
+  assert.equal(loadSettings({ welcomed: true }).welcomed, true);
+});
+
+test('âge borné à 2-14', () => {
+  for (const [age, want] of [[1, 2], [15, 14], [99, 14], [8, 8]]) {
+    assert.equal(loadSettings({ age }).age, want);
+  }
+});
+
+test('langue es acceptée', () => {
+  assert.equal(loadSettings({ language: 'es' }).language, 'es');
 });
