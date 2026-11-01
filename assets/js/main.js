@@ -6,6 +6,7 @@ import { startDiscover } from './ui-discover.js';
 import { renderCollection } from './ui-collection.js';
 import { openSettings } from './ui-settings.js';
 import { renderWelcome } from './ui-welcome.js';
+import { t } from './i18n.js';
 import { createAudio } from './rewards/audio.js';
 import { createFx } from './rewards/fx.js';
 import { startDirector } from './rewards/director.js';
@@ -24,8 +25,14 @@ const fx = createFx(document.body, audio);
 const director = startDirector({ getState: () => state, onChange, audio, fx });
 for (const t of ['keydown', 'pointerdown']) document.addEventListener(t, audio.unlock, { once: true });
 
+function syncLang() {
+  document.documentElement.lang = state.settings.language;
+  gear.setAttribute('aria-label', t(state.settings.language, 'settingsTitle'));
+}
+
 function home(focusBlock) {
   director.clear();
+  syncLang();
   gear.hidden = false;
   renderHome(root, state, {
     onPlay: (blockId) => game({ blockId }),
@@ -48,6 +55,7 @@ function game(target) {
 }
 
 gear.onclick = () => { director.clear(); openSettings(root, state, { onChange, onClose: () => home() }); };
+syncLang();
 if (state.settings.welcomed) home();
 else {
   gear.hidden = true;

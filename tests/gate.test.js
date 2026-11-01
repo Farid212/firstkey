@@ -29,3 +29,8 @@ test('makeGate rng bounds', () => {
   assert.equal(makeGate(() => 0.9999).answer, 81);
   assert.match(makeGate(() => 0.9999).prompt, /9 × 9/);
 });
+
+test('makeGate prompt follows the language', () => {
+  assert.match(makeGate(() => 0, 'fr').prompt, /^« 6 × 6 = \? »$/);
+  for (const l of ['en', 'ja', 'es']) assert.equal(makeGate(() => 0, l).prompt, '6 × 6 = ?');
+});

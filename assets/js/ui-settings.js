@@ -70,37 +70,38 @@ export function settingsRows(cur, change, lang) {
 }
 
 export function openSettings(root, state, handlers) {
+  const lang = state.settings.language;
   root.replaceChildren();
   const box = el('div', 'settings');
   const back = el('button', 'back', '←');
-  back.setAttribute('aria-label', 'Retour');
+  back.setAttribute('aria-label', t(lang, 'back'));
   back.onclick = handlers.onClose;
   const page = el('div', 'settings-page');
   page.append(back, box);
   root.append(page);
 
-  let gate = makeGate();
+  let gate = makeGate(Math.random, lang);
   const prompt = el('p', 'gate-q');
   const msg = el('p', 'gate-msg');
   msg.setAttribute('role', 'alert');
   const input = el('input', 'num');
   input.inputMode = 'numeric';
-  const ok = el('button', 'big', 'Valider');
-  const draw = () => { gate = makeGate(); prompt.textContent = gate.prompt; input.value = ''; };
+  const ok = el('button', 'big', t(lang, 'validate'));
+  const draw = () => { gate = makeGate(Math.random, lang); prompt.textContent = gate.prompt; input.value = ''; };
   const submit = () => {
     if (checkGate(gate, input.value)) return show(state);
-    msg.textContent = 'Ce n’est pas la bonne réponse. Essaie encore.';
+    msg.textContent = t(lang, 'gateWrong');
     draw();
   };
   ok.onclick = submit;
   input.onkeydown = (e) => { if (e.key === 'Enter') submit(); };
   draw();
-  box.append(el('h1', '', 'Espace parent'), el('p', '', 'Pour continuer, résous ce calcul :'), prompt,
-    row('gate-in', 'Réponse', input), ok, msg);
+  box.append(el('h1', '', t(lang, 'gateTitle')), el('p', '', t(lang, 'gateIntro')), prompt,
+    row('gate-in', t(lang, 'gateAnswer'), input), ok, msg);
   input.focus();
 
   function show(cur) {
-    box.replaceChildren(el('h1', '', 'Réglages'));
+    box.replaceChildren(el('h1', '', t(lang, 'settingsTitle')));
     const change = (fn) => {
       const s = structuredClone(cur);
       fn(s);
@@ -109,11 +110,11 @@ export function openSettings(root, state, handlers) {
       disarm();
     };
 
-    const rows = settingsRows(cur, change, 'fr');
+    const rows = settingsRows(cur, change, lang);
     box.append(...rows);
 
     const fs = el('fieldset');
-    fs.append(el('legend', '', 'Blocs actifs'));
+    fs.append(el('legend', '', t(lang, 'activeBlocks')));
     for (const b of BLOCKS.filter((x) => x.playable)) {
       const c = el('input');
       c.type = 'checkbox';
@@ -133,28 +134,28 @@ export function openSettings(root, state, handlers) {
     }
     const jn = el('input', 'num');
     Object.assign(jn, { type: 'number', min: 1, step: 1 });
-    const jg = el('button', 'big', 'Aller à ce niveau');
+    const jg = el('button', 'big', t(lang, 'jumpGo'));
     jg.onclick = () => {
       const n = Number(jn.value);
       if (jn.value.trim() === '' || !Number.isInteger(n) || n < 1) return;
       cur = jumpTo(cur, jb.value, n);
       handlers.onChange(cur);
-      jg.textContent = 'C’est fait';
+      jg.textContent = t(lang, 'jumpDone');
       disarm();
     };
-    jb.onchange = jn.oninput = () => { jg.textContent = 'Aller à ce niveau'; };
-    box.append(row('set-jb', 'Saut : bloc', jb), row('set-jn', 'Saut : niveau', jn), jg);
+    jb.onchange = jn.oninput = () => { jg.textContent = t(lang, 'jumpGo'); };
+    box.append(row('set-jb', t(lang, 'jumpBlock'), jb), row('set-jn', t(lang, 'jumpLevel'), jn), jg);
 
-    const reset = el('button', 'big danger', 'Recommencer à zéro');
+    const reset = el('button', 'big danger', t(lang, 'resetZero'));
     let armed = false;
     function disarm() {
       armed = false;
-      reset.textContent = 'Recommencer à zéro';
+      reset.textContent = t(lang, 'resetZero');
     }
     reset.onclick = () => {
       if (!armed) {
         armed = true;
-        reset.textContent = 'Sûr ? Clique encore pour tout effacer';
+        reset.textContent = t(lang, 'resetSure');
         return;
       }
       cur = resetState(cur);
