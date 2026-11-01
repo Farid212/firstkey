@@ -8,13 +8,13 @@ const ROWS = [
   [20, L('while et for...of', 'while and for...of', 'while と for...of', 'while y for...of'), L('while et for...of', 'while/for...of', 'for...of', 'while/for...of'), '🔁'],
   [30, L('Fonctions fléchées et valeurs par défaut', 'Arrow functions and default values', 'アローかんすうとしょきち', 'Funciones flecha y valores por defecto'), L('Fléchées', 'Arrow funcs', 'アロー', 'Flecha'), '🏹'],
   [39, L('La portée', 'Scope', 'スコープ', 'El ámbito'), L('Portée', 'Scope', 'スコープ', 'Ámbito'), '🔒'],
-  [49, L('Parcourir un tableau', 'Looping over an array', 'はいれつをめぐる', 'Recorrer un array'), L('forEach et map', 'forEach & map', 'forEach', 'forEach y map'), '🗺️'],
-  [58, L('Filtrer et chercher', 'Filter and find', 'しぼってさがす', 'Filtrar y buscar'), L('Filtrer, chercher', 'Filter, find', 'しぼる・さがす', 'Filtra, busca'), '🔍'],
+  [49, L('Parcourir un tableau', 'Looping over an array', 'はいれつをじゅんにみる', 'Recorrer un array'), L('forEach et map', 'forEach & map', 'forEach', 'forEach y map'), '🗺️'],
+  [58, L('Filtrer et chercher', 'Filter and find', 'しぼってさがす', 'Filtrar y buscar'), L('Filtrer, chercher', 'Filter, find', 'しぼる・さがす', 'Filtrar/buscar'), '🔍'],
   [68, L('Réduire', 'Reduce', 'まとめる', 'Reducir'), L('reduce', 'reduce', 'reduce', 'reduce'), '🧮'],
   [77, L('JSON', 'JSON', 'JSON', 'JSON'), L('JSON', 'JSON', 'JSON', 'JSON'), '📄'],
   [87, L('Le DOM', 'The DOM', 'DOM', 'El DOM'), L('DOM', 'DOM', 'DOM', 'DOM'), '🌳'],
   [96, L('Les événements', 'Events', 'イベント', 'Los eventos'), L('Événements', 'Events', 'イベント', 'Eventos'), '🖱️'],
-  [106, L("L'asynchrone", 'Async code', 'ひどうき', 'Lo asíncrono'), L('Asynchrone', 'Async', 'ひどうき', 'Asíncrono'), '⏳'],
+  [106, L("L'asynchrone", 'Async code', 'ひどうき', 'Código asíncrono'), L('Asynchrone', 'Async', 'ひどうき', 'Asíncrono'), '⏳'],
 ];
 export const DISCOVER2_CHAPTERS = ROWS.map(([from, name, short, icon], i) => ({
   id: `discover2:${i}`, name, short, icon, from, to: (ROWS[i + 1]?.[0] ?? MAX + 1) - 1,

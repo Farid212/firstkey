@@ -8,8 +8,8 @@ const b = (id, fr, en, ja, es, earned) => ({ id, names: byLang(fr, en, ja, es), 
 
 export const BADGES = [
   b('first_step', 'Premier pas', 'First step', 'はじめのいっぽ', 'Primer paso', stat('totalCorrect', 1)),
-  b('streak_10', 'Série de 10', '10 in a row', '10かれんぞく', 'Racha de 10', stat('bestStreak', 10)),
-  b('streak_25', 'Série de 25', '25 in a row', '25かれんぞく', 'Racha de 25', stat('bestStreak', 25)),
+  b('streak_10', 'Série de 10', '10 in a row', '10かい れんぞく', 'Racha de 10', stat('bestStreak', 10)),
+  b('streak_25', 'Série de 25', '25 in a row', '25かい れんぞく', 'Racha de 25', stat('bestStreak', 25)),
   b('first_level', 'Premier niveau', 'First level', 'はじめてのレベル', 'Primer nivel', (s) => s.rewards.levelUps >= 1),
   b('level_10', 'Niveau 10', 'Level 10', 'レベル10', 'Nivel 10', level(10)),
   b('level_25', 'Niveau 25', 'Level 25', 'レベル25', 'Nivel 25', level(25)),

@@ -25,7 +25,7 @@ export const BLOCKS = [
   { id: 'vault', minAge: 9, label: L('Coffre-fort', 'Safe', 'きんこ', 'Caja fuerte'), playable: false, category: 'code', group: 'py' },
   { id: 'caesar', minAge: 9, label: L('Message secret', 'Secret message', 'ひみつのメッセージ', 'Mensaje secreto'), playable: false, category: 'code', group: 'py' },
   { id: 'discover', minAge: 8, label: L('Découvre le JavaScript', 'Discover JavaScript', 'JavaScript をしろう', 'Descubre JavaScript'), playable: true, mix: false, category: 'code', group: 'js' },
-  { id: 'discover2', minAge: 9, label: L('JavaScript, aller plus loin', 'JavaScript, going further', 'JavaScript もっとさきへ', 'JavaScript, más allá'), playable: true, mix: false, category: 'code', group: 'js' },
+  { id: 'discover2', minAge: 9, label: L('JavaScript, aller plus loin', 'JavaScript, going further', 'JavaScript もっとさきへ', 'JavaScript: un paso más'), playable: true, mix: false, category: 'code', group: 'js' },
   { id: 'js', minAge: 8, label: L('Quiz JavaScript', 'JavaScript quiz', 'JavaScript クイズ', 'Quiz de JavaScript'), playable: true, category: 'code', group: 'js' },
   { id: 'cookie', minAge: 8, label: L('Cookie clicker', 'Cookie clicker', 'クッキークリッカー', 'Cookie clicker'), playable: false, category: 'code', group: 'js' },
   { id: 'rps', minAge: 8, label: L('Pierre-feuille-ciseaux', 'Rock paper scissors', 'じゃんけん', 'Piedra, papel o tijera'), playable: false, category: 'code', group: 'js' },

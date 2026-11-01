@@ -3,10 +3,10 @@ import { byLang as L } from './i18n.js';
 
 const MAX = 114;
 const ROWS = [
-  [1, L('Plus et moins', 'Plus and minus', 'たすとひく', 'Más y menos'), L('Plus et moins', 'Plus and minus', 'たすとひく', 'Más y menos'), '➕'],
-  [11, L('Fois et divisé', 'Times and divide', 'かけるとわる', 'Por y entre'), L('Fois et divisé', 'Times, divide', 'かけるとわる', 'Por y entre'), '✖️'],
+  [1, L('Plus et moins', 'Plus and minus', 'たしざんとひきざん', 'Más y menos'), L('Plus et moins', 'Plus and minus', 'たす・ひく', 'Más y menos'), '➕'],
+  [11, L('Fois et divisé', 'Times and divide', 'かけざんとわりざん', 'Multiplicar y dividir'), L('Fois et divisé', 'Times, divide', 'かける・わる', '× y ÷'), '✖️'],
   [20, L('Les textes', 'Text', 'もじれつ', 'Los textos'), L('Textes', 'Text', 'もじれつ', 'Textos'), '🔤'],
-  [30, L('Longueur et majuscules', 'Length and capitals', 'ながさとおおもじ', 'Longitud y mayúsculas'), L('Longueur et MAJ', 'Length & CAPS', 'ながさとABC', 'Longitud y MAY'), '🔠'],
+  [30, L('Longueur et majuscules', 'Length and capitals', 'ながさとおおもじ', 'Longitud y mayúsculas'), L('Longueur et MAJ', 'Length & CAPS', 'ながさとABC', 'Largo y MAYÚS'), '🔠'],
   [39, L('Les variables', 'Variables', 'へんすう', 'Las variables'), L('Variables', 'Variables', 'へんすう', 'Variables'), '📦'],
   [49, L('Variables qui changent', 'Changing variables', 'かわるへんすう', 'Variables que cambian'), L('Ça change', 'It changes!', 'かわるよ', '¡Cambia!'), '🔄'],
   [58, L('Comparer', 'Comparing', 'くらべる', 'Comparar'), L('Comparer', 'Compare', 'くらべる', 'Comparar'), '⚖️'],

@@ -22,7 +22,7 @@ const MAZE_NAMES = {
   square: [L('Les boucles', 'Loops', 'くりかえし', 'Los bucles'), L('Les boucles', 'Loops', 'くりかえし', 'Bucles'), '🔁'],
   stairs: [L('Escaliers', 'Stairs', 'かいだん', 'Escaleras'), L('Escaliers', 'Stairs', 'かいだん', 'Escaleras'), '🪜'],
   spiral: [L('Spirales et zigzags', 'Spirals and zigzags', 'うずまきとジグザグ', 'Espirales y zigzags'), L('Spirales', 'Spirals', 'うずまき', 'Espirales'), '🌀'],
-  nested: [L('Boucles et variables', 'Loops and variables', 'くりかえしとへんすう', 'Bucles y variables'), L('Boucles imbriquées', 'Nested loops', 'いれこループ', 'Bucle en bucle'), '🧮'],
+  nested: [L('Boucles et variables', 'Loops and variables', 'くりかえしとへんすう', 'Bucles y variables'), L('Boucles imbriquées', 'Nested loops', 'いれこくりかえし', 'Bucle en bucle'), '🧮'],
   fn: [L('Les fonctions', 'Functions', 'かんすう', 'Las funciones'), L('Fonctions', 'Functions', 'かんすう', 'Funciones'), '🧩'],
   while: [L('Programmes généraux', 'General programs', 'なんでもプログラム', 'Programas generales'), L('Programmes', 'Programs', 'プログラム', 'Programas'), '🏆'],
 };
@@ -40,7 +40,7 @@ const QUIZ_NAMES = [
   [L('Premières lignes', 'First lines', 'はじめてのコード', 'Primeras líneas'), L('Premières lignes', 'First lines', 'はじめてのコード', 'Primer código'), '⌨️'],
   [L('Si et boucles', 'Ifs and loops', 'もしとくりかえし', 'Si y bucles'), L('Si et boucles', 'Ifs and loops', 'もしとくりかえし', 'Si y bucles'), '🔂'],
   [L('Retape les listes', 'Type lists again', 'リストをうちなおす', 'Reescribe las listas'), L('Listes', 'Lists', 'リスト', 'Listas'), '🗒️'],
-  [L('Fonctions et plus', 'Functions and more', 'かんすうとそのさき', 'Funciones y más'), L('Fonctions et plus', 'More functions', 'かんすう＋', 'Funciones y +'), '🚀'],
+  [L('Fonctions et plus', 'Functions and more', 'かんすうとそのさき', 'Funciones y más'), L('Fonctions et plus', 'More functions', 'かんすう＋', 'Más funciones'), '🚀'],
 ];
 const quiz = (starts) => starts.map((from, i) => [from, ...QUIZ_NAMES[i]]);
 const QUIZ_PY = quiz([1, 6, 9, 15, 22, 34, 40, 49, 58, 82, 93, 103]);
@@ -49,8 +49,8 @@ const QUIZ_JS = quiz([1, 6, 10, 16, 23, 31, 38, 48, 58, 80, 91, 101]);
 export const CHAPTERS = {
   letters: build('letters', [
     [1, L('Premières lettres', 'First letters', 'はじめのもじ', 'Primeras letras'), L('Premières lettres', 'First letters', 'はじめのもじ', 'Primeras'), '🔤'],
-    [17, L('Plus de lettres', 'More letters', 'もっともじ', 'Más letras'), L('Plus de lettres', 'More letters', 'もっともじ', 'Más letras'), '🔡'],
-    [35, L('Encore plus de lettres', 'Even more letters', 'もっともっともじ', 'Aún más letras'), L('Encore plus', 'Even more', 'もっともっと', 'Aún más'), '🧱'],
+    [17, L('Plus de lettres', 'More letters', 'もっと もじ', 'Más letras'), L('Plus de lettres', 'More letters', 'もっと もじ', 'Más letras'), '🔡'],
+    [35, L('Encore plus de lettres', 'Even more letters', 'もっと もっと もじ', 'Aún más letras'), L('Encore plus', 'Even more', 'もっともっと', 'Aún más'), '🧱'],
     [53, L('Presque tout', 'Almost all', 'あとすこし', 'Casi todas'), L('Presque tout', 'Almost all', 'あとすこし', 'Casi todas'), '🌟'],
     [69, L("Tout l'alphabet", 'The whole alphabet', 'ぜんぶのもじ', 'Todo el alfabeto'), L("Tout l'alphabet", 'Whole alphabet', 'ぜんぶのもじ', 'Todo el abc'), '🔠'],
     [85, L('Les chiffres arrivent', 'Here come the numbers', 'すうじがくるよ', 'Llegan los números'), L('Les chiffres', 'Numbers', 'すうじ', 'Los números'), '🔢'],
