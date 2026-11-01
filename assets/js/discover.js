@@ -1,13 +1,20 @@
 import { EXERCISES } from './data/discover-js.js';
+import { byLang as L } from './i18n.js';
 
 const MAX = 114;
 const ROWS = [
-  [1, 'Plus et moins', 'Plus et moins', '➕'], [11, 'Fois et divisé', 'Fois et divisé', '✖️'],
-  [20, 'Les textes', 'Textes', '🔤'], [30, 'Longueur et majuscules', 'Longueur et MAJ', '🔠'],
-  [39, 'Les variables', 'Variables', '📦'], [49, 'Variables qui changent', 'Ça change', '🔄'],
-  [58, 'Comparer', 'Comparer', '⚖️'], [68, 'Si / sinon', 'Si / sinon', '🔀'],
-  [77, 'Les boucles', 'Boucles', '🔁'], [87, 'Les tableaux', 'Tableaux', '📋'],
-  [96, 'Les fonctions', 'Fonctions', '🧩'], [106, 'Le grand mélange', 'Grand mélange', '🏆'],
+  [1, L('Plus et moins', 'Plus and minus', 'たすとひく', 'Más y menos'), L('Plus et moins', 'Plus and minus', 'たすとひく', 'Más y menos'), '➕'],
+  [11, L('Fois et divisé', 'Times and divide', 'かけるとわる', 'Por y entre'), L('Fois et divisé', 'Times, divide', 'かけるとわる', 'Por y entre'), '✖️'],
+  [20, L('Les textes', 'Text', 'もじれつ', 'Los textos'), L('Textes', 'Text', 'もじれつ', 'Textos'), '🔤'],
+  [30, L('Longueur et majuscules', 'Length and capitals', 'ながさとおおもじ', 'Longitud y mayúsculas'), L('Longueur et MAJ', 'Length & CAPS', 'ながさとABC', 'Longitud y MAY'), '🔠'],
+  [39, L('Les variables', 'Variables', 'へんすう', 'Las variables'), L('Variables', 'Variables', 'へんすう', 'Variables'), '📦'],
+  [49, L('Variables qui changent', 'Changing variables', 'かわるへんすう', 'Variables que cambian'), L('Ça change', 'It changes!', 'かわるよ', '¡Cambia!'), '🔄'],
+  [58, L('Comparer', 'Comparing', 'くらべる', 'Comparar'), L('Comparer', 'Compare', 'くらべる', 'Comparar'), '⚖️'],
+  [68, L('Si / sinon', 'If / else', 'もし / そうでなければ', 'Si / si no'), L('Si / sinon', 'If / else', 'もし…なら', 'Si / si no'), '🔀'],
+  [77, L('Les boucles', 'Loops', 'くりかえし', 'Los bucles'), L('Boucles', 'Loops', 'くりかえし', 'Bucles'), '🔁'],
+  [87, L('Les tableaux', 'Arrays', 'はいれつ', 'Los arrays'), L('Tableaux', 'Arrays', 'はいれつ', 'Arrays'), '📋'],
+  [96, L('Les fonctions', 'Functions', 'かんすう', 'Las funciones'), L('Fonctions', 'Functions', 'かんすう', 'Funciones'), '🧩'],
+  [106, L('Le grand mélange', 'The big mix', 'ぜんぶまぜまぜ', 'La gran mezcla'), L('Grand mélange', 'Big mix', 'まぜまぜ', 'Gran mezcla'), '🏆'],
 ];
 export const DISCOVER_CHAPTERS = ROWS.map(([from, name, short, icon], i) => ({
   id: `discover:${i}`, name, short, icon, from, to: (ROWS[i + 1]?.[0] ?? MAX + 1) - 1,

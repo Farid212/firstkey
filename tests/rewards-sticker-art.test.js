@@ -17,12 +17,17 @@ test('stickerSvg: nom court, icône, cadenas seulement si verrouillé', async ()
   globalThis.document = { createElementNS: (_, tag) => node(tag) };
   try {
     const { stickerSvg } = await import('../assets/js/rewards/sticker-art.js');
-    const { CHAPTERS, chapterColor } = await import('../assets/js/chapters.js');
+    const { CHAPTERS, chapterColor, chapterShort } = await import('../assets/js/chapters.js');
     for (const id of STICKER_IDS) {
       const [b, i] = id.split(':');
       const ch = CHAPTERS[b][i];
-      const on = all(stickerSvg(id, false)), off = all(stickerSvg(id, true));
-      assert.ok(on.some((n) => n.textContent === ch.short) && on.some((n) => n.textContent === ch.icon), id);
+      for (const lang of ['fr', 'en', 'ja', 'es']) {
+        const svg = stickerSvg(id, false, lang);
+        assert.equal(svg.attrs['aria-label'], chapterShort(ch, lang), `${id} ${lang}`);
+        assert.ok(all(svg).some((n) => n.textContent === chapterShort(ch, lang)), `${id} ${lang}`);
+      }
+      const on = all(stickerSvg(id, false, 'fr')), off = all(stickerSvg(id, true, 'fr'));
+      assert.ok(on.some((n) => n.textContent === ch.icon), id);
       assert.ok(on.some((n) => n.attrs.stroke === chapterColor(b, Number(i))), id);
       assert.equal(off.filter((n) => n.tag === 'rect').length, 1, id);
       assert.equal(on.filter((n) => n.tag === 'rect').length, 0, id);

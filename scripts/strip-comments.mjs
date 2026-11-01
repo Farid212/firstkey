@@ -26,7 +26,7 @@ function skipRegex(src, i) {
   return i;
 }
 
-function jsComments(src) {
+function jsComments(src, strings = []) {
   const out = [];
   const braces = [];
   let prev = null;
@@ -39,11 +39,12 @@ function jsComments(src) {
     return false;
   };
   const scanTemplate = (i) => {
+    const s = i;
     while (i < src.length) {
       const c = src[i];
       if (c === '\\') { i += 2; continue; }
-      if (c === '`') return { i: i + 1, done: true };
-      if (c === '$' && src[i + 1] === '{') { braces.push('tpl'); return { i: i + 2, done: false }; }
+      if (c === '`') { strings.push({ start: s, end: i }); return { i: i + 1, done: true }; }
+      if (c === '$' && src[i + 1] === '{') { strings.push({ start: s, end: i }); braces.push('tpl'); return { i: i + 2, done: false }; }
       i++;
     }
     throw new Error('gabarit non terminé');
@@ -66,7 +67,7 @@ function jsComments(src) {
       i = e + 2;
       continue;
     }
-    if (c === '\'' || c === '"') { i = skipQuoted(src, i); push({ type: 'value' }); continue; }
+    if (c === '\'' || c === '"') { const s = i; i = skipQuoted(src, i); strings.push({ start: s + 1, end: i - 1 }); push({ type: 'value' }); continue; }
     if (c === '`') {
       const r = scanTemplate(i + 1);
       i = r.i;
@@ -170,6 +171,12 @@ export function langOf(path) {
   if (path.endsWith('.css')) return 'css';
   if (path.endsWith('.html')) return 'html';
   return null;
+}
+
+export function findStrings(src) {
+  const strings = [];
+  jsComments(src, strings);
+  return strings;
 }
 
 export function findComments(src, lang) {

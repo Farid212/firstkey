@@ -1,11 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CHAPTERS, chapterOf, chapterState, chapterProgress, chapterColor } from '../assets/js/chapters.js';
+import { CHAPTERS, chapterOf, chapterState, chapterProgress, chapterColor, chapterName, chapterShort } from '../assets/js/chapters.js';
 import { CURRICULUM } from '../assets/js/maze/curriculum.js';
 import { CODE_JS } from '../assets/js/data/code-js.js';
 import { CODE_PYTHON } from '../assets/js/data/code-python.js';
 import { windowOf } from '../assets/js/code.js';
 
+const LANGS = ['fr', 'en', 'ja', 'es'];
 const IDS = ['letters', 'words', 'math', 'maze', 'python', 'js', 'discover', 'discover2'];
 
 for (const id of IDS) {
@@ -18,10 +19,10 @@ for (const id of IDS) {
       assert.ok(c.from <= c.to);
       if (i) assert.equal(c.from, list[i - 1].to + 1);
       assert.equal(c.id, `${id}:${i}`);
-      assert.ok(c.name && c.short && c.short.length <= 18 && c.icon);
+      assert.ok(chapterName(c, 'fr') && chapterShort(c, 'fr').length <= 18 && c.icon);
       assert.match(chapterColor(id, i), /^#[0-9a-f]{6}$/i);
     });
-    assert.equal(new Set(list.map((c) => c.name)).size, list.length);
+    for (const l of LANGS) assert.equal(new Set(list.map((c) => chapterName(c, l))).size, list.length, l);
     assert.equal(new Set(list.map((c) => c.id)).size, list.length);
   });
 
@@ -84,12 +85,13 @@ const THEMES = {
 for (const [id, { data, kw }] of Object.entries(THEMES)) {
   test(`${id}: les programmes de la fenêtre de chaque chapitre contiennent son thème`, () => {
     for (const c of CHAPTERS[id]) {
-      const re = kw[c.short] ?? (c.short === 'Listes' ? kw.Listes : null);
-      assert.ok(re, `mots-clés manquants pour ${c.short}`);
+      const short = chapterShort(c, 'fr');
+      const re = kw[short] ?? (short === 'Listes' ? kw.Listes : null);
+      assert.ok(re, `mots-clés manquants pour ${short}`);
       const typed = c.from > 57;
       const pool = [];
       for (let l = c.from; l <= c.to; l++) pool.push(...windowOf(typed ? data.lines : data.quiz, l));
-      assert.ok(pool.some((p) => re.test(typed ? p : p.code)), `${id} ${c.name} (${c.from}-${c.to})`);
+      assert.ok(pool.some((p) => re.test(typed ? p : p.code)), `${id} ${chapterName(c, 'fr')} (${c.from}-${c.to})`);
     }
   });
 }
@@ -110,4 +112,43 @@ test('pathPoints: n points dans la boîte, sans chevauchement, extrémités, dé
       assert.ok(pts.at(-1).y >= lastRow - 1e-9, 'le dernier point est sur la dernière rangée');
     }
   }
+});
+
+const FR = {
+  letters: [['Premières lettres', 'Premières lettres'], ['Plus de lettres', 'Plus de lettres'], ['Encore plus de lettres', 'Encore plus'], ['Presque tout', 'Presque tout'], ["Tout l'alphabet", "Tout l'alphabet"], ['Les chiffres arrivent', 'Les chiffres'], ['Le grand final', 'Le grand final']],
+  words: [['Mots minuscules', 'Mots minuscules'], ['Mots courts', 'Mots courts'], ['Mots de tous les jours', 'Tous les jours'], ['Mots plus longs', 'Mots plus longs'], ['Mots géants', 'Mots géants'], ['Premières phrases', 'Phrases'], ['Phrases et histoires', 'Histoires']],
+  math: [['Additions', 'Additions'], ['Soustractions', 'Soustractions'], ['Multiplications', 'Multiplications'], ['Divisions', 'Divisions'], ['Le grand mélange', 'Grand mélange']],
+  maze: [['Tout droit', 'Tout droit'], ['Virage à droite', 'Virage à droite'], ['Virage à gauche', 'Virage à gauche'], ['Les L et les Z', 'Les L et les Z'], ['Longues branches', 'Longues branches'], ['U et détours', 'U et détours'], ['Les boucles', 'Les boucles'], ['Escaliers', 'Escaliers'], ['Spirales et zigzags', 'Spirales'], ['Boucles et variables', 'Boucles imbriquées'], ['Les fonctions', 'Fonctions'], ['Programmes généraux', 'Programmes']],
+  python: [['Afficher et calculer', 'Afficher'], ['Les variables', 'Variables'], ['Les textes', 'Textes'], ['Calculs et priorités', 'Calculs'], ['Si / sinon', 'Si / sinon'], ['Les boucles', 'Boucles'], ['Les listes', 'Listes'], ['Les fonctions', 'Fonctions'], ['Premières lignes', 'Premières lignes'], ['Si et boucles', 'Si et boucles'], ['Retape les listes', 'Listes'], ['Fonctions et plus', 'Fonctions et plus']],
+  js: [['Afficher et calculer', 'Afficher'], ['Les variables', 'Variables'], ['Les textes', 'Textes'], ['Calculs et priorités', 'Calculs'], ['Si / sinon', 'Si / sinon'], ['Les boucles', 'Boucles'], ['Les listes', 'Listes'], ['Les fonctions', 'Fonctions'], ['Premières lignes', 'Premières lignes'], ['Si et boucles', 'Si et boucles'], ['Retape les listes', 'Listes'], ['Fonctions et plus', 'Fonctions et plus']],
+  discover: [['Plus et moins', 'Plus et moins'], ['Fois et divisé', 'Fois et divisé'], ['Les textes', 'Textes'], ['Longueur et majuscules', 'Longueur et MAJ'], ['Les variables', 'Variables'], ['Variables qui changent', 'Ça change'], ['Comparer', 'Comparer'], ['Si / sinon', 'Si / sinon'], ['Les boucles', 'Boucles'], ['Les tableaux', 'Tableaux'], ['Les fonctions', 'Fonctions'], ['Le grand mélange', 'Grand mélange']],
+  discover2: [['Les objets', 'Objets'], ['switch', 'switch'], ['while et for...of', 'while et for...of'], ['Fonctions fléchées et valeurs par défaut', 'Fléchées'], ['La portée', 'Portée'], ['Parcourir un tableau', 'forEach et map'], ['Filtrer et chercher', 'Filtrer, chercher'], ['Réduire', 'reduce'], ['JSON', 'JSON'], ['Le DOM', 'DOM'], ['Les événements', 'Événements'], ["L'asynchrone", 'Asynchrone']],
+};
+
+test('noms des chapitres: français inchangé, quatre langues, ids inchangés', () => {
+  assert.deepEqual(Object.keys(CHAPTERS), Object.keys(FR));
+  for (const [id, list] of Object.entries(CHAPTERS)) {
+    assert.deepEqual(list.map((c) => [chapterName(c, 'fr'), chapterShort(c, 'fr')]), FR[id], id);
+    list.forEach((c, i) => {
+      assert.equal(c.id, `${id}:${i}`);
+      for (const x of [c.name, c.short]) {
+        assert.deepEqual(Object.keys(x).sort(), [...LANGS].sort(), c.id);
+        for (const l of LANGS) assert.ok(typeof x[l] === 'string' && x[l].trim(), `${c.id} ${l}`);
+      }
+    });
+  }
+});
+
+test('noms courts des autocollants: 14 caractères en en/es, 8 en ja', () => {
+  for (const list of Object.values(CHAPTERS)) for (const c of list) {
+    for (const l of ['en', 'es']) assert.ok([...chapterShort(c, l)].length <= 14, `${c.id} ${l}: ${chapterShort(c, l)}`);
+    assert.ok([...chapterShort(c, 'ja')].length <= 8, `${c.id} ja: ${chapterShort(c, 'ja')}`);
+  }
+});
+
+test('accesseurs: langue inconnue retombe sur l’anglais', () => {
+  assert.equal(chapterName(CHAPTERS.math[0], 'en'), 'Addition');
+  assert.equal(chapterName(CHAPTERS.math[0], 'de'), 'Addition');
+  assert.equal(chapterShort(CHAPTERS.math[1], 'ja'), 'ひきざん');
+  assert.equal(chapterShort(CHAPTERS.maze[0], 'es'), 'Todo recto');
 });

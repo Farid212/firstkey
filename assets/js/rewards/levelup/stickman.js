@@ -1,3 +1,4 @@
+import { tf } from '../../i18n.js';
 import { ease, track, lerp, clamp } from '../anim.js';
 import { svgEl, showCard } from '../fx.js';
 import { SFX } from '../audio.js';
@@ -235,8 +236,8 @@ export function footsteps(fx) {
 const DUR = 7.8;
 const NUM_H = 150;
 
-export function stickman(fx, { oldLevel, newLevel }) {
-  if (fx.reduced) return showCard(fx, null, SFX.fanfare, `Niveau ${newLevel}`);
+export function stickman(fx, { oldLevel, newLevel, lang }) {
+  if (fx.reduced) return showCard(fx, null, SFX.fanfare, tf(lang, 'level', { n: newLevel }));
   const oldTxt = String(oldLevel ?? Math.max(0, newLevel - 1));
   return fx.run(async (g) => {
     const S = bandScene(fx, g);

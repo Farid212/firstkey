@@ -2,6 +2,7 @@ import { pickBlock, recordCorrect, answersPerLevel } from './progress.js';
 import { makeQuestion, answerKind } from './questions.js';
 import { createTyper } from './typer.js';
 import { createPenalty } from './penalty.js';
+import { t, tf } from './i18n.js';
 
 const play = (id) => {
   const a = document.getElementById(id);
@@ -15,7 +16,7 @@ export function startGame(root, state, target, handlers) {
   root.replaceChildren();
   const bar = div('bar');
   const back = Object.assign(document.createElement('button'), { className: 'back round', textContent: '←', tabIndex: -1 });
-  back.setAttribute('aria-label', 'Retour');
+  back.setAttribute('aria-label', t(state.settings.language, 'back'));
   const score = div('pill score');
   const meter = div('meter');
   meter.setAttribute('role', 'progressbar');
@@ -74,7 +75,7 @@ export function startGame(root, state, target, handlers) {
       const b = Object.assign(document.createElement('button'), { className: 'choice', type: 'button' });
       const pos = Object.assign(document.createElement('span'), { className: 'pos', textContent: i + 1 });
       const num = Object.assign(document.createElement('span'), { className: 'num', textContent: c });
-      b.setAttribute('aria-label', `${i + 1} : ${c}`);
+      b.setAttribute('aria-label', tf(s.settings.language, 'game.choiceAria', { pos: i + 1, c }));
       b.append(pos, num);
       b.onclick = () => q === question && choose(i);
       return b;
@@ -127,8 +128,8 @@ export function startGame(root, state, target, handlers) {
     const pct = level < p.level ? 100 : Math.round((100 * p.correct) / answersPerLevel(s.settings.age, blockId));
     fill.style.width = `${pct}%`;
     meter.setAttribute('aria-valuenow', String(pct));
-    meter.setAttribute('aria-label', `Niveau ${level}`);
-    lvlTag.textContent = `Niveau ${level}`;
+    meter.setAttribute('aria-label', tf(s.settings.language, 'game.level', { level }));
+    lvlTag.textContent = tf(s.settings.language, 'game.level', { level });
     if (question.kind === 'choice') {
       lead.textContent = question.display;
       done.textContent = rest.textContent = '';
