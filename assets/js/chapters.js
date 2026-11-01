@@ -53,7 +53,7 @@ export const CHAPTERS = {
     [35, L('Encore plus de lettres', 'Even more letters', 'もっと もっと もじ', 'Aún más letras'), L('Encore plus', 'Even more', 'もっともっと', 'Aún más'), '🧱'],
     [53, L('Presque tout', 'Almost all', 'あとすこし', 'Casi todas'), L('Presque tout', 'Almost all', 'あとすこし', 'Casi todas'), '🌟'],
     [69, L("Tout l'alphabet", 'The whole alphabet', 'ぜんぶのもじ', 'Todo el alfabeto'), L("Tout l'alphabet", 'Whole alphabet', 'ぜんぶのもじ', 'Todo el abc'), '🔠'],
-    [85, L('Les chiffres arrivent', 'Here come the numbers', 'すうじがくるよ', 'Llegan los números'), L('Les chiffres', 'Numbers', 'すうじ', 'Los números'), '🔢'],
+    [85, L('Les chiffres arrivent', 'Here come the numbers', 'あたらしい もじが くるよ', 'Llegan los números'), L('Les chiffres', 'Numbers', 'あたらしいもじ', 'Los números'), '🔢'],
     [104, L('Le grand final', 'The grand finale', 'さいごのしあげ', 'El gran final'), L('Le grand final', 'Grand finale', 'しあげ', 'El gran final'), '🏆'],
   ]),
   words: build('words', [

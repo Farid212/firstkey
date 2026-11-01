@@ -6,15 +6,9 @@ import { nextVariant } from './variants.js';
 import { createTyper } from './typer.js';
 import { createPenalty } from './penalty.js';
 import { t, tf, tn } from './i18n.js';
+import { play as playSound } from './sound.js';
 import { getArt } from './rewards/art/index.js';
 import { CREATURES } from './rewards/creatures.js';
-
-const play = (id) => {
-  const a = document.getElementById(id);
-  if (!a) return;
-  a.currentTime = 0;
-  a.play().catch(() => {});
-};
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -69,6 +63,7 @@ export function startDiscover(root, state, target, handlers) {
   screen.append(bar, stage);
   root.append(screen);
 
+  const play = (id) => playSound(id, handlers.getState);
   let s = handlers.getState();
   let fixed = target.level;
   const penalty = createPenalty();

@@ -11,13 +11,7 @@ import { CREATURES } from './rewards/creatures.js';
 import { svgEl } from './rewards/fx.js';
 import { createPenalty } from './penalty.js';
 import { t, tf, tn } from './i18n.js';
-
-const play = (id) => {
-  const a = document.getElementById(id);
-  if (!a) return;
-  a.currentTime = 0;
-  a.play().catch(() => {});
-};
+import { play as playSound } from './sound.js';
 
 const el = (tag, cls, text) => {
   const e = document.createElement(tag);
@@ -190,6 +184,7 @@ export function startMaze(root, state, target, handlers) {
   screen.append(bar, wrap);
   root.append(screen);
 
+  const play = (id) => playSound(id, handlers.getState);
   let s = handlers.getState();
   const lang = s.settings.codeLanguage === 'js' ? 'js' : 'py';
   const names = commandNames(lang);
